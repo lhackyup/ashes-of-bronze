@@ -1,6 +1,7 @@
 import { UnitEntity } from '../entities/UnitEntity.ts';
 import { BuildingEntity } from '../entities/BuildingEntity.ts';
 import { EventBus } from '../core/EventBus.ts';
+import { TILE_SIZE } from '../data/terrain.ts';
 
 export interface Projectile {
   x: number;
@@ -27,7 +28,7 @@ export class CombatSystem {
       }
       if (b.def.attackRange && b.def.damage && b.attackCooldown <= 0) {
         // Cerca nemico più vicino
-        const rangePx = b.def.attackRange * 48;
+        const rangePx = b.def.attackRange * TILE_SIZE;
         let nearest: UnitEntity | null = null;
         let nearestDist = rangePx;
 

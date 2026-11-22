@@ -18,6 +18,9 @@ import { UNITS } from './data/units.ts';
 import { EventBus } from './core/EventBus.ts';
 import { SVGAProceduralBank } from './engine/rendering/SVGAProceduralBank.ts';
 
+const VIRTUAL_WIDTH = 640;
+const VIRTUAL_HEIGHT = 360;
+
 class GameApp {
   private canvas!: HTMLCanvasElement;
   private ctx!: CanvasRenderingContext2D;
@@ -118,13 +121,11 @@ class GameApp {
   }
 
   private resizeCanvas(): void {
-    const parent = this.canvas.parentElement;
-    if (parent) {
-      this.canvas.width = parent.clientWidth;
-      this.canvas.height = parent.clientHeight;
-      if (this.camera) {
-        this.camera.updateDimensions(this.canvas.width, this.canvas.height);
-      }
+    this.canvas.width = VIRTUAL_WIDTH;
+    this.canvas.height = VIRTUAL_HEIGHT;
+    this.ctx.imageSmoothingEnabled = false;
+    if (this.camera) {
+      this.camera.updateDimensions(VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
     }
   }
 
@@ -225,12 +226,14 @@ class GameApp {
     });
 
     this.canvas.addEventListener('mousedown', (e) => {
-      // Inizia riproduzione BGM al primo gesto
+      // Begin BGM on first interaction
       this.audio.startBGM();
 
       const rect = this.canvas.getBoundingClientRect();
-      const sx = e.clientX - rect.left;
-      const sy = e.clientY - rect.top;
+      const scaleX = VIRTUAL_WIDTH / rect.width;
+      const scaleY = VIRTUAL_HEIGHT / rect.height;
+      const sx = (e.clientX - rect.left) * scaleX;
+      const sy = (e.clientY - rect.top) * scaleY;
       const worldPos = this.camera.screenToWorld(sx, sy);
 
       if (e.button === 0) {
@@ -269,9 +272,11 @@ class GameApp {
 
     this.canvas.addEventListener('mousemove', (e) => {
       const rect = this.canvas.getBoundingClientRect();
+      const scaleX = VIRTUAL_WIDTH / rect.width;
+      const scaleY = VIRTUAL_HEIGHT / rect.height;
       this.dragCurrent = {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top
+        x: (e.clientX - rect.left) * scaleX,
+        y: (e.clientY - rect.top) * scaleY
       };
     });
 
@@ -508,8 +513,8 @@ class GameApp {
       const ghostTx = Math.floor(mouseWorld.x / TILE_SIZE);
       const ghostTy = Math.floor(mouseWorld.y / TILE_SIZE);
       const ghostScreen = this.camera.worldToScreen(ghostTx * TILE_SIZE, ghostTy * TILE_SIZE);
-      const gw = bDef.width * TILE_SIZE * this.camera.zoom;
-      const gh = bDef.height * TILE_SIZE * this.camera.zoom;
+      const gw = bDef.width * TILE_SIZE;
+      const gh = bDef.height * TILE_SIZE;
 
       let canPlace = true;
       for (let dy = 0; dy < bDef.height; dy++) {
@@ -555,86 +560,59 @@ class GameApp {
 
   private renderBuilding(ctx: CanvasRenderingContext2D, b: BuildingEntity): void {
     const sp = this.camera.worldToScreen(b.tx * TILE_SIZE, b.ty * TILE_SIZE);
-    const bw = b.def.width * TILE_SIZE * this.camera.zoom;
-    const bh = b.def.height * TILE_SIZE * this.camera.zoom;
+    const bw = b.def.width * TILE_SIZE;
+    const bh = b.def.height * TILE_SIZE;
+    const drawX = Math.round(sp.x);
+    const drawY = Math.round(sp.y);
 
-    // Disegna sprite procedurale SVGA memorizzato nella banca
+    // Render retro pixel sprite from SVGAProceduralBank
     const sprite = SVGAProceduralBank.getBuildingSprite(b.defId, b.owner);
     if (sprite) {
-      // Ombra edificio proiettata
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
-      ctx.fillRect(sp.x + 6, sp.y + 6, bw, bh);
-      ctx.drawImage(sprite, sp.x, sp.y, bw, bh);
+      ctx.drawImage(sprite, drawX, drawY, bw, bh);
     } else {
       ctx.fillStyle = b.owner === 'player' ? '#8a6234' : '#692d2d';
-      ctx.fillRect(sp.x, sp.y, bw, bh);
+      ctx.fillRect(drawX, drawY, bw, bh);
     }
 
-    // Bandiere animate che sventolano nel vento per Acropoli, Caserma e Torri
-    if (b.defId === 'acropolis' || b.defId === 'barracks' || b.defId === 'watchtower') {
-      const now = Date.now() / 200;
-      const wave = Math.sin(now + b.id) * 3;
-      const poleX = sp.x + (b.defId === 'watchtower' ? 14 : 24);
-      const poleY = sp.y + 8;
-
-      // Asta in bronzo
-      ctx.fillStyle = '#b8944d';
-      ctx.fillRect(poleX, poleY, 3, 22);
-
-      // Tessuto bandiera con pieghe mosse dal vento levantino
-      ctx.fillStyle = b.owner === 'player' ? '#2de0a5' : '#e63946';
-      ctx.beginPath();
-      ctx.moveTo(poleX + 3, poleY + 2);
-      ctx.lineTo(poleX + 18, poleY + 5 + wave);
-      ctx.lineTo(poleX + 3, poleY + 12);
-      ctx.closePath();
-      ctx.fill();
-    }
-
-    // Bordo di selezione
+    // Selection border (1px crisp pixel outline)
     if (b.isSelected) {
       ctx.strokeStyle = '#ffff55';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(sp.x, sp.y, bw, bh);
+      ctx.lineWidth = 1;
+      ctx.strokeRect(drawX - 0.5, drawY - 0.5, bw + 1, bh + 1);
     }
 
-    // Etichetta edificio
-    ctx.fillStyle = '#ffffff';
-    ctx.font = '10px Cinzel, serif';
-    ctx.fillText(b.def.name.substring(0, 14), sp.x + 4, sp.y + bh + 12);
-
-    // Barra HP se selezionato o danneggiato
+    // HP bar if selected or damaged
     if (b.isSelected || b.hp < b.maxHp) {
       const hpPct = Math.max(0, b.hp / b.maxHp);
-      ctx.fillStyle = '#1c0909';
-      ctx.fillRect(sp.x, sp.y - 6, bw, 4);
-      ctx.fillStyle = '#2b9348';
-      ctx.fillRect(sp.x, sp.y - 6, bw * hpPct, 4);
+      ctx.fillStyle = '#0e0b08';
+      ctx.fillRect(drawX, drawY - 4, bw, 3);
+      ctx.fillStyle = '#22c55e';
+      ctx.fillRect(drawX, drawY - 4, Math.round(bw * hpPct), 3);
     }
   }
 
   private renderUnit(ctx: CanvasRenderingContext2D, u: UnitEntity): void {
     const sp = this.camera.worldToScreen(u.x, u.y);
+    const drawX = Math.round(sp.x);
+    const drawY = Math.round(sp.y);
 
-    // Render animato procedurale dell'Età del Bronzo
-    SVGAProceduralBank.drawAnimatedUnit(ctx, u, sp.x, sp.y);
+    // Render animated Dune II style pixel sprite
+    SVGAProceduralBank.drawAnimatedUnit(ctx, u, drawX, drawY);
 
-    // Bordo o indicatore di selezione
+    // Selection ring
     if (u.isSelected) {
       ctx.strokeStyle = '#ffff33';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.arc(sp.x, sp.y, 14, 0, Math.PI * 2);
-      ctx.stroke();
+      ctx.lineWidth = 1;
+      ctx.strokeRect(drawX - 8.5, drawY - 8.5, 17, 17);
     }
 
-    // Barra HP se selezionata o ferita
+    // HP bar if selected or wounded
     if (u.isSelected || u.hp < u.maxHp) {
       const hpPct = Math.max(0, u.hp / u.maxHp);
-      ctx.fillStyle = '#1c0909';
-      ctx.fillRect(sp.x - 12, sp.y - 18, 24, 3);
-      ctx.fillStyle = '#2b9348';
-      ctx.fillRect(sp.x - 12, sp.y - 18, 24 * hpPct, 3);
+      ctx.fillStyle = '#0e0b08';
+      ctx.fillRect(drawX - 7, drawY - 12, 14, 2);
+      ctx.fillStyle = '#22c55e';
+      ctx.fillRect(drawX - 7, drawY - 12, Math.round(14 * hpPct), 2);
     }
   }
 

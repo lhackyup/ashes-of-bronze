@@ -6,6 +6,7 @@ import { UnitEntity } from '../entities/UnitEntity.ts';
 import { BuildingEntity } from '../entities/BuildingEntity.ts';
 import { Camera2D } from '../engine/camera/Camera2D.ts';
 import { SVGAProceduralBank } from '../engine/rendering/SVGAProceduralBank.ts';
+import { TILE_SIZE } from '../data/terrain.ts';
 
 export class HUDController {
   private resCopperEl!: HTMLElement;
@@ -182,13 +183,13 @@ export class HUDController {
     ctx.fillStyle = '#1c1712';
     ctx.fillRect(0, 0, cw, ch);
 
-    const scaleX = cw / (mapW * 48);
-    const scaleY = ch / (mapH * 48);
+    const scaleX = cw / (mapW * TILE_SIZE);
+    const scaleY = ch / (mapH * TILE_SIZE);
 
     // Buildings
     for (const b of buildings) {
       ctx.fillStyle = b.owner === 'player' ? '#2de0a5' : '#e63946';
-      ctx.fillRect(b.tx * 48 * scaleX, b.ty * 48 * scaleY, b.def.width * 48 * scaleX, b.def.height * 48 * scaleY);
+      ctx.fillRect(b.tx * TILE_SIZE * scaleX, b.ty * TILE_SIZE * scaleY, b.def.width * TILE_SIZE * scaleX, b.def.height * TILE_SIZE * scaleY);
     }
 
     // Units

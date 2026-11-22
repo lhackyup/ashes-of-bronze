@@ -1,59 +1,60 @@
 import { TerrainDef, TerrainType } from './types.ts';
 
-export const TILE_SIZE = 48;
+// Dune II 1992 Authentic Tile Size (24x24 pixels on a 640x360 virtual buffer)
+export const TILE_SIZE = 24;
 
 export const TERRAINS: Record<TerrainType, TerrainDef> = {
   plain: {
     id: 'plain',
-    name: 'Arid Levantine Plains',
+    name: 'Desert Sand / Dunes',
     walkable: true,
     speedMultiplier: 1.0,
     isResource: false,
-    color: '#7a6b52'
+    color: '#d4a259' // Warm mustard Dune sand
   },
   sand: {
     id: 'sand',
-    name: 'Coastal Sand / Dunes',
+    name: 'Soft Sand Dunes',
     walkable: true,
-    speedMultiplier: 0.75, // Slows down chariots and infantry
+    speedMultiplier: 0.7,
     isResource: false,
-    color: '#c4a773'
+    color: '#c28f42'
   },
   water: {
     id: 'water',
-    name: 'Deep Sea / River',
+    name: 'Deep Sea / Coast',
     walkable: false,
     speedMultiplier: 0.0,
     isResource: false,
-    color: '#2b506e'
+    color: '#1a446c'
   },
   cliff: {
     id: 'cliff',
-    name: 'Cyclopean Rocky Outcrop',
+    name: 'Dark Rock Plateau',
     walkable: false,
     speedMultiplier: 0.0,
     isResource: false,
-    color: '#423d38'
+    color: '#3b2f25' // Dune II rocky slab bedrock
   },
   marsh: {
     id: 'marsh',
-    name: 'Alluvial Marsh',
+    name: 'Salt Silt / Silt Basin',
     walkable: true,
     speedMultiplier: 0.55,
     isResource: false,
-    color: '#474d39'
+    color: '#524b3a'
   },
   fertile_soil: {
     id: 'fertile_soil',
-    name: 'Irrigated Alluvial Soil',
+    name: 'Oasis Silt',
     walkable: true,
     speedMultiplier: 0.95,
     isResource: false,
-    color: '#5e4831'
+    color: '#6e5434'
   },
   vein_copper: {
     id: 'vein_copper',
-    name: 'Malachite / Copper Vein',
+    name: 'Malachite Ore Field',
     walkable: false,
     speedMultiplier: 0.0,
     isResource: true,
@@ -62,24 +63,24 @@ export const TERRAINS: Record<TerrainType, TerrainDef> = {
       amountPerHarvest: 15,
       totalAmount: 1800
     },
-    color: '#498a72'
+    color: '#2bb673' // Vibrant green spice/ore
   },
   vein_tin: {
     id: 'vein_tin',
-    name: 'Rare Cassiterite / Tin Vein',
+    name: 'Cassiterite Tin Ridge',
     walkable: false,
     speedMultiplier: 0.0,
     isResource: true,
     resourceYield: {
       type: 'tin',
       amountPerHarvest: 5,
-      totalAmount: 450 // Rare like spice
+      totalAmount: 450
     },
-    color: '#9aa0a6'
+    color: '#e2e8f0' // Sparkling silver tin field
   },
   vein_iron: {
     id: 'vein_iron',
-    name: 'Hematite / Dark Iron Vein',
+    name: 'Hematite Iron Ridge',
     walkable: false,
     speedMultiplier: 0.0,
     isResource: true,
@@ -88,6 +89,6 @@ export const TERRAINS: Record<TerrainType, TerrainDef> = {
       amountPerHarvest: 12,
       totalAmount: 2400
     },
-    color: '#362f2d'
+    color: '#211d1b'
   }
 };
