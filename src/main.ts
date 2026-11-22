@@ -58,6 +58,15 @@ class GameApp {
   private units: UnitEntity[] = [];
   private buildings: BuildingEntity[] = [];
   private decorations: Array<{ x: number; y: number; type: string }> = [];
+  private floatingTexts: Array<{
+    id: number;
+    text: string;
+    color: string;
+    x: number;
+    y: number;
+    life: number;
+    maxLife: number;
+  }> = [];
 
   private selectedUnits: UnitEntity[] = [];
   private selectedBuilding: BuildingEntity | null = null;
@@ -267,6 +276,19 @@ class GameApp {
       this.closeAllModals();
       this.isGamePaused = true;
       this.settingsModal.show(true);
+    });
+
+    // Wire Floating Text visual FX
+    EventBus.get().on('fx:floating_text', (data: { text: string; color: string; x: number; y: number }) => {
+      this.floatingTexts.push({
+        id: this.nextEntityId++,
+        text: data.text,
+        color: data.color || '#fef08a',
+        x: data.x,
+        y: data.y,
+        life: 1.3,
+        maxLife: 1.3
+      });
     });
 
     // Wire Victory / Defeat events
@@ -600,15 +622,32 @@ class GameApp {
 
     for (const u of this.selectedUnits) {
       if (targetEnemyUnit) {
+        u.targetMineCoord = null;
         u.targetEntityId = targetEnemyUnit.id;
         u.state = 'ATTACK_TARGET';
       } else if (isResourceNode && u.def.category === 'worker') {
-        // Caravan dispatched to harvest ore
+        // Caravan dispatched to harvest ore with automated lifecycle
+        u.targetMineCoord = { tx: targetTx, ty: targetTy };
         u.targetPosition = { x: targetTx * TILE_SIZE + 24, y: targetTy * TILE_SIZE + 24 };
         u.currentCargoType = tileType.replace('vein_', '');
-        u.path = [{ x: targetTx * TILE_SIZE + 24, y: targetTy * TILE_SIZE + 24 }];
-        u.state = 'HARVESTING';
+
+        const startTx = Math.floor(u.x / TILE_SIZE);
+        const startTy = Math.floor(u.y / TILE_SIZE);
+        const pathCoords = AStar.findPath(this.gridGraph, { tx: startTx, ty: startTy }, { tx: targetTx, ty: targetTy });
+        if (pathCoords.length > 0) {
+          u.path = pathCoords.map(c => ({
+            x: c.tx * TILE_SIZE + 24,
+            y: c.ty * TILE_SIZE + 24
+          }));
+        } else {
+          u.path = [{ x: targetTx * TILE_SIZE + 24, y: targetTy * TILE_SIZE + 24 }];
+        }
+        u.state = 'HARVEST_SEEK';
       } else {
+        // Clear automated mining target if player orders a manual move
+        u.targetMineCoord = null;
+        u.targetEntityId = null;
+
         // Navigate using A* pathfinding
         const startTx = Math.floor(u.x / TILE_SIZE);
         const startTy = Math.floor(u.y / TILE_SIZE);
@@ -704,6 +743,16 @@ class GameApp {
         this.economy,
         this.tacticalDirector
       );
+    }
+
+    // Update floating text visual FX
+    for (let i = this.floatingTexts.length - 1; i >= 0; i--) {
+      const ft = this.floatingTexts[i];
+      ft.life -= dt;
+      ft.y -= 22 * dt;
+      if (ft.life <= 0) {
+        this.floatingTexts.splice(i, 1);
+      }
     }
 
     // Contextual narrative check: first tin harvested by caravans
@@ -824,6 +873,20 @@ class GameApp {
       ctx.restore();
     }
 
+    // 6. Floating text visual FX (World coordinates)
+    for (const ft of this.floatingTexts) {
+      const alpha = Math.max(0, Math.min(1, ft.life / 0.4));
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.font = '900 12px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#0f0b08';
+      ctx.fillText(ft.text, ft.x + 1, ft.y + 1);
+      ctx.fillStyle = ft.color;
+      ctx.fillText(ft.text, ft.x, ft.y);
+      ctx.restore();
+    }
+
     ctx.restore(); // Restore world transform
 
     // 6. Box selection dragging rectangle (Screen space)
@@ -909,7 +972,8 @@ class GameApp {
     SVGAProceduralBank.drawAnimatedUnit(ctx, u, drawX, drawY);
 
     // HP bar if wounded or selected
-    if (u.isSelected || u.hp < u.maxHp) {
+    const hasHpBar = u.isSelected || u.hp < u.maxHp;
+    if (hasHpBar) {
       const hpPct = Math.max(0, u.hp / u.maxHp);
       ctx.fillStyle = '#1c0909';
       ctx.fillRect(drawX - 12, drawY - 16, 24, 4);
@@ -917,6 +981,32 @@ class GameApp {
       ctx.strokeRect(drawX - 12, drawY - 16, 24, 4);
       ctx.fillStyle = hpPct > 0.5 ? '#2b9348' : (hpPct > 0.25 ? '#eab308' : '#ef4444');
       ctx.fillRect(drawX - 11, drawY - 15, Math.max(0, 22 * hpPct), 2);
+    }
+
+    // Cargo progress bar & status indicator for worker/donkey caravan
+    if (u.def.category === 'worker' && (u.currentCargoAmount > 0 || u.state === 'HARVESTING' || u.isSelected)) {
+      const maxCargo = u.def.cargoCapacity || 120;
+      const cargoPct = Math.min(1.0, u.currentCargoAmount / maxCargo);
+      const barY = drawY - (hasHpBar ? 23 : 16);
+
+      ctx.fillStyle = '#110d08';
+      ctx.fillRect(drawX - 14, barY, 28, 4);
+      ctx.strokeStyle = '#604c38';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(drawX - 14, barY, 28, 4);
+
+      const oreColor = u.currentCargoType === 'tin' ? '#7dd3fc' : (u.currentCargoType === 'copper' ? '#fbbf24' : '#cbd5e1');
+      ctx.fillStyle = oreColor;
+      ctx.fillRect(drawX - 13, barY + 1, Math.max(0, 26 * cargoPct), 2);
+
+      // Flashing golden mining pulse dot
+      if (u.state === 'HARVESTING') {
+        const pulse = Math.sin(Date.now() / 100) * 0.5 + 0.5;
+        ctx.fillStyle = `rgba(253, 224, 71, ${0.4 + pulse * 0.6})`;
+        ctx.beginPath();
+        ctx.arc(drawX + 17, barY + 2, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
   }
 

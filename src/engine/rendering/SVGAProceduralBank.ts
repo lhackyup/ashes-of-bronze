@@ -705,24 +705,104 @@ export class SVGAProceduralBank {
     ctx.translate(cx, cy);
 
     if (u.def.category === 'worker') {
-      // Harvester / Donkey Caravan Wagon
-      ctx.fillStyle = '#6b4423';
-      ctx.fillRect(-16, -8 + bob * 0.4, 32, 16);
-      ctx.fillStyle = cMain;
-      ctx.fillRect(-14, -6 + bob * 0.4, 28, 4);
+      // Authentic Bronze Age Pack Donkey & Mining Caravan
+      const isHarvesting = u.state === 'HARVESTING';
+      const minePhase = (u.harvestAnimationTimer || 0) * 8;
 
-      // LIVE ORE FILL LEVEL BAR
+      // Pack Donkey Body (Arid dun/tan coat)
+      ctx.fillStyle = '#83654b';
+      ctx.fillRect(-12, -7 + bob * 0.4, 24, 13); // Torso
+
+      // Donkey Head & Long Ears
+      const headBob = isHarvesting ? Math.sin(minePhase) * 3 : bob * 0.6;
+      ctx.fillStyle = '#83654b';
+      ctx.fillRect(8, -13 + headBob, 8, 9); // Head
+      ctx.fillStyle = '#bfa58d';
+      ctx.fillRect(13, -11 + headBob, 5, 6); // Muzzle / snout
+      ctx.fillStyle = '#1c1917';
+      ctx.fillRect(11, -12 + headBob, 2, 2); // Eye
+      // Long donkey ears
+      ctx.fillStyle = '#654b35';
+      ctx.fillRect(7, -19 + headBob, 3, 7);
+      ctx.fillRect(10, -18 + headBob, 3, 6);
+
+      // Tail with tuft
+      ctx.strokeStyle = '#654b35';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(-12, -4 + bob * 0.4);
+      ctx.lineTo(-17, 2 + (isHarvesting ? Math.sin(minePhase * 1.5) * 3 : 0));
+      ctx.stroke();
+
+      // Legs & Hooves
+      ctx.fillStyle = '#5a3f29';
+      const legStep = isMoving ? Math.sin(animPhase) * 4 : 0;
+      ctx.fillRect(-9 + legStep * 0.5, 6, 3, 8);
+      ctx.fillRect(-3 - legStep * 0.5, 6, 3, 8);
+      ctx.fillRect(3 + legStep * 0.5, 6, 3, 8);
+      ctx.fillRect(9 - legStep * 0.5, 6, 3, 8);
+      // Black hooves
+      ctx.fillStyle = '#1c1917';
+      ctx.fillRect(-9 + legStep * 0.5, 12, 3, 2);
+      ctx.fillRect(-3 - legStep * 0.5, 12, 3, 2);
+      ctx.fillRect(3 + legStep * 0.5, 12, 3, 2);
+      ctx.fillRect(9 - legStep * 0.5, 12, 3, 2);
+
+      // Woven Wicker Panniers / Saddles (Pack baskets on flanks)
+      ctx.fillStyle = '#9a6b38';
+      ctx.fillRect(-10, -6 + bob * 0.4, 18, 10);
+      ctx.strokeStyle = '#583c1d';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(-10, -6 + bob * 0.4, 18, 10);
+
+      // LIVE ORE HEAP IN BASKET
       if (u.currentCargoAmount > 0) {
-        const maxCargo = u.def.cargoCapacity || 100;
-        const fillH = Math.ceil((u.currentCargoAmount / maxCargo) * 8);
-        ctx.fillStyle = '#f59e0b';
-        ctx.fillRect(-11, 2 - fillH + bob * 0.4, 22, fillH);
+        const maxCargo = u.def.cargoCapacity || 120;
+        const fillRatio = Math.min(1.0, u.currentCargoAmount / maxCargo);
+        const heapH = Math.ceil(fillRatio * 7);
+
+        // Mineral ore color scheme
+        const isTin = u.currentCargoType === 'tin';
+        const isIron = u.currentCargoType === 'iron';
+        const oreMain = isTin ? '#93c5fd' : (isIron ? '#475569' : '#f59e0b');
+        const oreLight = isTin ? '#e0f2fe' : (isIron ? '#94a3b8' : '#fde68a');
+
+        ctx.fillStyle = oreMain;
+        ctx.fillRect(-9, -6 - heapH + bob * 0.4, 16, heapH);
+        // Gleam highlights on raw ore chunks
+        ctx.fillStyle = oreLight;
+        ctx.fillRect(-7, -5 - heapH + bob * 0.4, 4, 2);
+        ctx.fillRect(1, -4 - heapH + bob * 0.4, 4, 2);
       }
 
-      // Spoked wheels
-      ctx.fillStyle = '#1c1917';
-      ctx.beginPath(); ctx.arc(-9, 10, 5, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(9, 10, 5, 0, Math.PI * 2); ctx.fill();
+      // MINING ANIMATION: Miner with swinging pickaxe & dust/sparks
+      if (isHarvesting) {
+        const swing = Math.sin(minePhase);
+        const pickAngle = -Math.PI / 4 + swing * 0.8;
+
+        ctx.save();
+        ctx.translate(-18, 0);
+        // Little miner silhouette
+        ctx.fillStyle = cMain;
+        ctx.fillRect(-3, -4, 6, 8); // Tunic
+        ctx.fillStyle = '#bfa58d';
+        ctx.fillRect(-2, -9, 4, 4); // Head
+        // Swinging wooden haft & bronze pick
+        ctx.rotate(pickAngle);
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(-1, -12, 2, 14); // Shaft
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(-5, -13, 10, 3); // Pickaxe head
+        ctx.restore();
+
+        // Chipping sparks & dust puffs at impact point
+        if (swing > 0.6) {
+          ctx.fillStyle = '#fef08a';
+          ctx.fillRect(-22 + Math.random() * 6, 6 + Math.random() * 4, 2, 2);
+          ctx.fillStyle = '#e2e8f0';
+          ctx.fillRect(-24 + Math.random() * 8, 4 + Math.random() * 5, 2, 2);
+        }
+      }
     } else if (u.def.category === 'chariot') {
       // 2-Horse Chariot
       ctx.fillStyle = '#5c3a21';

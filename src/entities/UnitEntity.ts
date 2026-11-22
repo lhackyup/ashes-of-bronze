@@ -1,4 +1,4 @@
-import { FactionId, UnitDef, UnitState, Vector2 } from '../data/types.ts';
+import { FactionId, GridCoord, UnitDef, UnitState, Vector2 } from '../data/types.ts';
 import { UNITS } from '../data/units.ts';
 
 export class UnitEntity {
@@ -16,11 +16,13 @@ export class UnitEntity {
   public path: Vector2[] = [];
   public targetEntityId: number | null = null;
   public targetPosition: Vector2 | null = null;
+  public targetMineCoord: GridCoord | null = null;
 
   // Economia / Cargo per carovane
   public currentCargoType: string | null = null;
   public currentCargoAmount: number = 0;
   public harvestCooldown: number = 0;
+  public harvestAnimationTimer: number = 0;
 
   // Combattimento
   public attackCooldown: number = 0;

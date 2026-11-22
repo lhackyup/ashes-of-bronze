@@ -1,6 +1,7 @@
 import { UnitEntity } from '../entities/UnitEntity.ts';
 import { BuildingEntity } from '../entities/BuildingEntity.ts';
 import { GridGraph } from '../engine/pathfinding/GridGraph.ts';
+import { AStar } from '../engine/pathfinding/AStar.ts';
 import { CombatSystem } from '../systems/CombatSystem.ts';
 import { EconomySystem } from '../systems/EconomySystem.ts';
 import { TILE_SIZE } from '../data/terrain.ts';
@@ -37,7 +38,7 @@ export class UnitFSM {
       case 'HARVESTING':
       case 'RETURN_CARGO':
       case 'UNLOADING':
-        this.handleHarvestCycle(u, dt, buildings, economy);
+        this.handleHarvestCycle(u, dt, graph, buildings, economy);
         break;
     }
   }
@@ -180,6 +181,7 @@ export class UnitFSM {
   private static handleHarvestCycle(
     u: UnitEntity,
     dt: number,
+    graph: GridGraph,
     buildings: BuildingEntity[],
     economy: EconomySystem
   ): void {
@@ -188,41 +190,140 @@ export class UnitFSM {
       return;
     }
 
-    const maxCargo = u.def.cargoCapacity || 100;
+    const maxCargo = u.def.cargoCapacity || 120;
 
+    // 1. HARVEST_SEEK: Navigates to the assigned ore vein
+    if (u.state === 'HARVEST_SEEK') {
+      if (!u.targetMineCoord) {
+        u.state = 'IDLE';
+        return;
+      }
+
+      const mineTargetX = u.targetMineCoord.tx * TILE_SIZE + 24;
+      const mineTargetY = u.targetMineCoord.ty * TILE_SIZE + 24;
+      const distToMine = Math.hypot(mineTargetX - u.x, mineTargetY - u.y);
+
+      // Within harvesting reach (1.5 tiles)
+      if (distToMine <= TILE_SIZE * 1.5) {
+        u.path = [];
+        u.state = 'HARVESTING';
+        u.harvestCooldown = 0;
+        return;
+      }
+
+      // If path exhausted before arriving, recompute A* path
+      if (u.path.length === 0) {
+        const curTx = Math.floor(u.x / TILE_SIZE);
+        const curTy = Math.floor(u.y / TILE_SIZE);
+        const pathCoords = AStar.findPath(graph, { tx: curTx, ty: curTy }, { tx: u.targetMineCoord.tx, ty: u.targetMineCoord.ty });
+        if (pathCoords.length > 0) {
+          u.path = pathCoords.map(c => ({ x: c.tx * TILE_SIZE + 24, y: c.ty * TILE_SIZE + 24 }));
+        } else {
+          // Unreachable
+          u.state = 'IDLE';
+          return;
+        }
+      }
+
+      this.handleMove(u, dt, graph);
+      return;
+    }
+
+    // 2. HARVESTING: Chipping ore into pack baskets
     if (u.state === 'HARVESTING') {
-      u.harvestCooldown += dt * (u.def.harvestSpeed || 15);
+      u.harvestAnimationTimer = (u.harvestAnimationTimer || 0) + dt;
+      u.harvestCooldown += dt * (u.def.harvestSpeed || 18);
+
       if (u.harvestCooldown >= 10) {
         u.harvestCooldown = 0;
         u.currentCargoAmount = Math.min(maxCargo, u.currentCargoAmount + 10);
         EventBus.get().emit('audio:harvest');
 
         if (u.currentCargoAmount >= maxCargo) {
-          // Carico pieno: trova il punto di scarico più vicino (Fonderia o Acropoli)
+          // Cargo full: locate nearest active dropoff depot (Foundry or Acropolis)
           const dropoffs = buildings.filter(
             b => b.owner === u.owner && (b.defId === 'bronze_foundry' || b.defId === 'acropolis')
           );
           if (dropoffs.length > 0) {
             dropoffs.sort((a, b) => Math.hypot(a.centerX - u.x, a.centerY - u.y) - Math.hypot(b.centerX - u.x, b.centerY - u.y));
             const nearest = dropoffs[0];
-            u.path = [{ x: nearest.centerX, y: nearest.centerY }];
+            const curTx = Math.floor(u.x / TILE_SIZE);
+            const curTy = Math.floor(u.y / TILE_SIZE);
+            const dropTx = nearest.tx + Math.floor(nearest.def.width / 2);
+            const dropTy = nearest.ty + Math.floor(nearest.def.height / 2);
+
+            const pathCoords = AStar.findPath(graph, { tx: curTx, ty: curTy }, { tx: dropTx, ty: dropTy });
+            if (pathCoords.length > 0) {
+              u.path = pathCoords.map(c => ({ x: c.tx * TILE_SIZE + 24, y: c.ty * TILE_SIZE + 24 }));
+            } else {
+              u.path = [{ x: nearest.centerX, y: nearest.centerY }];
+            }
             u.state = 'RETURN_CARGO';
           } else {
             u.state = 'IDLE';
           }
         }
       }
-    } else if (u.state === 'RETURN_CARGO') {
-      if (u.path.length === 0) {
-        // Giunto al dropoff: scarica
+      return;
+    }
+
+    // 3. RETURN_CARGO: Hauling ore to the smelter / acropolis
+    if (u.state === 'RETURN_CARGO') {
+      const dropoffs = buildings.filter(
+        b => b.owner === u.owner && (b.defId === 'bronze_foundry' || b.defId === 'acropolis')
+      );
+      if (dropoffs.length === 0) {
+        u.state = 'IDLE';
+        return;
+      }
+      dropoffs.sort((a, b) => Math.hypot(a.centerX - u.x, a.centerY - u.y) - Math.hypot(b.centerX - u.x, b.centerY - u.y));
+      const nearest = dropoffs[0];
+      const distToDropoff = Math.hypot(nearest.centerX - u.x, nearest.centerY - u.y);
+      const reachDist = (Math.max(nearest.def.width, nearest.def.height) + 1) * TILE_SIZE * 0.7;
+
+      if (distToDropoff <= reachDist || u.path.length === 0) {
+        // Depot reached: Unload ore cargo
         if (u.currentCargoType && u.currentCargoAmount > 0) {
-          economy.addResource(u.currentCargoType as any, u.currentCargoAmount);
+          const type = u.currentCargoType;
+          const amount = u.currentCargoAmount;
+          economy.addResource(type as any, amount);
           EventBus.get().emit('audio:build');
+
+          const colorMap: Record<string, string> = {
+            tin: '#93c5fd',
+            copper: '#fbbf24',
+            iron: '#cbd5e1',
+            grain: '#fde047',
+            stone: '#d6d3d1',
+            timber: '#a16207'
+          };
+
+          EventBus.get().emit('fx:floating_text', {
+            text: `+${amount} ${type.toUpperCase()}`,
+            color: colorMap[type] || '#fef08a',
+            x: u.x,
+            y: u.y - 24
+          });
         }
         u.currentCargoAmount = 0;
-        u.state = 'IDLE'; // Pronta per nuovo ciclo o comando
+
+        // AUTOMATIC LOOP: Return to target mine if assigned
+        if (u.targetMineCoord) {
+          const curTx = Math.floor(u.x / TILE_SIZE);
+          const curTy = Math.floor(u.y / TILE_SIZE);
+          const pathCoords = AStar.findPath(graph, { tx: curTx, ty: curTy }, { tx: u.targetMineCoord.tx, ty: u.targetMineCoord.ty });
+          if (pathCoords.length > 0) {
+            u.path = pathCoords.map(c => ({ x: c.tx * TILE_SIZE + 24, y: c.ty * TILE_SIZE + 24 }));
+            u.state = 'HARVEST_SEEK';
+          } else {
+            u.path = [{ x: u.targetMineCoord.tx * TILE_SIZE + 24, y: u.targetMineCoord.ty * TILE_SIZE + 24 }];
+            u.state = 'HARVEST_SEEK';
+          }
+        } else {
+          u.state = 'IDLE';
+        }
       } else {
-        this.handleMove(u, dt, null as any);
+        this.handleMove(u, dt, graph);
       }
     }
   }
