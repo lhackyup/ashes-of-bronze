@@ -5,6 +5,7 @@ import { SVGAProceduralBank } from '../engine/rendering/SVGAProceduralBank.ts';
 export class ChronicleModal {
   private overlayEl: HTMLElement | null = null;
   public onClose?: () => void;
+  public onProceedToBattle?: () => void;
 
   constructor() {
     this.createDOM();
@@ -91,8 +92,26 @@ export class ChronicleModal {
           color: #a89f91;
           font-family: 'Cinzel', serif;
         ">
-          <span id="chronicle-count-label">0 Records Inscribed</span>
-          <span style="font-style: italic; color: #786957;">"Words etched into fired clay outlive empires of brass."</span>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <span id="chronicle-count-label">0 Records Inscribed</span>
+            <span style="font-style: italic; color: #786957; font-size: 11px;">"Words etched into fired clay outlive empires of brass."</span>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <button id="chronicle-deploy-btn" class="svga-btn" style="
+              padding: 6px 16px;
+              font-size: 12px;
+              font-weight: 900;
+              background: linear-gradient(180deg, #785a2f 0%, #473215 100%);
+              border-color: #ffd166;
+              color: #fff8e8;
+            ">
+              ⚔ MARCH TO BATTLE
+            </button>
+            <button id="chronicle-return-btn" class="svga-btn" style="padding: 6px 14px; font-size: 12px;">
+              ✕ RETURN
+            </button>
+          </div>
         </div>
       </div>
     `;
@@ -100,10 +119,23 @@ export class ChronicleModal {
     document.body.appendChild(overlay);
     this.overlayEl = overlay;
 
-    document.getElementById('chronicle-close-btn')?.addEventListener('click', () => {
+    const handleClose = () => {
       EventBus.get().emit('audio:click');
       this.hide();
       if (this.onClose) this.onClose();
+    };
+
+    document.getElementById('chronicle-close-btn')?.addEventListener('click', handleClose);
+    document.getElementById('chronicle-return-btn')?.addEventListener('click', handleClose);
+
+    document.getElementById('chronicle-deploy-btn')?.addEventListener('click', () => {
+      EventBus.get().emit('audio:command');
+      this.hide();
+      if (this.onProceedToBattle) {
+        this.onProceedToBattle();
+      } else if (this.onClose) {
+        this.onClose();
+      }
     });
   }
 

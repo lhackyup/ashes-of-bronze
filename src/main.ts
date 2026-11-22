@@ -49,6 +49,7 @@ class GameApp {
   private councilModal!: CouncilModal;
   private debriefingModal!: DebriefingModal;
 
+  private hasGameStarted: boolean = false;
   private isGamePaused: boolean = true;
   private gameSpeedMultiplier: number = 1.0;
   private hasHarvestedFirstTin: boolean = false;
@@ -119,6 +120,8 @@ class GameApp {
     this.spawnUnit('skirmisher', 'player', (pStart.tx - 4) * TILE_SIZE, (pStart.ty + 4) * TILE_SIZE);
 
     this.camera.centerOn(pStart.tx * TILE_SIZE, pStart.ty * TILE_SIZE);
+    this.resizeCanvas();
+    this.updateFogOfWar();
 
     this.hud = new HUDController();
     this.hud.onSelectBuildItem = (defId: string) => {
@@ -142,7 +145,9 @@ class GameApp {
     this.objectiveManager = new ObjectiveManager(scenario);
     this.councilModal = new CouncilModal(() => {
       this.closeAllModals();
+      this.hasGameStarted = true;
       this.isGamePaused = false;
+      this.updateFogOfWar();
       this.audio.startBGM();
     });
     this.debriefingModal = new DebriefingModal(
@@ -181,17 +186,43 @@ class GameApp {
     };
     this.campaignMapModal.onClose = () => {
       this.closeAllModals();
+      if (this.hasGameStarted) {
+        this.isGamePaused = false;
+        this.updateFogOfWar();
+      } else {
+        this.titleScreen.show();
+      }
     };
 
     // Chronicle Modal actions
+    this.chronicleModal.onProceedToBattle = () => {
+      this.closeAllModals();
+      if (this.hasGameStarted) {
+        this.isGamePaused = false;
+        this.updateFogOfWar();
+      } else {
+        this.councilModal.show();
+      }
+    };
     this.chronicleModal.onClose = () => {
       this.closeAllModals();
+      if (this.hasGameStarted) {
+        this.isGamePaused = false;
+        this.updateFogOfWar();
+      } else {
+        this.titleScreen.show();
+      }
     };
 
     // Settings Modal actions
     this.settingsModal.onResume = () => {
       this.closeAllModals();
-      this.isGamePaused = false;
+      if (this.hasGameStarted) {
+        this.isGamePaused = false;
+        this.updateFogOfWar();
+      } else {
+        this.titleScreen.show();
+      }
     };
     this.settingsModal.onRestartScenario = () => {
       window.location.reload();
@@ -219,14 +250,17 @@ class GameApp {
     // Wire Top Bar Buttons
     document.getElementById('btn-open-council')?.addEventListener('click', () => {
       this.closeAllModals();
+      this.isGamePaused = true;
       this.councilModal.show();
     });
     document.getElementById('btn-open-map')?.addEventListener('click', () => {
       this.closeAllModals();
+      this.isGamePaused = true;
       this.campaignMapModal.show();
     });
     document.getElementById('btn-open-chronicle')?.addEventListener('click', () => {
       this.closeAllModals();
+      this.isGamePaused = true;
       this.chronicleModal.show();
     });
     document.getElementById('btn-open-settings')?.addEventListener('click', () => {
@@ -686,6 +720,11 @@ class GameApp {
     this.hud.updateWaveTimer(this.tacticalDirector.getNextWaveCountdown());
 
     // Update Fog of War
+    this.updateFogOfWar();
+  }
+
+  private updateFogOfWar(): void {
+    if (!this.fogRenderer) return;
     this.fogRenderer.resetVisibility();
     for (const u of this.units) {
       if (u.owner === 'player') {
@@ -703,6 +742,9 @@ class GameApp {
   }
 
   private render(): void {
+    // Ensure visibility is up-to-date even when game is paused
+    this.updateFogOfWar();
+
     const ctx = this.ctx;
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
