@@ -17,6 +17,7 @@ import { BUILDINGS } from './data/buildings.ts';
 import { UNITS } from './data/units.ts';
 import { EventBus } from './core/EventBus.ts';
 import { SVGAProceduralBank } from './engine/rendering/SVGAProceduralBank.ts';
+import { AssetLoader } from './engine/rendering/AssetLoader.ts';
 
 const VIRTUAL_WIDTH = 640;
 const VIRTUAL_HEIGHT = 360;
@@ -57,8 +58,9 @@ class GameApp {
     this.resizeCanvas();
     window.addEventListener('resize', () => this.resizeCanvas());
 
-    // Inizializza generatori procedurali SVGA
+    // Initialize procedural generators and real 2D pixel art asset loader
     SVGAProceduralBank.init();
+    await AssetLoader.init();
 
     // Carica lo Scenario 1
     const scenario = await ScenarioLoader.loadScenario('scenario_01_horned_sails');
@@ -565,13 +567,19 @@ class GameApp {
     const drawX = Math.round(sp.x);
     const drawY = Math.round(sp.y);
 
-    // Render retro pixel sprite from SVGAProceduralBank
-    const sprite = SVGAProceduralBank.getBuildingSprite(b.defId, b.owner);
-    if (sprite) {
-      ctx.drawImage(sprite, drawX, drawY, bw, bh);
+    // 1. Try real 2D pixel art building sprite first
+    const realBldgImg = AssetLoader.getBuilding(b.defId, b.owner);
+    if (realBldgImg && realBldgImg.complete && realBldgImg.naturalWidth > 0) {
+      ctx.drawImage(realBldgImg, drawX, drawY, bw, bh);
     } else {
-      ctx.fillStyle = b.owner === 'player' ? '#8a6234' : '#692d2d';
-      ctx.fillRect(drawX, drawY, bw, bh);
+      // Fallback to SVGAProceduralBank
+      const sprite = SVGAProceduralBank.getBuildingSprite(b.defId, b.owner);
+      if (sprite) {
+        ctx.drawImage(sprite, drawX, drawY, bw, bh);
+      } else {
+        ctx.fillStyle = b.owner === 'player' ? '#8a6234' : '#692d2d';
+        ctx.fillRect(drawX, drawY, bw, bh);
+      }
     }
 
     // Selection border (1px crisp pixel outline)
@@ -596,23 +604,37 @@ class GameApp {
     const drawX = Math.round(sp.x);
     const drawY = Math.round(sp.y);
 
-    // Render animated Dune II style pixel sprite
-    SVGAProceduralBank.drawAnimatedUnit(ctx, u, drawX, drawY);
+    const isMoving = u.state === 'MOVE_TO' || u.state === 'RETURN_CARGO' || u.state === 'HARVESTING';
+    const animPhase = (Date.now() / 150) * (isMoving ? 1.0 : 0.2);
+    const step = isMoving ? Math.floor(Math.sin(animPhase) * 2) : 0;
+
+    // 1. Try real 2D pixel art unit sprite first
+    const realUnitImg = AssetLoader.getUnit(u.defId);
+    if (realUnitImg && realUnitImg.complete && realUnitImg.naturalWidth > 0) {
+      ctx.save();
+      ctx.translate(drawX, drawY + step);
+      // Center unit sprite (32x32)
+      ctx.drawImage(realUnitImg, -16, -16, 32, 32);
+      ctx.restore();
+    } else {
+      // Fallback to SVGAProceduralBank
+      SVGAProceduralBank.drawAnimatedUnit(ctx, u, drawX, drawY);
+    }
 
     // Selection ring
     if (u.isSelected) {
       ctx.strokeStyle = '#ffff33';
       ctx.lineWidth = 1;
-      ctx.strokeRect(drawX - 8.5, drawY - 8.5, 17, 17);
+      ctx.strokeRect(drawX - 10.5, drawY - 10.5, 21, 21);
     }
 
     // HP bar if selected or wounded
     if (u.isSelected || u.hp < u.maxHp) {
       const hpPct = Math.max(0, u.hp / u.maxHp);
       ctx.fillStyle = '#0e0b08';
-      ctx.fillRect(drawX - 7, drawY - 12, 14, 2);
+      ctx.fillRect(drawX - 8, drawY - 14, 16, 2);
       ctx.fillStyle = '#22c55e';
-      ctx.fillRect(drawX - 7, drawY - 12, Math.round(14 * hpPct), 2);
+      ctx.fillRect(drawX - 8, drawY - 14, Math.round(16 * hpPct), 2);
     }
   }
 

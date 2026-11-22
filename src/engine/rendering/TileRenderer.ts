@@ -3,6 +3,7 @@ import { TERRAINS, TILE_SIZE } from '../../data/terrain.ts';
 import { TerrainType } from '../../data/types.ts';
 import { GridGraph } from '../pathfinding/GridGraph.ts';
 import { SVGAProceduralBank } from './SVGAProceduralBank.ts';
+import { AssetLoader } from './AssetLoader.ts';
 
 export class TileRenderer {
   public readonly width: number;
@@ -120,21 +121,31 @@ export class TileRenderer {
     for (let ty = startTileY; ty <= endTileY; ty++) {
       for (let tx = startTileX; tx <= endTileX; tx++) {
         const tileType = this.getTile(tx, ty);
-        const tileImg = this.tileCache.get(tileType);
         const screenPos = camera.worldToScreen(tx * TILE_SIZE, ty * TILE_SIZE);
         const drawX = Math.round(screenPos.x);
         const drawY = Math.round(screenPos.y);
 
-        if (tileImg) {
-          ctx.drawImage(tileImg, drawX, drawY, TILE_SIZE, TILE_SIZE);
+        // 1. Try real 2D pixel art tile first
+        const realTileImg = AssetLoader.getTile(tileType);
+        if (realTileImg && realTileImg.complete && realTileImg.naturalWidth > 0) {
+          ctx.drawImage(realTileImg, drawX, drawY, TILE_SIZE, TILE_SIZE);
+        } else {
+          const tileImg = this.tileCache.get(tileType);
+          if (tileImg) {
+            ctx.drawImage(tileImg, drawX, drawY, TILE_SIZE, TILE_SIZE);
+          }
         }
 
         // Dune II Concrete Slabs Layer
         if (graph.hasFoundation(tx, ty)) {
-          const slabSprite = SVGAProceduralBank.getBuildingSprite('cyclopean_slab', 'player');
-          if (slabSprite) {
-            // Draw a single 24x24 tile quadrant of slab
-            ctx.drawImage(slabSprite, 0, 0, 24, 24, drawX, drawY, TILE_SIZE, TILE_SIZE);
+          const slabPng = AssetLoader.getBuilding('cyclopean_slab', 'player');
+          if (slabPng && slabPng.complete && slabPng.naturalWidth > 0) {
+            ctx.drawImage(slabPng, 0, 0, 32, 32, drawX, drawY, TILE_SIZE, TILE_SIZE);
+          } else {
+            const slabSprite = SVGAProceduralBank.getBuildingSprite('cyclopean_slab', 'player');
+            if (slabSprite) {
+              ctx.drawImage(slabSprite, 0, 0, 24, 24, drawX, drawY, TILE_SIZE, TILE_SIZE);
+            }
           }
         }
       }
