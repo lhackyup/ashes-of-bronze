@@ -804,8 +804,22 @@ class GameApp {
 
     EventBus.get().emit('audio:command');
 
-    const targetTx = Math.floor(wx / TILE_SIZE);
-    const targetTy = Math.floor(wy / TILE_SIZE);
+    let targetTx = Math.floor(wx / TILE_SIZE);
+    let targetTy = Math.floor(wy / TILE_SIZE);
+
+    // Prevent land units from marching into the sea without boats:
+    // Western sea occupies x < 6. Clamp destination to the sandy beach shoreline (x = 6)
+    const isWater = targetTx < 6 || this.tileRenderer.getTile(targetTx, targetTy) === 'water';
+    if (isWater) {
+      targetTx = 6;
+      wx = 6 * TILE_SIZE + 24;
+      EventBus.get().emit('fx:floating_text', {
+        text: 'CANNOT CROSS WATER!',
+        color: '#38bdf8',
+        x: wx,
+        y: wy - 18
+      });
+    }
 
     // Check if clicking on an enemy entity
     const targetEnemyUnit = this.units.find(
@@ -837,7 +851,7 @@ class GameApp {
         const pathCoords = AStar.findPath(this.gridGraph, { tx: startTx, ty: startTy }, { tx: targetTx, ty: targetTy });
         if (pathCoords.length > 0) {
           u.path = pathCoords.map(c => ({
-            x: c.tx * TILE_SIZE + 24,
+            x: Math.max(6 * TILE_SIZE + 12, c.tx * TILE_SIZE + 24),
             y: c.ty * TILE_SIZE + 24
           }));
         } else {
@@ -857,7 +871,7 @@ class GameApp {
         const pathCoords = AStar.findPath(this.gridGraph, { tx: startTx, ty: startTy }, { tx: treeTx, ty: treeTy });
         if (pathCoords.length > 0) {
           u.path = pathCoords.map(c => ({
-            x: c.tx * TILE_SIZE + 24,
+            x: Math.max(6 * TILE_SIZE + 12, c.tx * TILE_SIZE + 24),
             y: c.ty * TILE_SIZE + 24
           }));
         } else {
@@ -876,13 +890,16 @@ class GameApp {
 
         if (pathCoords.length > 0) {
           u.path = pathCoords.map(c => ({
-            x: c.tx * TILE_SIZE + 24,
+            x: Math.max(6 * TILE_SIZE + 12, c.tx * TILE_SIZE + 24),
             y: c.ty * TILE_SIZE + 24
           }));
           u.state = 'MOVE_TO';
-        } else {
-          u.path = [{ x: wx, y: wy }];
+        } else if (this.gridGraph.isWalkable(targetTx, targetTy) && targetTx >= 6) {
+          u.path = [{ x: Math.max(6 * TILE_SIZE + 12, wx), y: wy }];
           u.state = 'MOVE_TO';
+        } else {
+          u.path = [];
+          u.state = 'IDLE';
         }
       }
     }

@@ -103,14 +103,27 @@ export class UnitFSM {
       return;
     }
 
+    // Water shoreline boundary enforcement:
+    // Western sea occupies x < 6 tiles (288px). Land units cannot cross into the water without boats.
+    const waterEdgePx = 6 * TILE_SIZE + 10;
+    if (u.x < waterEdgePx) {
+      u.x = waterEdgePx;
+      u.path = u.path.filter(wp => wp.x >= waterEdgePx);
+      if (u.path.length === 0) {
+        u.state = 'IDLE';
+        return;
+      }
+    }
+
     const nextWp = u.path[0];
-    const dx = nextWp.x - u.x;
+    const targetWpX = Math.max(waterEdgePx, nextWp.x);
+    const dx = targetWpX - u.x;
     const dy = nextWp.y - u.y;
     const dist = Math.hypot(dx, dy);
     const speedPx = u.def.speed * TILE_SIZE * dt;
 
     if (dist <= speedPx) {
-      u.x = nextWp.x;
+      u.x = targetWpX;
       u.y = nextWp.y;
       u.path.shift();
       if (u.path.length === 0) {
@@ -119,6 +132,7 @@ export class UnitFSM {
     } else {
       u.x += (dx / dist) * speedPx;
       u.y += (dy / dist) * speedPx;
+      if (u.x < waterEdgePx) u.x = waterEdgePx;
     }
   }
 

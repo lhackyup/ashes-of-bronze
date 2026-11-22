@@ -42,7 +42,7 @@
       "aiProfile": "aggressive_raider",
       "waves": [
         {
-          "triggerTimeSeconds": 90,
+          "triggerTimeSeconds": 240,
           "spawnEdge": "west",
           "units": [
             { "type": "sea_raider", "count": 3 }
@@ -50,20 +50,20 @@
           "advisorWarning": "Zalpa: Dark sails off the western shoals! Three landing skiffs have hit the beach!"
         },
         {
-          "triggerTimeSeconds": 190,
+          "triggerTimeSeconds": 420,
           "spawnEdge": "west",
           "units": [
-            { "type": "sea_raider", "count": 6 }
+            { "type": "sea_raider", "count": 4 }
           ],
           "advisorWarning": "Zalpa: More Shardana raiders advancing up the dunes! Protect the foundry and our donkey caravans!"
         },
         {
-          "triggerTimeSeconds": 320,
+          "triggerTimeSeconds": 600,
           "spawnEdge": "west",
           "units": [
-            { "type": "sea_raider", "count": 10 }
+            { "type": "sea_raider", "count": 6 }
           ],
-          "advisorWarning": "Burna-Khabir: The main assault fleet has arrived. Keep your tower shields tightly locked together or we will be overwhelmed!"
+          "advisorWarning": "Burna-Khabir: The final assault fleet has landed! Drive the sea raiders back into the Aegean waves!"
         }
       ]
     }
@@ -88,8 +88,8 @@
       {
         "id": "survive_sea_peoples",
         "type": "survive_time",
-        "description": "Withstand and repel all Sea Peoples landing waves (6 minutes).",
-        "targetSeconds": 360,
+        "description": "Withstand and repel all 3 Sea Peoples landing waves.",
+        "targetAmount": 3,
         "isPrimary": true
       }
     ],
