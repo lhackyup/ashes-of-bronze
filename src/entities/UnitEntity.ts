@@ -21,6 +21,10 @@ export class UnitEntity {
   // Economia / Cargo per carovane
   public currentCargoType: string | null = null;
   public currentCargoAmount: number = 0;
+  public lastHarvestCoord: GridCoord | null = null;
+  public lastCargoType: string | null = null;
+  public targetDropoffBuildingId: number | null = null;
+  public isManualDropoffOrder: boolean = false;
   public harvestCooldown: number = 0;
   public harvestAnimationTimer: number = 0;
 

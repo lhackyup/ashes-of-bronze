@@ -279,52 +279,151 @@ export class TileRenderer {
       ctx.fillRect(30, 18, 4, 3);
     }));
 
-    // 6. Mediterranean Cedar / Cypress Tree Sprite (48x64 px)
-    this.cedarTreeCanvas = makeCanvas(48, 64, (ctx) => {
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+    // 6. Majestic Ancient Mediterranean / Lebanese Cedar Sprite (80x84 px)
+    // Characteristic tiered horizontal umbrella-like boughs and flat tabular crown of Cedrus libani
+    this.cedarTreeCanvas = makeCanvas(80, 84, (ctx) => {
+      // Sprawling Ground Shadow
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.38)';
       ctx.beginPath();
-      ctx.ellipse(30, 56, 14, 6, 0.3, 0, Math.PI * 2);
+      ctx.ellipse(42, 74, 30, 8, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // Trunk
-      ctx.fillStyle = '#4a3219';
-      ctx.fillRect(21, 46, 5, 11);
-
-      // Lush foliage with natural gradient
-      const grad = ctx.createLinearGradient(14, 8, 32, 50);
-      grad.addColorStop(0, '#588157');
-      grad.addColorStop(0.5, '#3a5a40');
-      grad.addColorStop(1, '#1b2a1a');
-      ctx.fillStyle = grad;
+      // Ancient Gnarled Cedar Trunk & Buttress Roots
+      ctx.fillStyle = '#26170d'; // Deep bark crevices
       ctx.beginPath();
-      ctx.moveTo(23.5, 6);
-      ctx.bezierCurveTo(34, 22, 35, 44, 23.5, 48);
-      ctx.bezierCurveTo(12, 44, 13, 22, 23.5, 6);
+      ctx.moveTo(33, 75);
+      ctx.lineTo(36, 50);
+      ctx.lineTo(38, 28);
+      ctx.lineTo(43, 28);
+      ctx.lineTo(45, 50);
+      ctx.lineTo(49, 75);
+      ctx.closePath();
       ctx.fill();
+
+      // Bark highlight & texture
+      ctx.fillStyle = '#4a2f1b';
+      ctx.fillRect(36, 42, 7, 28);
+      ctx.fillStyle = '#63422a';
+      ctx.fillRect(38, 48, 3, 20);
+
+      // Horizontal Branch Arm Structure (supporting flat needle shelves)
+      ctx.strokeStyle = '#2d1a0d';
+      ctx.lineWidth = 3.5;
+      ctx.beginPath();
+      // Lower major limbs
+      ctx.moveTo(37, 56); ctx.lineTo(14, 55);
+      ctx.moveTo(43, 56); ctx.lineTo(66, 55);
+      // Mid limbs
+      ctx.moveTo(38, 43); ctx.lineTo(18, 41);
+      ctx.moveTo(43, 43); ctx.lineTo(62, 41);
+      // Upper limbs
+      ctx.moveTo(39, 31); ctx.lineTo(24, 28);
+      ctx.moveTo(42, 31); ctx.lineTo(56, 28);
+      ctx.stroke();
+
+      // HELPER: Draws authentic flat tiered horizontal needle shelf (Lebanese cedar bough)
+      const drawCedarShelf = (
+        bx: number,
+        by: number,
+        w: number,
+        h: number,
+        cShade: string,
+        cMid: string,
+        cLight: string
+      ) => {
+        // Deep shadow base of the shelf
+        ctx.fillStyle = cShade;
+        ctx.beginPath();
+        ctx.ellipse(bx + w / 2, by + h * 0.7, w / 2, h * 0.45, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Main dense evergreen needle body
+        ctx.fillStyle = cMid;
+        ctx.beginPath();
+        ctx.ellipse(bx + w / 2, by + h * 0.45, w * 0.48, h * 0.4, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Sunlit flat upper plate of needles
+        ctx.fillStyle = cLight;
+        ctx.beginPath();
+        ctx.ellipse(bx + w / 2, by + h * 0.25, w * 0.42, h * 0.28, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Micro-fringes along the flat shelf edge
+        ctx.fillStyle = cLight;
+        const step = Math.max(3, Math.floor(w / 8));
+        for (let ox = 4; ox < w - 4; ox += step) {
+          ctx.fillRect(bx + ox, by + h * 0.15, step - 1, 2.5);
+        }
+      };
+
+      // TIER 1 (Lowest, spreading widest across the mountain slope)
+      drawCedarShelf(6, 49, 36, 12, '#0f1f14', '#1b3823', '#2d5a39');
+      drawCedarShelf(38, 48, 36, 13, '#0f1f14', '#1b3823', '#346641');
+
+      // TIER 2 (Middle-lower stepped horizontal shelves)
+      drawCedarShelf(11, 36, 32, 11, '#112217', '#1f4028', '#386f46');
+      drawCedarShelf(36, 34, 34, 12, '#112217', '#1f4028', '#407a4f');
+
+      // TIER 3 (Middle-upper boughs)
+      drawCedarShelf(16, 23, 28, 10, '#13261a', '#244b2f', '#468656');
+      drawCedarShelf(36, 22, 28, 10, '#13261a', '#244b2f', '#4d925e');
+
+      // TIER 4 (Distinctive Flat Tabular Crown of mature Cedrus libani)
+      drawCedarShelf(22, 12, 36, 9, '#152b1d', '#285434', '#59a36d');
+      // Crown flat crest
+      ctx.fillStyle = '#6ab87f';
+      ctx.beginPath();
+      ctx.ellipse(40, 14, 14, 2.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Upright Cedar Cones on upper branches
+      ctx.fillStyle = '#603813';
+      ctx.fillRect(29, 19, 3, 5);
+      ctx.fillRect(49, 18, 3, 5);
+      ctx.fillRect(35, 9, 3, 4.5);
+      ctx.fillStyle = '#b45309';
+      ctx.fillRect(29.5, 18, 2, 2);
+      ctx.fillRect(49.5, 17, 2, 2);
     });
 
-    // 7. Felled Cedar Tree Stump Sprite (48x48 px)
-    this.cedarStumpCanvas = makeCanvas(48, 48, (ctx) => {
+    // 7. Felled Cedar Tree Stump Sprite (64x48 px)
+    this.cedarStumpCanvas = makeCanvas(64, 48, (ctx) => {
       // Ground shadow
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
       ctx.beginPath();
-      ctx.ellipse(24, 30, 12, 6, 0, 0, Math.PI * 2);
+      ctx.ellipse(32, 34, 18, 8, 0, 0, Math.PI * 2);
       ctx.fill();
-      // Cut stump base
-      ctx.fillStyle = '#4a3219';
-      ctx.fillRect(18, 22, 12, 10);
-      // Annual growth rings
-      ctx.fillStyle = '#b4916c';
+      // Cut stump base with roots
+      ctx.fillStyle = '#2d1a0d';
       ctx.beginPath();
-      ctx.ellipse(24, 22, 6, 3, 0, 0, Math.PI * 2);
+      ctx.moveTo(20, 36);
+      ctx.lineTo(24, 22);
+      ctx.lineTo(40, 22);
+      ctx.lineTo(44, 36);
+      ctx.closePath();
       ctx.fill();
-      ctx.strokeStyle = '#7c5a35';
+      // Bark texture
+      ctx.fillStyle = '#4a2f1b';
+      ctx.fillRect(25, 23, 14, 11);
+      // Annual growth rings on top face
+      ctx.fillStyle = '#c79d6e';
+      ctx.beginPath();
+      ctx.ellipse(32, 22, 10, 5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#855228';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.ellipse(32, 22, 6, 3, 0, 0, Math.PI * 2);
       ctx.stroke();
+      ctx.fillStyle = '#593214';
+      ctx.beginPath(); ctx.arc(32, 22, 1.5, 0, Math.PI * 2); ctx.fill();
       // Woodchips scattered around
-      ctx.fillStyle = '#d4b483';
-      ctx.fillRect(13, 28, 3, 2);
-      ctx.fillRect(29, 29, 3, 2);
-      ctx.fillRect(20, 32, 2, 2);
+      ctx.fillStyle = '#eab308';
+      ctx.fillRect(16, 32, 3, 2);
+      ctx.fillRect(43, 31, 3, 2);
+      ctx.fillRect(26, 37, 4, 2);
+      ctx.fillRect(36, 36, 3, 1.5);
     });
   }
 

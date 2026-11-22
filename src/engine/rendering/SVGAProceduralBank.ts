@@ -1639,115 +1639,275 @@ export class SVGAProceduralBank {
     const animPhase = (Date.now() / 150) * (isMoving ? 1.0 : 0.2);
     const bob = isMoving ? Math.sin(animPhase) * 2.5 : 0;
 
-    // Ground cast shadow ellipse
+    // Ground cast shadow ellipse (scaled to match enlarged unit size)
     ctx.fillStyle = 'rgba(0, 0, 0, 0.42)';
     ctx.beginPath();
-    ctx.ellipse(cx + 3, cy + 12, u.def.category === 'chariot' ? 18 : 10, 5, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx + 3, cy + 14, u.def.category === 'chariot' ? 24 : 14, 6, 0, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.save();
     ctx.translate(cx, cy);
+    // Proportionally enlarge units (~25% larger) for clear SVGA tactical readability
+    ctx.scale(1.25, 1.25);
 
     if (u.def.category === 'worker') {
-      // Authentic Bronze Age Pack Donkey & Mining Caravan
+      // --- AUTHENTIC BRONZE AGE PACK DONKEY & MINING CARAVAN ---
       const isHarvesting = u.state === 'HARVESTING';
       const minePhase = (u.harvestAnimationTimer || 0) * 8;
-
-      // Pack Donkey Body (Arid dun/tan coat)
-      ctx.fillStyle = '#83654b';
-      ctx.fillRect(-12, -7 + bob * 0.4, 24, 13); // Torso
-
-      // Donkey Head & Long Ears
       const headBob = isHarvesting ? Math.sin(minePhase) * 3 : bob * 0.6;
-      ctx.fillStyle = '#83654b';
-      ctx.fillRect(8, -13 + headBob, 8, 9); // Head
-      ctx.fillStyle = '#bfa58d';
-      ctx.fillRect(13, -11 + headBob, 5, 6); // Muzzle / snout
-      ctx.fillStyle = '#1c1917';
-      ctx.fillRect(11, -12 + headBob, 2, 2); // Eye
-      // Long donkey ears
-      ctx.fillStyle = '#654b35';
-      ctx.fillRect(7, -19 + headBob, 3, 7);
-      ctx.fillRect(10, -18 + headBob, 3, 6);
+      const legStep = isMoving ? Math.sin(animPhase) * 4.5 : 0;
 
-      // Tail with tuft
-      ctx.strokeStyle = '#654b35';
-      ctx.lineWidth = 1.5;
+      // 1. Pack Donkey Body & Coat (Warm dun/tan coat with dark dorsal eel-stripe)
+      ctx.fillStyle = '#83654b'; // Main dun coat
       ctx.beginPath();
-      ctx.moveTo(-12, -4 + bob * 0.4);
-      ctx.lineTo(-17, 2 + (isHarvesting ? Math.sin(minePhase * 1.5) * 3 : 0));
+      ctx.ellipse(0, -1 + bob * 0.4, 14, 8, 0, 0, Math.PI * 2); // Contoured muscular torso
+      ctx.fill();
+
+      // Creamy lighter underbelly
+      ctx.fillStyle = '#b39a82';
+      ctx.beginPath();
+      ctx.ellipse(0, 2 + bob * 0.4, 11, 4, 0, 0, Math.PI);
+      ctx.fill();
+
+      // Dark dorsal stripe along spine (characteristic donkey trait)
+      ctx.fillStyle = '#4a3525';
+      ctx.fillRect(-12, -8 + bob * 0.4, 22, 1.8);
+
+      // 2. Muscular Neck, Head & Long Expressive Ears
+      // Neck
+      ctx.fillStyle = '#83654b';
+      ctx.beginPath();
+      ctx.moveTo(7, -3 + bob * 0.4);
+      ctx.lineTo(13, -11 + headBob);
+      ctx.lineTo(18, -10 + headBob);
+      ctx.lineTo(13, 2 + bob * 0.4);
+      ctx.closePath();
+      ctx.fill();
+
+      // Dark bristly erect mane
+      ctx.fillStyle = '#362215';
+      for (let m = 0; m < 5; m++) {
+        ctx.fillRect(8 + m * 1.5, -9 - m * 0.8 + headBob * 0.8, 1.5, 3.5);
+      }
+
+      // Donkey Head
+      ctx.fillStyle = '#83654b';
+      ctx.beginPath();
+      ctx.ellipse(15, -11 + headBob, 6, 5, 0.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Soft Creamy/Tan Muzzle
+      ctx.fillStyle = '#d4c2b0';
+      ctx.beginPath();
+      ctx.ellipse(20, -9 + headBob, 4, 3.2, 0.1, 0, Math.PI * 2);
+      ctx.fill();
+      // Nostrils & mouth line
+      ctx.fillStyle = '#26170d';
+      ctx.fillRect(21, -10 + headBob, 1.5, 1.2);
+      ctx.fillRect(20, -8 + headBob, 2.5, 0.8);
+
+      // Large Expressive Eye with glint
+      ctx.fillStyle = '#1c1917';
+      ctx.beginPath(); ctx.arc(14, -12 + headBob, 1.8, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(14.5, -13 + headBob, 0.8, 0.8); // Specular eye glint
+
+      // Long Characteristic Donkey Ears (with pinkish/cream inner fluff)
+      // Left ear
+      ctx.fillStyle = '#654b35';
+      ctx.beginPath();
+      ctx.ellipse(11, -18 + headBob, 2.2, 6, -0.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#d8b4a0'; // Inner pink ear
+      ctx.beginPath();
+      ctx.ellipse(11, -18 + headBob, 1.2, 4, -0.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Right ear (slightly forward)
+      ctx.fillStyle = '#73543d';
+      ctx.beginPath();
+      ctx.ellipse(14, -18 + headBob, 2.2, 6, 0.1, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#e4c4b2';
+      ctx.beginPath();
+      ctx.ellipse(14, -18 + headBob, 1.2, 4, 0.1, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 3. Natural Swishing Tail with Tufted End
+      ctx.strokeStyle = '#654b35';
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.moveTo(-13, -3 + bob * 0.4);
+      const tailWag = isHarvesting ? Math.sin(minePhase * 1.5) * 4 : (isMoving ? Math.sin(animPhase) * 3 : 1);
+      ctx.quadraticCurveTo(-18, 0, -17 + tailWag, 7);
+      ctx.stroke();
+      // Brushy tail hair tuft
+      ctx.fillStyle = '#362215';
+      ctx.beginPath();
+      ctx.arc(-17 + tailWag, 7, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 4. Sturdy Slender Legs, Knee Joints & Shiny Black Hooves
+      ctx.fillStyle = '#5a3f29';
+      // Rear left & right legs
+      ctx.fillRect(-9 + legStep * 0.5, 6, 3, 9);
+      ctx.fillRect(-4 - legStep * 0.5, 6, 3, 9);
+      // Front left & right legs
+      ctx.fillRect(4 + legStep * 0.5, 6, 3, 9);
+      ctx.fillRect(9 - legStep * 0.5, 6, 3, 9);
+      // Polished black hooves
+      ctx.fillStyle = '#1c1917';
+      ctx.fillRect(-9 + legStep * 0.5, 13, 3.2, 2.5);
+      ctx.fillRect(-4 - legStep * 0.5, 13, 3.2, 2.5);
+      ctx.fillRect(4 + legStep * 0.5, 13, 3.2, 2.5);
+      ctx.fillRect(9 - legStep * 0.5, 13, 3.2, 2.5);
+
+      // 5. Heavy Timber Pack Saddle & Girth Straps
+      ctx.fillStyle = '#4a2810'; // Leather girth cinch
+      ctx.fillRect(-2, -7 + bob * 0.4, 3, 14);
+      ctx.fillRect(6, -6 + bob * 0.4, 2, 12);
+      // Halter and bridle across head
+      ctx.strokeStyle = '#92400e';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(11, -12 + headBob); ctx.lineTo(19, -8 + headBob);
+      ctx.moveTo(13, -16 + headBob); ctx.lineTo(13, -7 + headBob);
       ctx.stroke();
 
-      // Legs & Hooves
-      ctx.fillStyle = '#5a3f29';
-      const legStep = isMoving ? Math.sin(animPhase) * 4 : 0;
-      ctx.fillRect(-9 + legStep * 0.5, 6, 3, 8);
-      ctx.fillRect(-3 - legStep * 0.5, 6, 3, 8);
-      ctx.fillRect(3 + legStep * 0.5, 6, 3, 8);
-      ctx.fillRect(9 - legStep * 0.5, 6, 3, 8);
-      // Black hooves
-      ctx.fillStyle = '#1c1917';
-      ctx.fillRect(-9 + legStep * 0.5, 12, 3, 2);
-      ctx.fillRect(-3 - legStep * 0.5, 12, 3, 2);
-      ctx.fillRect(3 + legStep * 0.5, 12, 3, 2);
-      ctx.fillRect(9 - legStep * 0.5, 12, 3, 2);
-
-      // Woven Wicker Panniers / Saddles (Pack baskets on flanks)
+      // Dual Woven Wicker Panniers / Pack Baskets on Flanks
       ctx.fillStyle = '#9a6b38';
-      ctx.fillRect(-10, -6 + bob * 0.4, 18, 10);
+      ctx.fillRect(-10, -5 + bob * 0.4, 19, 10);
       ctx.strokeStyle = '#583c1d';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(-10, -6 + bob * 0.4, 18, 10);
+      ctx.lineWidth = 1.2;
+      ctx.strokeRect(-10, -5 + bob * 0.4, 19, 10);
+      // Wicker crosshatch texture
+      ctx.strokeStyle = '#b48148';
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(-6, -5 + bob * 0.4); ctx.lineTo(-6, 5 + bob * 0.4);
+      ctx.moveTo(-1, -5 + bob * 0.4); ctx.lineTo(-1, 5 + bob * 0.4);
+      ctx.moveTo(4, -5 + bob * 0.4); ctx.lineTo(4, 5 + bob * 0.4);
+      ctx.stroke();
 
-      // LIVE ORE HEAP IN BASKET
+      // 6. LIVE ORE & RESOURCE CARGO HEAP IN PACK BASKETS
       if (u.currentCargoAmount > 0) {
         const maxCargo = u.def.cargoCapacity || 120;
         const fillRatio = Math.min(1.0, u.currentCargoAmount / maxCargo);
-        const heapH = Math.ceil(fillRatio * 7);
+        const heapH = Math.ceil(fillRatio * 8);
 
-        // Mineral & timber cargo color scheme
         const isTin = u.currentCargoType === 'tin';
         const isIron = u.currentCargoType === 'iron';
         const isStone = u.currentCargoType === 'stone';
         const isTimber = u.currentCargoType === 'timber';
-        const oreMain = isTin ? '#93c5fd' : (isIron ? '#475569' : (isStone ? '#e2e8f0' : (isTimber ? '#b45309' : '#10b981')));
-        const oreLight = isTin ? '#e0f2fe' : (isIron ? '#94a3b8' : (isStone ? '#ffffff' : (isTimber ? '#f59e0b' : '#34d399')));
+        const isGrain = u.currentCargoType === 'grain';
 
-        ctx.fillStyle = oreMain;
-        ctx.fillRect(-9, -6 - heapH + bob * 0.4, 16, heapH);
-        // Gleam highlights on raw ore chunks
-        ctx.fillStyle = oreLight;
-        ctx.fillRect(-7, -5 - heapH + bob * 0.4, 4, 2);
-        ctx.fillRect(1, -4 - heapH + bob * 0.4, 4, 2);
+        if (isTimber) {
+          // Bundles of cut cedar timber logs tied with rope
+          ctx.fillStyle = '#78350f';
+          ctx.fillRect(-9, -5 - heapH + bob * 0.4, 17, heapH);
+          ctx.fillStyle = '#d97706'; // Annual rings on log ends
+          ctx.beginPath(); ctx.arc(-8, -4 - heapH / 2 + bob * 0.4, 2, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.arc(7, -4 - heapH / 2 + bob * 0.4, 2, 0, Math.PI * 2); ctx.fill();
+          ctx.strokeStyle = '#fde047'; // Binding ropes
+          ctx.lineWidth = 1;
+          ctx.strokeRect(-9, -5 - heapH + bob * 0.4, 17, heapH);
+        } else if (isStone) {
+          // Hewn limestone ashlar blocks
+          ctx.fillStyle = '#cbd5e1';
+          ctx.fillRect(-9, -5 - heapH + bob * 0.4, 17, heapH);
+          ctx.fillStyle = '#ffffff'; // Top highlight
+          ctx.fillRect(-8, -5 - heapH + bob * 0.4, 15, 2);
+          ctx.strokeStyle = '#64748b';
+          ctx.lineWidth = 0.8;
+          ctx.strokeRect(-9, -5 - heapH + bob * 0.4, 17, heapH);
+        } else if (isTin) {
+          // Glistening silver-blue cassiterite crystal ingots
+          ctx.fillStyle = '#93c5fd';
+          ctx.fillRect(-9, -5 - heapH + bob * 0.4, 17, heapH);
+          ctx.fillStyle = '#ffffff'; // Brilliant silver specular shine
+          ctx.fillRect(-7, -4 - heapH + bob * 0.4, 5, 2.5);
+          ctx.fillRect(1, -3 - heapH + bob * 0.4, 4, 2.5);
+        } else if (isIron) {
+          // Dark metallic iron bloom with steel highlights
+          ctx.fillStyle = '#334155';
+          ctx.fillRect(-9, -5 - heapH + bob * 0.4, 17, heapH);
+          ctx.fillStyle = '#94a3b8';
+          ctx.fillRect(-6, -4 - heapH + bob * 0.4, 5, 2);
+          ctx.fillRect(2, -3 - heapH + bob * 0.4, 4, 2);
+        } else if (isGrain) {
+          // Golden grain sacks and wheat sheaves
+          ctx.fillStyle = '#ca8a04';
+          ctx.fillRect(-9, -5 - heapH + bob * 0.4, 17, heapH);
+          ctx.fillStyle = '#fde047';
+          ctx.fillRect(-7, -4 - heapH + bob * 0.4, 13, 3);
+        } else {
+          // Raw Malachite Copper Ore: vibrant green with teal facets and copper flecks
+          ctx.fillStyle = '#059669'; // Malachite green
+          ctx.fillRect(-9, -5 - heapH + bob * 0.4, 17, heapH);
+          ctx.fillStyle = '#34d399'; // Emerald crystal highlight
+          ctx.fillRect(-7, -4 - heapH + bob * 0.4, 5, 2.5);
+          ctx.fillRect(1, -3 - heapH + bob * 0.4, 5, 2.5);
+          ctx.fillStyle = '#fbbf24'; // Native raw copper flecks
+          ctx.fillRect(-4, -2 - heapH + bob * 0.4, 2, 2);
+          ctx.fillRect(4, -2 - heapH + bob * 0.4, 2, 2);
+        }
       }
 
-      // MINING ANIMATION: Miner with swinging pickaxe & dust/sparks
+      // 7. CARAVAN MINER & HANDLER (Swinging bronze pickaxe with sparks during harvest)
       if (isHarvesting) {
         const swing = Math.sin(minePhase);
-        const pickAngle = -Math.PI / 4 + swing * 0.8;
+        const pickAngle = -Math.PI / 4 + swing * 0.9;
 
         ctx.save();
-        ctx.translate(-18, 0);
-        // Little miner silhouette
+        ctx.translate(-21, 1);
+        // Miner silhouette (Tunic in faction color)
         ctx.fillStyle = cMain;
-        ctx.fillRect(-3, -4, 6, 8); // Tunic
+        ctx.fillRect(-4, -5, 7, 9); // Tunic
         ctx.fillStyle = '#bfa58d';
-        ctx.fillRect(-2, -9, 4, 4); // Head
-        // Swinging wooden haft & bronze pick
+        ctx.fillRect(-3, -11, 5, 5); // Head
+        ctx.fillStyle = '#451a03';
+        ctx.fillRect(-3, -13, 5, 2.5); // Hair
+
+        // Swinging wooden haft & bronze pickaxe
         ctx.rotate(pickAngle);
         ctx.fillStyle = '#78350f';
-        ctx.fillRect(-1, -12, 2, 14); // Shaft
+        ctx.fillRect(-1.2, -14, 2.5, 17); // Long haft
         ctx.fillStyle = '#fbbf24';
-        ctx.fillRect(-5, -13, 10, 3); // Pickaxe head
+        ctx.fillRect(-6, -15, 12, 3.5); // Double-pointed bronze pick head
+        ctx.fillStyle = '#f59e0b';
+        ctx.beginPath();
+        ctx.moveTo(6, -15); ctx.lineTo(9, -13.5); ctx.lineTo(6, -11.5); ctx.fill();
         ctx.restore();
 
-        // Chipping sparks & dust puffs at impact point
-        if (swing > 0.6) {
+        // Chipping sparks and dust puffs at impact point
+        if (swing > 0.5) {
           ctx.fillStyle = '#fef08a';
-          ctx.fillRect(-22 + Math.random() * 6, 6 + Math.random() * 4, 2, 2);
+          ctx.fillRect(-27 + Math.random() * 8, 7 + Math.random() * 4, 2.5, 2.5);
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(-29 + Math.random() * 9, 5 + Math.random() * 6, 2, 2);
           ctx.fillStyle = '#e2e8f0';
-          ctx.fillRect(-24 + Math.random() * 8, 4 + Math.random() * 5, 2, 2);
+          ctx.fillRect(-26 + Math.random() * 7, 3 + Math.random() * 7, 2.5, 2.5);
         }
+      } else if (isMoving) {
+        // Caravan driver walking alongside holding lead reins
+        ctx.save();
+        ctx.translate(-19, 0);
+        ctx.fillStyle = cMain;
+        ctx.fillRect(-3, -4 + bob * 0.5, 6, 8); // Tunic
+        ctx.fillStyle = '#bfa58d';
+        ctx.fillRect(-2.5, -9 + bob * 0.5, 5, 5); // Head
+        // Driver legs walking
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(-3 + legStep * 0.4, 4, 2.5, 6);
+        ctx.fillRect(1 - legStep * 0.4, 4, 2.5, 6);
+        // Lead rope to donkey bridle
+        ctx.strokeStyle = '#d4c2b0';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(3, -2 + bob * 0.5);
+        ctx.quadraticCurveTo(10, 4, 20, -8 + headBob);
+        ctx.stroke();
+        ctx.restore();
       }
     } else if (u.def.category === 'chariot' || u.defId === 'war_chariot') {
       // 2-Horse Royal War Chariot

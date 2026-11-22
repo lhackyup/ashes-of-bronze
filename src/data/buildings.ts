@@ -45,7 +45,8 @@ export const BUILDINGS: Record<string, BuildingDef> = {
     requiresFoundation: true,
     foundationPenaltyHpRatio: 0.5,
     supplyProvided: 10,
-    storageProvided: 500
+    storageProvided: 500,
+    dropsOffResources: ['grain', 'timber', 'stone', 'copper', 'tin', 'iron']
   },
 
   bronze_foundry: {

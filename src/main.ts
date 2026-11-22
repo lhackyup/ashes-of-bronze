@@ -826,6 +826,13 @@ class GameApp {
       u => u.owner !== 'player' && Math.hypot(u.x - wx, u.y - wy) < 24
     );
 
+    // Check if clicking on a friendly storehouse / dropoff building (Acropolis, Granary, Foundry, Smelter)
+    const targetFriendlyBuilding = this.buildings.find(
+      b => b.owner === 'player' &&
+           ((targetTx >= b.tx && targetTx < b.tx + b.def.width && targetTy >= b.ty && targetTy < b.ty + b.def.height) ||
+            (targetTx >= b.tx && targetTx < b.tx + b.def.width && targetTy >= b.ty - 0.7 && targetTy < b.ty + b.def.height))
+    );
+
     // Check if clicking on a resource node vein or stone quarry
     const tileType = this.tileRenderer.getTile(targetTx, targetTy);
     const isResourceNode = tileType.startsWith('vein_');
@@ -835,16 +842,91 @@ class GameApp {
       d => d.type === 'cedar' && d.current > 0 && Math.hypot(d.x - (targetTx + 0.5), d.y - (targetTy + 0.5)) < 1.2
     );
 
-    for (const u of this.selectedUnits) {
+    // Formation slotting to guarantee no two units are assigned the same tile
+    const assignedTiles = new Set<string>();
+    const spiralOffsets = [
+      { dx: 0, dy: 0 },
+      { dx: 1, dy: 0 }, { dx: -1, dy: 0 }, { dx: 0, dy: 1 }, { dx: 0, dy: -1 },
+      { dx: 1, dy: 1 }, { dx: -1, dy: 1 }, { dx: 1, dy: -1 }, { dx: -1, dy: -1 },
+      { dx: 2, dy: 0 }, { dx: -2, dy: 0 }, { dx: 0, dy: 2 }, { dx: 0, dy: -2 },
+      { dx: 2, dy: 1 }, { dx: -2, dy: 1 }, { dx: 1, dy: 2 }, { dx: -1, dy: 2 }
+    ];
+
+    for (let i = 0; i < this.selectedUnits.length; i++) {
+      const u = this.selectedUnits[i];
+
       if (targetEnemyUnit) {
         u.targetMineCoord = null;
         u.targetEntityId = targetEnemyUnit.id;
         u.state = 'ATTACK_TARGET';
+      } else if (
+        targetFriendlyBuilding &&
+        u.def.category === 'worker' &&
+        (u.currentCargoAmount > 0 || u.state === 'WAITING_STORAGE') &&
+        (targetFriendlyBuilding.defId === 'acropolis' || targetFriendlyBuilding.defId === 'granary' || targetFriendlyBuilding.defId === 'bronze_foundry' || targetFriendlyBuilding.defId === 'iron_smelter')
+      ) {
+        // Player directed donkey caravan to unload at a Granary, Megaron, or Foundry!
+        const harvestTarget = u.targetMineCoord || u.lastHarvestCoord;
+        u.targetMineCoord = harvestTarget ? { ...harvestTarget } : null;
+        u.lastHarvestCoord = harvestTarget ? { ...harvestTarget } : null;
+        u.targetDropoffBuildingId = targetFriendlyBuilding.id;
+        u.isManualDropoffOrder = true;
+
+        // Find nearest walkable entrance/perimeter tile outside the solid walls of the building
+        let dropTx = targetFriendlyBuilding.tx + Math.floor(targetFriendlyBuilding.def.width / 2);
+        let dropTy = targetFriendlyBuilding.ty + targetFriendlyBuilding.def.height;
+        if (!this.gridGraph.isInBounds(dropTx, dropTy) || !this.gridGraph.isWalkable(dropTx, dropTy) || dropTx < 6) {
+          let bestD = Infinity;
+          for (let dy = -1; dy <= targetFriendlyBuilding.def.height; dy++) {
+            for (let dx = -1; dx <= targetFriendlyBuilding.def.width; dx++) {
+              if (dx >= 0 && dx < targetFriendlyBuilding.def.width && dy >= 0 && dy < targetFriendlyBuilding.def.height) continue;
+              const px = targetFriendlyBuilding.tx + dx;
+              const py = targetFriendlyBuilding.ty + dy;
+              if (px >= 6 && this.gridGraph.isInBounds(px, py) && this.gridGraph.isWalkable(px, py)) {
+                const curTx = Math.floor(u.x / TILE_SIZE);
+                const curTy = Math.floor(u.y / TILE_SIZE);
+                const d = Math.hypot(px - curTx, py - curTy);
+                if (d < bestD) {
+                  bestD = d;
+                  dropTx = px;
+                  dropTy = py;
+                }
+              }
+            }
+          }
+        }
+
+        const startTx = Math.floor(u.x / TILE_SIZE);
+        const startTy = Math.floor(u.y / TILE_SIZE);
+        const pathCoords = AStar.findPath(this.gridGraph, { tx: startTx, ty: startTy }, { tx: dropTx, ty: dropTy });
+        if (pathCoords.length > 0) {
+          u.path = pathCoords.map(c => ({
+            x: Math.max(6 * TILE_SIZE + 12, c.tx * TILE_SIZE + 24),
+            y: c.ty * TILE_SIZE + 24
+          }));
+        } else {
+          u.path = [{ x: dropTx * TILE_SIZE + 24, y: dropTy * TILE_SIZE + 24 }];
+        }
+        u.state = 'RETURN_CARGO';
+
+        EventBus.get().emit('fx:floating_text', {
+          text: `DELIVERING TO ${targetFriendlyBuilding.def.name.split(' ')[0].toUpperCase()}!`,
+          color: '#60a5fa',
+          x: u.x,
+          y: u.y - 20
+        });
+        EventBus.get().emit('advisor:message', {
+          speaker: 'burna_khabir',
+          text: `Caravan resuming! Dispatched to unload at ${targetFriendlyBuilding.def.name}.`,
+          isAlert: false
+        });
       } else if (isResourceNode && u.def.category === 'worker') {
         // Caravan dispatched to harvest ore or quarry stone
         u.targetMineCoord = { tx: targetTx, ty: targetTy };
+        u.lastHarvestCoord = { tx: targetTx, ty: targetTy };
         u.targetPosition = { x: targetTx * TILE_SIZE + 24, y: targetTy * TILE_SIZE + 24 };
         u.currentCargoType = tileType.replace('vein_', '');
+        u.lastCargoType = u.currentCargoType;
 
         const startTx = Math.floor(u.x / TILE_SIZE);
         const startTy = Math.floor(u.y / TILE_SIZE);
@@ -863,8 +945,10 @@ class GameApp {
         const treeTx = Math.floor(targetTree.x);
         const treeTy = Math.floor(targetTree.y);
         u.targetMineCoord = { tx: treeTx, ty: treeTy };
+        u.lastHarvestCoord = { tx: treeTx, ty: treeTy };
         u.targetPosition = { x: targetTree.x * TILE_SIZE, y: targetTree.y * TILE_SIZE };
         u.currentCargoType = 'timber';
+        u.lastCargoType = 'timber';
 
         const startTx = Math.floor(u.x / TILE_SIZE);
         const startTy = Math.floor(u.y / TILE_SIZE);
@@ -879,14 +963,30 @@ class GameApp {
         }
         u.state = 'HARVEST_SEEK';
       } else {
-        // Clear automated mining target if player orders a manual move
+        // Normal unit movement order: assign distinct destination tile for this unit
         u.targetMineCoord = null;
         u.targetEntityId = null;
+
+        let unitTargetTx = targetTx;
+        let unitTargetTy = targetTy;
+
+        // Find a distinct walkable tile around the target point that no other selected unit has taken
+        for (const off of spiralOffsets) {
+          const cTx = targetTx + off.dx;
+          const cTy = targetTy + off.dy;
+          const key = `${cTx},${cTy}`;
+          if (cTx >= 6 && this.gridGraph.isInBounds(cTx, cTy) && this.gridGraph.isWalkable(cTx, cTy) && !assignedTiles.has(key)) {
+            unitTargetTx = cTx;
+            unitTargetTy = cTy;
+            assignedTiles.add(key);
+            break;
+          }
+        }
 
         // Navigate using A* pathfinding
         const startTx = Math.floor(u.x / TILE_SIZE);
         const startTy = Math.floor(u.y / TILE_SIZE);
-        const pathCoords = AStar.findPath(this.gridGraph, { tx: startTx, ty: startTy }, { tx: targetTx, ty: targetTy });
+        const pathCoords = AStar.findPath(this.gridGraph, { tx: startTx, ty: startTy }, { tx: unitTargetTx, ty: unitTargetTy });
 
         if (pathCoords.length > 0) {
           u.path = pathCoords.map(c => ({
@@ -894,8 +994,8 @@ class GameApp {
             y: c.ty * TILE_SIZE + 24
           }));
           u.state = 'MOVE_TO';
-        } else if (this.gridGraph.isWalkable(targetTx, targetTy) && targetTx >= 6) {
-          u.path = [{ x: Math.max(6 * TILE_SIZE + 12, wx), y: wy }];
+        } else if (this.gridGraph.isWalkable(unitTargetTx, unitTargetTy) && unitTargetTx >= 6) {
+          u.path = [{ x: Math.max(6 * TILE_SIZE + 12, unitTargetTx * TILE_SIZE + 24), y: unitTargetTy * TILE_SIZE + 24 }];
           u.state = 'MOVE_TO';
         } else {
           u.path = [];
@@ -947,6 +1047,10 @@ class GameApp {
         this.units.splice(i, 1);
       }
     }
+
+    // Physical unit-to-unit separation & tile occupancy enforcement
+    // Ensures troops, donkeys, and Sea Peoples never occupy the same tile or overlap
+    UnitFSM.resolveUnitCollisions(this.units, this.buildings);
 
     // Real-time update for inspected ore vein or cedar tree
     if (this.selectedVein) {
@@ -1191,16 +1295,16 @@ class GameApp {
         const tx = Math.floor(d.x);
         const ty = Math.floor(d.y);
         if (this.fogRenderer.getFog(tx, ty) === 0) continue;
-        const wx = Math.round(d.x * TILE_SIZE - 24);
-        const wy = Math.round(d.y * TILE_SIZE - 52);
         if (d.type === 'cedar') {
+          const wx = Math.round(d.x * TILE_SIZE - 40);
+          const wy = Math.round(d.y * TILE_SIZE - 74);
           ctx.drawImage(this.tileRenderer.cedarTreeCanvas, wx, wy);
           if (d.current < d.max && d.current > 0) {
             // Mini timber reserve bar
-            const barW = 26;
-            const barH = 3;
-            const bx = wx + 11;
-            const by = wy + 52;
+            const barW = 30;
+            const barH = 4;
+            const bx = Math.round(d.x * TILE_SIZE - 15);
+            const by = Math.round(d.y * TILE_SIZE + 4);
             ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
             ctx.fillRect(bx - 1, by - 1, barW + 2, barH + 2);
             const fillW = Math.max(1, Math.floor((d.current / d.max) * barW));
@@ -1208,7 +1312,9 @@ class GameApp {
             ctx.fillRect(bx, by, fillW, barH);
           }
         } else if (d.type === 'stump') {
-          ctx.drawImage(this.tileRenderer.cedarStumpCanvas, wx, wy + 20);
+          const stumpWx = Math.round(d.x * TILE_SIZE - 32);
+          const stumpWy = Math.round(d.y * TILE_SIZE - 36);
+          ctx.drawImage(this.tileRenderer.cedarStumpCanvas, stumpWx, stumpWy);
         }
       }
     }

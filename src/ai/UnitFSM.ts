@@ -281,7 +281,7 @@ export class UnitFSM {
 
   // --- Strict Building Collision Barrier (Prevents entering building interiors) ---
   public static resolveBuildingCollisions(u: UnitEntity, buildings: BuildingEntity[]): void {
-    const r = 11; // Unit collision radius
+    const r = 13; // Unit collision radius
     for (const b of buildings) {
       // Foundations are flat ground slabs that units can walk over freely
       if (b.defId === 'cyclopean_slab') continue;
@@ -309,6 +309,94 @@ export class UnitFSM {
         } else {
           u.y = bMaxY + r;
         }
+      }
+    }
+  }
+
+  // --- Strict Unit-to-Unit Collision & Tile Occupancy Separation ---
+  // Guarantees no two units (troops, donkeys, Sea Peoples raiders) occupy the same tile or overlap.
+  public static resolveUnitCollisions(units: UnitEntity[], buildings: BuildingEntity[]): void {
+    const waterEdgePx = 6 * TILE_SIZE + 10;
+    const len = units.length;
+
+    // 2 iterative relaxation passes for smooth and firm separation
+    for (let pass = 0; pass < 2; pass++) {
+      for (let i = 0; i < len; i++) {
+        const u1 = units[i];
+        const r1 = u1.def.category === 'chariot' ? 24 : 17;
+
+        for (let j = i + 1; j < len; j++) {
+          const u2 = units[j];
+          const r2 = u2.def.category === 'chariot' ? 24 : 17;
+          // Minimum separation distance: 36px for infantry/donkeys; ensures they cannot fit inside the same 48px tile!
+          const minDist = r1 + r2 + 4;
+
+          const dx = u2.x - u1.x;
+          const dy = u2.y - u1.y;
+          const dist = Math.hypot(dx, dy);
+
+          if (dist < minDist) {
+            const overlap = minDist - dist;
+            let nx = 0;
+            let ny = 0;
+
+            if (dist > 0.001) {
+              nx = dx / dist;
+              ny = dy / dist;
+            } else {
+              // Deterministic angle if units perfectly stacked on identical pixel
+              const angle = ((u1.id * 53 + u2.id * 31) % 360) * (Math.PI / 180);
+              nx = Math.cos(angle);
+              ny = Math.sin(angle);
+            }
+
+            // Weight displacement: moving units yield more to stationary units
+            const u1Moving = u1.state === 'MOVE_TO' || u1.state === 'HARVEST_SEEK' || u1.state === 'RETURN_CARGO';
+            const u2Moving = u2.state === 'MOVE_TO' || u2.state === 'HARVEST_SEEK' || u2.state === 'RETURN_CARGO';
+
+            let w1 = 0.5;
+            let w2 = 0.5;
+            if (u1Moving && !u2Moving) {
+              w1 = 0.75;
+              w2 = 0.25;
+            } else if (!u1Moving && u2Moving) {
+              w1 = 0.25;
+              w2 = 0.75;
+            }
+
+            u1.x -= nx * overlap * w1;
+            u1.y -= ny * overlap * w1;
+            u2.x += nx * overlap * w2;
+            u2.y += ny * overlap * w2;
+          }
+        }
+
+        // Clamp to water edge & eject from building interiors
+        if (u1.x < waterEdgePx) u1.x = waterEdgePx;
+        UnitFSM.resolveBuildingCollisions(u1, buildings);
+      }
+    }
+
+    // Strict Integer Tile Occupancy Check:
+    // If two stationary units end up with identical tile coords (Math.floor(x/48), Math.floor(y/48)),
+    // gently displace the secondary unit to the nearest tile edge/adjacent tile.
+    const occupiedTiles = new Map<string, UnitEntity>();
+    for (let i = 0; i < len; i++) {
+      const u = units[i];
+      const tx = Math.floor(u.x / TILE_SIZE);
+      const ty = Math.floor(u.y / TILE_SIZE);
+      const key = `${tx},${ty}`;
+
+      if (occupiedTiles.has(key)) {
+        const other = occupiedTiles.get(key)!;
+        const ndx = u.x >= other.x ? 1 : -1;
+        const ndy = u.y >= other.y ? 1 : -1;
+        u.x += ndx * 16;
+        u.y += ndy * 16;
+        if (u.x < waterEdgePx) u.x = waterEdgePx;
+        UnitFSM.resolveBuildingCollisions(u, buildings);
+      } else {
+        occupiedTiles.set(key, u);
       }
     }
   }
@@ -518,11 +606,13 @@ export class UnitFSM {
           }
 
           if (u.currentCargoAmount >= maxCargo || (isDepleted && (!u.targetMineCoord || u.currentCargoAmount > 0))) {
-            // Locate nearest valid dropoff depot: Acropolis for all goods; Foundry also accepts metal ores
+            // Locate nearest valid dropoff depot: Acropolis and Granary accept all cargo; Foundry accepts ores/stone
             const dropoffs = buildings.filter(
               b => b.owner === u.owner && b.buildProgress >= 1.0 && (
                 b.defId === 'acropolis' ||
-                (b.defId === 'bronze_foundry' && (u.currentCargoType === 'copper' || u.currentCargoType === 'tin' || u.currentCargoType === 'iron'))
+                b.defId === 'granary' ||
+                (b.defId === 'bronze_foundry' && (u.currentCargoType === 'copper' || u.currentCargoType === 'tin' || u.currentCargoType === 'iron' || u.currentCargoType === 'stone')) ||
+                (b.defId === 'iron_smelter' && u.currentCargoType === 'iron')
               )
             );
             if (dropoffs.length > 0) {
@@ -531,7 +621,7 @@ export class UnitFSM {
               const curTx = Math.floor(u.x / TILE_SIZE);
               const curTy = Math.floor(u.y / TILE_SIZE);
               const dropTx = nearest.tx + Math.floor(nearest.def.width / 2);
-              const dropTy = nearest.ty + Math.floor(nearest.def.height / 2);
+              const dropTy = nearest.ty + nearest.def.height; // Front entrance
 
               const pathCoords = AStar.findPath(graph, { tx: curTx, ty: curTy }, { tx: dropTx, ty: dropTy });
               if (pathCoords.length > 0) {
@@ -554,29 +644,38 @@ export class UnitFSM {
 
     // 3. RETURN_CARGO: Hauling ore, timber, or stone to the depot
     if (u.state === 'RETURN_CARGO') {
-      const dropoffs = buildings.filter(
-        b => b.owner === u.owner && b.buildProgress >= 1.0 && (
-          b.defId === 'acropolis' ||
-          (b.defId === 'bronze_foundry' && (u.currentCargoType === 'copper' || u.currentCargoType === 'tin' || u.currentCargoType === 'iron'))
-        )
-      );
-      if (dropoffs.length === 0) {
-        u.state = 'IDLE';
-        return;
+      let nearest: BuildingEntity | null = null;
+      if (u.targetDropoffBuildingId) {
+        nearest = buildings.find(b => b.id === u.targetDropoffBuildingId && b.owner === u.owner) || null;
       }
-      dropoffs.sort((a, b) => Math.hypot(a.centerX - u.x, a.centerY - u.y) - Math.hypot(b.centerX - u.x, b.centerY - u.y));
-      const nearest = dropoffs[0];
+      if (!nearest) {
+        const dropoffs = buildings.filter(
+          b => b.owner === u.owner && b.buildProgress >= 1.0 && (
+            b.defId === 'acropolis' ||
+            b.defId === 'granary' ||
+            (b.defId === 'bronze_foundry' && (u.currentCargoType === 'copper' || u.currentCargoType === 'tin' || u.currentCargoType === 'iron' || u.currentCargoType === 'stone')) ||
+            (b.defId === 'iron_smelter' && u.currentCargoType === 'iron')
+          )
+        );
+        if (dropoffs.length === 0) {
+          u.state = 'IDLE';
+          return;
+        }
+        dropoffs.sort((a, b) => Math.hypot(a.centerX - u.x, a.centerY - u.y) - Math.hypot(b.centerX - u.x, b.centerY - u.y));
+        nearest = dropoffs[0];
+      }
+
       const distToDropoff = Math.hypot(nearest.centerX - u.x, nearest.centerY - u.y);
-      const reachDist = (Math.max(nearest.def.width, nearest.def.height) + 1) * TILE_SIZE * 0.7;
+      const reachDist = (Math.max(nearest.def.width, nearest.def.height) + 1.2) * TILE_SIZE * 0.7;
 
       if (distToDropoff <= reachDist || u.path.length === 0) {
         // Depot reached: Unload cargo
         if (u.currentCargoType && u.currentCargoAmount > 0) {
           const type = u.currentCargoType as ResourceType;
-          const remainingSpace = economy.getRemainingStorage(type);
+          let remainingSpace = economy.getRemainingStorage(type);
 
-          if (remainingSpace <= 0) {
-            // Storage is 100% full! Donkey CANNOT unload!
+          // If storage full and NOT a direct manual player order to this depot:
+          if (remainingSpace <= 0 && !u.isManualDropoffOrder) {
             u.state = 'WAITING_STORAGE';
             u.path = [];
             EventBus.get().emit('fx:floating_text', {
@@ -593,7 +692,17 @@ export class UnitFSM {
             return;
           }
 
-          const added = economy.addResource(type, u.currentCargoAmount);
+          let added = 0;
+          if (u.isManualDropoffOrder && remainingSpace < u.currentCargoAmount) {
+            // Player explicitly directed donkey to deposit cargo into this Megaron / Granary:
+            // Store cargo directly into royal reserve
+            economy.resources[type] += u.currentCargoAmount;
+            added = u.currentCargoAmount;
+            economy.checkStorageAlerts();
+            EventBus.get().emit('economy:changed', economy.resources);
+          } else {
+            added = economy.addResource(type, u.currentCargoAmount);
+          }
           u.currentCargoAmount -= added;
           EventBus.get().emit('audio:build');
 
@@ -608,7 +717,7 @@ export class UnitFSM {
 
           EventBus.get().emit('fx:floating_text', {
             text: `+${added} ${type.toUpperCase()}`,
-            color: colorMap[type] || '#fef08a',
+            color: colorMap[type] || '#4ade80',
             x: u.x,
             y: u.y - 24
           });
@@ -626,10 +735,17 @@ export class UnitFSM {
             return;
           }
         }
-        u.currentCargoAmount = 0;
 
-        // AUTOMATIC LOOP: Return to target mine or cedar grove if assigned
-        if (u.targetMineCoord) {
+        u.currentCargoAmount = 0;
+        u.isManualDropoffOrder = false;
+        u.targetDropoffBuildingId = null;
+
+        // "FALLO RIPARTIRE" - Restore harvest target and immediately resume journey back to the vein/trees
+        const harvestTarget = u.targetMineCoord || u.lastHarvestCoord;
+        if (harvestTarget) {
+          u.targetMineCoord = { ...harvestTarget };
+          u.lastHarvestCoord = { ...harvestTarget };
+
           if (isTimber && decorations) {
             const tree = decorations.find(
               d => d.type === 'cedar' && (d.current === undefined || d.current > 0) &&
@@ -642,8 +758,17 @@ export class UnitFSM {
           } else if (!isTimber && tileRenderer) {
             const curTile = tileRenderer.getTile(u.targetMineCoord.tx, u.targetMineCoord.ty);
             if (!curTile.startsWith('vein_')) {
-              u.targetMineCoord = UnitFSM.findNearestVein(tileRenderer, u.targetMineCoord.tx, u.targetMineCoord.ty, u.currentCargoType || 'copper');
+              u.targetMineCoord = UnitFSM.findNearestVein(tileRenderer, u.targetMineCoord.tx, u.targetMineCoord.ty, u.currentCargoType || u.lastCargoType || 'copper');
             }
+          }
+        } else {
+          // If no previous target recorded, locate nearest available resource node
+          if (isTimber && decorations) {
+            const nextTree = UnitFSM.findNearestTree(decorations, Math.floor(u.x / TILE_SIZE), Math.floor(u.y / TILE_SIZE));
+            if (nextTree) u.targetMineCoord = { tx: Math.floor(nextTree.x), ty: Math.floor(nextTree.y) };
+          } else if (tileRenderer) {
+            const nextVein = UnitFSM.findNearestVein(tileRenderer, Math.floor(u.x / TILE_SIZE), Math.floor(u.y / TILE_SIZE), u.currentCargoType || u.lastCargoType || 'copper');
+            if (nextVein) u.targetMineCoord = nextVein;
           }
         }
 
@@ -653,11 +778,15 @@ export class UnitFSM {
           const pathCoords = AStar.findPath(graph, { tx: curTx, ty: curTy }, { tx: u.targetMineCoord.tx, ty: u.targetMineCoord.ty });
           if (pathCoords.length > 0) {
             u.path = pathCoords.map(c => ({ x: c.tx * TILE_SIZE + 24, y: c.ty * TILE_SIZE + 24 }));
-            u.state = 'HARVEST_SEEK';
           } else {
             u.path = [{ x: u.targetMineCoord.tx * TILE_SIZE + 24, y: u.targetMineCoord.ty * TILE_SIZE + 24 }];
-            u.state = 'HARVEST_SEEK';
           }
+          u.state = 'HARVEST_SEEK';
+          EventBus.get().emit('advisor:message', {
+            speaker: 'burna_khabir',
+            text: `Caravan unloaded at ${nearest.def.name}! Returning to extraction grounds.`,
+            isAlert: false
+          });
         } else {
           u.state = 'IDLE';
         }
@@ -670,6 +799,8 @@ export class UnitFSM {
     // 4. WAITING_STORAGE: Donkey holds cargo at the depot waiting for storage capacity to free up
     if (u.state === 'WAITING_STORAGE') {
       if (!u.currentCargoType || u.currentCargoAmount <= 0) {
+        const harvestTarget = u.targetMineCoord || u.lastHarvestCoord;
+        u.targetMineCoord = harvestTarget ? { ...harvestTarget } : null;
         u.state = u.targetMineCoord ? 'HARVEST_SEEK' : 'IDLE';
         return;
       }
@@ -699,7 +830,10 @@ export class UnitFSM {
 
         if (u.currentCargoAmount <= 0) {
           u.currentCargoAmount = 0;
-          if (u.targetMineCoord) {
+          const harvestTarget = u.targetMineCoord || u.lastHarvestCoord;
+          if (harvestTarget) {
+            u.targetMineCoord = { ...harvestTarget };
+            u.lastHarvestCoord = { ...harvestTarget };
             u.state = 'HARVEST_SEEK';
             u.path = [];
           } else {
