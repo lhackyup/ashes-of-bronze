@@ -85,43 +85,43 @@ export class CouncilModal {
           <!-- ADVISORS CARDS -->
           <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
             <!-- BURNA-KHABIR -->
-            <div class="stone-panel advisor-briefing-card" style="padding: 10px; border-radius: 3px; display: flex; flex-direction: column; gap: 8px;">
-              <div style="display: flex; align-items: center; gap: 10px;">
-                <img src="${getPortraitURL('burna_khabir')}" style="width: 48px; height: 48px; border: 1px solid #c9933b; border-radius: 2px;" alt="Burna-Khabir" />
+            <div class="stone-panel advisor-briefing-card" style="padding: 12px; border-radius: 4px; display: flex; flex-direction: column; gap: 8px; border: 1px solid #785a2b;">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <img src="${getPortraitURL('burna_khabir')}" style="width: 74px; height: 74px; border: 2px solid #c9933b; border-radius: 3px; box-shadow: 0 2px 8px rgba(0,0,0,0.8); object-fit: cover;" alt="Burna-Khabir" />
                 <div>
-                  <div style="font-family: 'Cinzel', serif; font-size: 13px; font-weight: 700; color: #ffd166;">Burna-Khabir</div>
+                  <div style="font-family: 'Cinzel', serif; font-size: 14px; font-weight: 700; color: #ffd166;">Burna-Khabir</div>
                   <div style="font-size: 11px; color: #b0a390;">Royal Scribe & Chronicler</div>
                 </div>
               </div>
-              <div style="font-size: 13px; color: #e8dccb; line-height: 1.35; font-style: italic;">
+              <div style="font-size: 13px; color: #e8dccb; line-height: 1.4; font-style: italic;">
                 "The kings of the Earth are weeping into the dust. If our Acropolis falls, our memory is extinguished forever. Guard our central Megaron with stone and blood."
               </div>
             </div>
 
             <!-- TARKHUNTA -->
-            <div class="stone-panel advisor-briefing-card" style="padding: 10px; border-radius: 3px; display: flex; flex-direction: column; gap: 8px;">
-              <div style="display: flex; align-items: center; gap: 10px;">
-                <img src="${getPortraitURL('tarkhunta')}" style="width: 48px; height: 48px; border: 1px solid #ffd166; border-radius: 2px;" alt="Tarkhunta" />
+            <div class="stone-panel advisor-briefing-card" style="padding: 12px; border-radius: 4px; display: flex; flex-direction: column; gap: 8px; border: 1px solid #784520;">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <img src="${getPortraitURL('tarkhunta')}" style="width: 74px; height: 74px; border: 2px solid #f59e0b; border-radius: 3px; box-shadow: 0 2px 8px rgba(0,0,0,0.8); object-fit: cover;" alt="Tarkhunta" />
                 <div>
-                  <div style="font-family: 'Cinzel', serif; font-size: 13px; font-weight: 700; color: #ffd166;">Tarkhunta</div>
+                  <div style="font-family: 'Cinzel', serif; font-size: 14px; font-weight: 700; color: #ffd166;">Tarkhunta</div>
                   <div style="font-size: 11px; color: #b0a390;">Luwian Master Smelter</div>
                 </div>
               </div>
-              <div style="font-size: 13px; color: #e8dccb; line-height: 1.35; font-style: italic;">
+              <div style="font-size: 13px; color: #e8dccb; line-height: 1.4; font-style: italic;">
                 "Copper is as soft as river mud without Cassiterite! Send Donkey Caravans to the northeast sand dunes immediately. We need 200 bars of pure Tin for the armory."
               </div>
             </div>
 
             <!-- ZALPA -->
-            <div class="stone-panel advisor-briefing-card" style="padding: 10px; border-radius: 3px; display: flex; flex-direction: column; gap: 8px;">
-              <div style="display: flex; align-items: center; gap: 10px;">
-                <img src="${getPortraitURL('zalpa')}" style="width: 48px; height: 48px; border: 1px solid #2de0a5; border-radius: 2px;" alt="Zalpa" />
+            <div class="stone-panel advisor-briefing-card" style="padding: 12px; border-radius: 4px; display: flex; flex-direction: column; gap: 8px; border: 1px solid #1e6653;">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <img src="${getPortraitURL('zalpa')}" style="width: 74px; height: 74px; border: 2px solid #2de0a5; border-radius: 3px; box-shadow: 0 2px 8px rgba(0,0,0,0.8); object-fit: cover;" alt="Zalpa" />
                 <div>
-                  <div style="font-family: 'Cinzel', serif; font-size: 13px; font-weight: 700; color: #ffd166;">Zalpa</div>
+                  <div style="font-family: 'Cinzel', serif; font-size: 14px; font-weight: 700; color: #ffd166;">Zalpa</div>
                   <div style="font-size: 11px; color: #b0a390;">Kaska Scout Captain</div>
                 </div>
               </div>
-              <div style="font-size: 13px; color: #e8dccb; line-height: 1.35; font-style: italic;">
+              <div style="font-size: 13px; color: #e8dccb; line-height: 1.4; font-style: italic;">
                 "Bird prows have been spotted off the western dunes. Erect a Cyclopean Watchtower on the coastal approach to detect landing craft before they overrun our workshops!"
               </div>
             </div>

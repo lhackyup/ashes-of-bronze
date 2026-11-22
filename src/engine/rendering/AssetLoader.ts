@@ -1,3 +1,5 @@
+import { SVGAProceduralBank } from './SVGAProceduralBank.ts';
+
 export class AssetLoader {
   private static tiles: Map<string, HTMLImageElement> = new Map();
   private static buildings: Map<string, HTMLImageElement> = new Map();
@@ -58,7 +60,25 @@ export class AssetLoader {
       this.units.set(u.id, img);
     });
 
-    await Promise.all([...tilePromises, ...bldgPromises, ...unitPromises]);
+    const portraitList = [
+      { id: 'burna_khabir', file: '/assets/portraits/burna_khabir.png' },
+      { id: 'tarkhunta', file: '/assets/portraits/tarkhunta.png' },
+      { id: 'zalpa', file: '/assets/portraits/zalpa.png' }
+    ];
+
+    const portraitPromises = portraitList.map(async (p) => {
+      const img = await loadImg(p.file);
+      if (img.width > 0 && img.height > 0) {
+        const c = document.createElement('canvas');
+        c.width = img.width;
+        c.height = img.height;
+        const ctx = c.getContext('2d')!;
+        ctx.drawImage(img, 0, 0);
+        SVGAProceduralBank.advisorPortraits.set(p.id, c);
+      }
+    });
+
+    await Promise.all([...tilePromises, ...bldgPromises, ...unitPromises, ...portraitPromises]);
   }
 
   public static getTile(terrainId: string): HTMLImageElement | null {

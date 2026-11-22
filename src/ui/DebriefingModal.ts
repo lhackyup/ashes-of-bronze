@@ -99,8 +99,8 @@ export class DebriefingModal {
         <!-- BODY -->
         <div style="padding: 18px 24px; display: flex; flex-direction: column; gap: 14px;">
           <!-- CHRONICLE ENTRY -->
-          <div style="display: flex; gap: 14px; background: rgba(20, 16, 12, 0.8); border: 1px solid #4a3e33; padding: 12px; border-radius: 3px;">
-            <img src="${bkPortrait}" style="width: 56px; height: 56px; border: 1px solid #c9933b; border-radius: 2px; flex-shrink: 0;" alt="Burna-Khabir" />
+          <div style="display: flex; gap: 16px; background: rgba(20, 16, 12, 0.85); border: 1px solid #4a3e33; padding: 14px; border-radius: 4px;">
+            <img src="${bkPortrait}" style="width: 76px; height: 76px; border: 2px solid #c9933b; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.8); flex-shrink: 0; object-fit: cover;" alt="Burna-Khabir" />
             <div style="display: flex; flex-direction: column; gap: 4px;">
               <div style="font-family: 'Cinzel', serif; font-size: 12px; font-weight: 700; color: #ffd166;">Chronicle of Burna-Khabir, Scribe of the Wanax:</div>
               <div style="font-size: 14px; line-height: 1.4; color: #f7efe1; font-style: italic;">

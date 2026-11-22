@@ -92,6 +92,7 @@ export class HUDController {
           img.src = portraitCanvas.toDataURL();
           img.style.width = '100%';
           img.style.height = '100%';
+          img.style.objectFit = 'cover';
           this.advisorPortraitEl.appendChild(img);
         } else {
           this.advisorPortraitEl.textContent = data.speaker === 'zalpa' ? 'ZA' : (data.speaker === 'tarkhunta' ? 'TA' : 'BK');
