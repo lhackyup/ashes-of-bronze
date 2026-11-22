@@ -1,52 +1,47 @@
-# Piano Architetturale: Ashes of Bronze (RTS 2.5D SVGA)
-## Transizione e Modularizzazione dal Prototipo Monolitico allo Sviluppo Completo
+# Architecture Plan: Ashes of Bronze (2.5D SVGA RTS)
+## Transition and Modularization from Monolithic Prototype to Full Production
 
 ---
 
-## 1. Visione del Progetto e Transizione all'Età del Bronzo
+## 1. Project Vision and Setting Transition
 
-Il progetto si evolve dal prototipo monolitico a tema romano (*Imperium Romanum*) verso l'ambientazione storica originale: **Il Collasso dell'Età del Bronzo e la Rivoluzione del Ferro (1200 – 900 a.C.)**.
+The project transitions from the monolithic Roman-themed prototype into its true historical setting: **The Late Bronze Age Collapse and the Iron Dawn (1200 – 900 BC)**.
 
-### 1.1 Premessa Storico-Narrativa & Gameplay
-* **Ambientazione:** Mediterraneo orientale ed Egeo post-1200 a.C. Le rotte commerciali collassano, i Popoli del Mare devastano le coste e le grandi città (Micene, Ugarit, Hattusa) crollano o lottano per la sopravvivenza.
-* **Risorsa Chiave (Meccanica "Spezia di Dune"): lo Stagno (*Cassiterite*).**
-  * Il rame è accessibile, ma senza stagno non è possibile forgiare il bronzo. La scarsità di rotte dello stagno forza spedizioni rischiose e guerre territoriali.
-* **Transizione Tecnologica Epocale (Età del Ferro):**
-  * Nella seconda metà della campagna (Atti II e III), il giocatore sblocca forni a mantice avanzati e la metallurgia del **Ferro**, superando la dipendenza dallo stagno e producendo armi più letali ed economiche.
-* **Fondamenta Strutturali:**
-  * Sostituzione delle lastre romane con **Terrapieni in Argilla e Pietra Ciclopica** (*Cyclopean Foundations*), indispensabili per erigere magazzini, fornaci e mura fortificate senza penalità di integrità.
-
----
-
-## 2. Diagnosi del Prototipo Esistente (`imperium_romanum_strategia_svga_anni_90.html`)
-
-Il prototipo attuale raccoglie in un unico file di oltre 3.600 righe tutte le logiche di rendering, input, simulazione, audio, dati e UI.
-
-### 2.1 Punti di Forza da Mantenere
-1. **Loop SVGA Retrò Autentico:** Look visivo solido (palette 256/High-Color anni '90, barre di selezione in rilievo, HUD scolpito).
-2. **Ciclo Economico e Fondamenta:** Meccanica collaudata delle lastre di fondazione e dei raccoglitori/estrattori con drop-off automatico e controllo manuale.
-3. **Web Audio Sintetico:** Generatore audio procedurale a zero dipendenze per BGM e SFX (ottimo fallback prima dell'inserimento di campioni audio dedicati).
-4. **Controlli RTS Classici:** Box selection, doppi clic, gruppi rapidi (`Ctrl+1-9`), comandi contestuali con clic destro.
-
-### 2.2 Debiti Tecnici Critici
-| Componente Prototipo | Problema Attuale | Rischio Scalabilità |
-| :--- | :--- | :--- |
-| **Movimento / Pathfinding** | `moveUnitToward()` usa moto rettilineo con evitamento ostacoli ingenuo (step angolari 30°/60°). | Unità bloccate in vicoli ciechi, curve a U impossibili, collisioni a grappolo (*clumping*). |
-| **Rendering Monolitico** | Tutto su un unico `CanvasRenderingContext2D`, iterando per ogni frame su canvas dimensionalmente non scalati e canvas procedurali ripetuti. | Frame rate crolla sopra 100 unità; nessun frustum/culling rigoroso; nessuna pipeline per spritesheet esterni. |
-| **Logica di Stato Globale** | Variabili globali mutate ovunque (`mapTiles`, `units`, `buildings`, `projectiles`, `activeMission`). | Impossibile testare unità singole, difficile salvare/ripristinare lo stato, prono a race condition. |
-| **IA Semplificata** | `updateEnemyAI()` è un timer hardcoded che produce unità a intervalli e le lancia in linea retta verso il palazzo del giocatore. | Nessuna tattica di accerchiamento, nessun ritiro strategico, nessuna gestione economica per la fazione nemica. |
-| **Campagna Hardcoded** | 5 missioni cablate in `startMission(missionIdx)` con logiche imperativo-sequenziali nel codice. | Impossibile aggiungere missioni via JSON o modding; nessuna persistenza di veterani, tecnologie o decisioni strategiche. |
+### 1.1 Historical-Narrative Premise & Core Gameplay
+* **Setting:** Eastern Mediterranean and Aegean post-1200 BC. International trade routes collapse, Sea Peoples ravage coastal ports, and great empires crumble.
+* **Key Strategic Resource (The "Dune Spice" Mechanic): Tin (*Cassiterite*).**
+  * Copper is accessible, but without tin, bronze cannot be forged. Scarcity of tin drives expeditions, trade defense, and territorial warfare in Acts I and II.
+* **Epochal Technological Transition (The Iron Age):**
+  * In the second half of the campaign (Acts III and IV), the player unlocks double-bellows bloomeries and **Iron Metallurgy**, breaking dependence on tin and producing more cost-effective, lethal weapons.
+* **Structural Foundations:**
+  * Substitution of Roman slabs with **Dry-Laid Cyclopean Megalithic Foundations** (*Cyclopean Foundations*), essential for erecting workshops, smelters, and fortifications without structural integrity penalties.
 
 ---
 
-## 3. Stack Tecnologico Target & Struttura delle Directory
+## 2. Monolithic Prototype Diagnosis (`imperium_romanum_strategia_svga_anni_90.html`)
 
-* **Linguaggio:** TypeScript (strict mode) per robustezza e tipizzazione delle entità RTS.
-* **Bundler / Dev Environment:** Vite (HMR ultra-rapido per browser e bundling statico ottimizzato).
-* **Target di Distribuzione:** Web Browser (itch.io demo) e Desktop Packaging via Tauri (Steam release multipiattaforma).
-* **Rendering:** Canvas 2D ottimizzato con offscreen buffer per Fog of War e Tilemap + compatibilità WebGL per post-processing/palette shading.
+The original prototype aggregated rendering, input, simulation, audio, and UI into a single 3,600+ line file.
 
-### Struttura Directory Proposta
+### 2.1 Strengths to Preserve
+1. **Authentic Late 90s SVGA Look & Feel:** Solid retro aesthetic (rich palette, beveled selection indicators, carved stone UI).
+2. **Economic Cycle & Foundations:** Proven concrete slab foundation mechanic and dual-mode harvesters (autonomous haul loop + manual micro control).
+3. **Synthetic Web Audio API:** Zero-dependency procedural sound generator for BGM and SFX.
+4. **Classic RTS Controls:** Box drag selection, double-click type selection, control groups (`Ctrl+1-9`), right-click contextual orders.
+
+### 2.2 Critical Technical Debts Resolved
+* **Pathfinding:** Replaced naive linear movement with true **A\* Search** and **Dijkstra Flow Fields** for mass horde movement.
+* **Procedural SVGA Bank:** Centralized all sprite generation into an offscreen canvas cache (`SVGAProceduralBank.ts`), rendering at solid 60 FPS with zero external asset bloat.
+* **State Decoupling:** Converted global mutable arrays into strict TypeScript ECS/System modules (`EconomySystem`, `CombatSystem`, `TacticalDirector`).
+* **Declarative Campaign Engine:** Externalized scenarios into structured JSON data files (`public/campaigns/`).
+
+---
+
+## 3. Technology Stack & Directory Structure
+
+* **Language:** TypeScript (strict mode).
+* **Bundler & Build Tool:** Vite (instant HMR and fast production bundling).
+* **Target Platforms:** Web Browser (itch.io demo) and Desktop Packaging via Tauri (Steam release).
+* **Rendering:** Pure Procedural Canvas 2D with offscreen cached buffers and 45° cavalier axonometric perspective.
 
 ```text
 ashes-of-bronze/
@@ -56,222 +51,41 @@ ashes-of-bronze/
 ├── vite.config.ts
 ├── public/
 │   ├── assets/
-│   │   ├── sprites/       # Spritesheet PNG pre-renderizzati (Blender) + JSON metadata
-│   │   ├── tiles/         # Biomi: coste egee, pianure levantine, steppe anatoliche
-│   │   ├── audio/         # SFX ed echi vocali (con fallback al sintetizzatore)
-│   │   └── ui/            # Cornici bronzo/pietra, icone risorse, ritratti
-│   └── campaigns/         # File JSON per scenari e alberi decisionali
+│   └── campaigns/act1/        # JSON Scenario definitions
 ├── src/
-│   ├── core/              # Game loop, Time, EventBus, Math (Vettori, Griglie)
-│   ├── data/              # Definizioni dati: unità, edifici, tecnologie, biomi
+│   ├── core/                  # EventBus, math helpers
+│   ├── data/                  # Buildings, units, terrains, types
 │   ├── engine/
-│   │   ├── camera/        # Camera2D, screen-to-world, viewport culling
-│   │   ├── rendering/     # TileRenderer, SpriteRenderer, FogRenderer, UIRenderer
-│   │   ├── pathfinding/   # Grid Graph, A*, Flow Field, Local Avoidance (RVO)
-│   │   ├── spatial/       # Spatial Hash / QuadTree per query di raggio e collisioni
-│   │   └── audio/         # SoundManager, AudioSynthesizer (Web Audio API), MusicPlayer
-│   ├── entities/          # Gestione ECS / Oggetti: Unit, Building, ResourceNode, Projectile
-│   ├── systems/
-│   │   ├── EconomySystem.ts      # Stoccaggio, raccolte, carovane/carri, supply cap
-│   │   ├── ProductionSystem.ts   # Code di costruzione, fondamenta, upgrade
-│   │   ├── CombatSystem.ts       # Armi (arco, lancia, khopesh, carro), armature, danni
-│   │   └── FogOfWarSystem.ts     # Calcolo visibilità a 3 stati (inesplorato/scoperto/visibile)
-│   ├── ai/
-│   │   ├── UnitFSM.ts            # State machine locale unità (Idle, Move, Attack, Harvest, Flee)
-│   │   ├── StrategicAI.ts        # Macro-gestione nemica (economia, costruzione base)
-│   │   ├── TacticalDirector.ts   # Ondate Popoli del Mare, raid costieri, assedi coordinati
-│   │   └── InfluenceMap.ts       # Mappa di influenza pericolo/opportunità
-│   ├── campaign/
-│   │   ├── CampaignManager.ts    # Mappa strategica dell'Egeo, persistenza (Save/Load)
-│   │   ├── ScenarioLoader.ts     # Parser scenari JSON, caricamento mappa
-│   │   ├── ObjectiveSystem.ts    # Obiettivi primari/secondari, fail/win conditions
-│   │   └── NarrativeSystem.ts    # Dialoghi consiglieri, tavolette cuneiformi, messaggi storici
-│   ├── ui/
-│   │   ├── HUDController.ts      # Risorse, barra di comando, inspector
-│   │   ├── Minimap.ts            # Rendering radar/minimappa con fog integrata
-│   │   ├── BuildMenu.ts          # Griglia costruzioni e piastre di fondazione
-│   │   └── InputHandler.ts       # Selezione rettangolare, hotkey, comandi contestuali
-│   └── main.ts                   # Bootstrap del gioco
-└── tools/
-    └── blender_export/           # Script Python per render 8 direzioni e fogli sprite
+│   │   ├── camera/            # 2D Camera, viewport frustum culling
+│   │   ├── rendering/         # SVGAProceduralBank, TileRenderer, FogRenderer
+│   │   ├── pathfinding/       # GridGraph, AStar, FlowField
+│   │   └── audio/             # BronzeAudioEngine (Web Audio synthesis)
+│   ├── entities/              # UnitEntity, BuildingEntity
+│   ├── systems/               # EconomySystem, CombatSystem
+│   ├── ai/                    # UnitFSM, TacticalDirector
+│   ├── campaign/              # ScenarioLoader
+│   ├── ui/                    # HUDController
+│   └── main.ts                # Application bootstrap and game loop
 ```
 
 ---
 
-## 4. Moduli Architetturali di Dettaglio
+## 4. Architectural Modules
 
-### 4.1 Motore di Rendering SVGA Procedurale su Canvas
-Il rendering adotta un approccio procedurale puro su Canvas 2D (stile DOS/SVGA anni '90), senza dipendenze da asset esterni pesanti o modelli 3D. Tutti gli edifici, i ritratti dei consiglieri e le animazioni delle unità sono generati a codice tramite la `SVGAProceduralBank`:
+### 4.1 Procedural SVGA Canvas Rendering Engine
+Adopts a pure procedural Canvas 2D pipeline (90s DOS/SVGA style) with zero external sprite downloads:
+* **High-Contrast Ashlar Limestone Masonry:** Walls rendered with bevel highlights and shadow lines, popping distinctly against arid soils.
+* **Terracotta Pitched Roofs:** Slanted roofs with grooved clay tiles and raised eaves.
+* **Minoan/Mycenaean Fluted Colonnades:** Tapered cedar pillars with cylindrical shading and gold disc capitals.
+* **Dynamic Wave Banners:** Cloth faction flags on acropolis and watchtowers waving continuously in the wind (`Math.sin(time) * 3`).
 
-```mermaid
-flowchart TD
-    Loop[Game Loop: Render Pass] --> Cull[Camera Frustum Culling]
-    Cull --> L1[Layer 1: Terreno & Terrapieni Ciclopici su Canvas Pattern]
-    Cull --> L2[Layer 2: Edifici Pre-renderizzati in Offscreen Buffers]
-    Cull --> L3[Layer 3: Unità con Animazione Procedurale dei Passi & Armi]
-    Cull --> L4[Layer 4: Proiettili, Frecce e Polvere]
-    Cull --> L5[Layer 5: Fog of War Masking via Blending a 3 Stati]
-    Cull --> L6[Layer 6: UI & HUD Canvas Top-Level]
-```
+### 4.2 Navigation & Pathfinding
+* **A\* with Octile Distance Heuristic:** Handles single unit orders and path smoothing.
+* **Flow Field (Vector Grids) for Hordes:** Sea Peoples landing waves read directional flow vectors in $O(1)$ time complexity without CPU degradation.
 
-1. **Tilemap & Terrapieni Ciclopici:** Generati tramite pattern procedurali SVGA con giunture megalitiche a secco e nodi di minerale scintillanti (rame, stagno, ferro).
-2. **Edifici Pre-renderizzati (`SVGAProceduralBank`):** All'avvio, ogni edificio (Acropoli, Fonderia, Granai, Torri) viene "cotto" una volta sola su canvas offscreen dedicati tramite forme geometriche e gradienti SVGA, garantendo performance ottimali a 60 fps.
-3. **Unità Animate a Codice:**
-   * Animazione procedurale della camminata (`bobbing`), oscillazione delle zampe degli asinelli e delle ruote raggiate dei carri.
-   * Visualizzazione in tempo reale del carico minerario nelle ceste (verde per rame, argento per stagno, nero per ferro).
-   * Dettagli storici d'epoca: scudi a torre micenei, sciabole ricurve *khopesh*, elmi cornuti degli Shardana e lance bronzee.
-4. **Fog of War a 3 Stati:** Mantenuta su un `Uint8Array` a griglia: `0 = Inesplorato`, `1 = Esplorato in ombra`, `2 = Visibile in tempo reale`.
-5. **Ritratti Storici Procedurali:** I volti di Burna-Khabir (scriba), Tarkhunta (mastro fabbro) e Zalpa (capitana dei carri) sono generati direttamente all'avvio su canvas 64x64.
+### 4.3 Artificial Intelligence
+* **Unit FSM:** Handles `IDLE`, `MOVE_TO`, `ATTACK_TARGET`, and `HARVEST_CYCLE` (quarrying, hauling, unloading).
+* **Tactical Director:** Manages scripted amphibious raids and timed horde assault waves.
 
----
-
-### 4.2 Navigazione, Griglia e Pathfinding
-Il limite maggiore del prototipo è l'assenza di un vero algoritmo di instradamento.
-
-#### A* Gerarchico e Flow Fields per RTS
-* **Livello Macro (Griglia 48x48 o 96x96):**
-  * Costruzione del grafo di calpestabilità: piastre di fondazione aumentano la velocità di transito (+15%), terreni rocciosi/paludi la riducono, fiumi e rilievi ciclopici sono invalicabili.
-  * **A\* con Jump Point Search (JPS):** Ottimale per comandi di unità singole o piccoli gruppi.
-* **Livello Micro (Flow Field per Masse / Ondate):**
-  * Quando un'ondata di 30 predoni dei Popoli del Mare attacca la città, calcolare 30 percorsi A* satura la CPU.
-  * Il sistema genera una **Mappa dei Vettori di Flusso (Flow Field)** generata con Dijkstra partendo dal target (la porta o il granaio della città). Tutte le unità dell'ondata leggono il vettore locale istantaneamente in $O(1)$.
-* **Evitamento Locale Dinamico (Steering / RVO):**
-  * Le unità mantengono un raggio di separazione elastico per non sovrapporsi e formare formazioni credibili (falange o linea d'assalto).
-
----
-
-### 4.3 Sistema di Intelligenza Artificiale (IA)
-
-L'IA viene scomposta in tre livelli cooperativi:
-
-```mermaid
-graph TD
-    Strat[Strategic AI: Macro-Director] -->|Alloca risorse & Ordina piani| Base[Base Builder & Econ Controller]
-    Strat -->|Pianifica assalti & Raid| Tact[Tactical Director: Popoli del Mare]
-    Tact -->|Genera battaglioni| Squad[Squad AI: Formazioni / Flanking]
-    Squad -->|Invia comandi| FSM[Unit FSM: Idle / Move / Attack / Harvest]
-```
-
-1. **Unit FSM (Stato Locale):**
-   * Stati: `IDLE`, `MOVE_TO`, `ATTACK_TARGET`, `HARVEST_CYCLE` (MoveToNode -> Mine -> ReturnDropoff -> Unload), `FLEE`, `PATROL`.
-2. **Carovane & Harvester Economici:**
-   * Gli asinelli/carri estrattori selezionano autonomamente il giacimento di Stagno o Rame più sicuro e vicino. Se attaccati, inviano un segnale di soccorso al sistema di allarmi della base e ripiegano verso le mura più vicine.
-3. **Tactical Director (Ondate Asimmetriche dei Popoli del Mare):**
-   * Non semplici timer: l'IA analizza i punti deboli della base del giocatore (assenza di torri di guardia, varchi nelle mura, depositi di grano sguarniti) ed esegue sbarchi navali o raid fulminei da settori imprevisti.
-4. **Base Enemy AI (Città Rivali):**
-   * Gestione autonoma del tech tree: estrae risorse, costruisce caserme, ricerca la tecnologia del ferro quando disponibile.
-
----
-
-### 4.4 Definizione della Campagna & Architettura Scenari
-
-La campagna dell'Età del Bronzo non sarà codificata in funzioni JS monolitiche, ma definita attraverso file di configurazione dichiarativi (JSON con schema validato).
-
-#### Struttura di uno Scenario (`scenario_schema.json`)
-```json
-{
-  "id": "scenario_03_ugarit_fall",
-  "title": "La Caduta di Ugarit",
-  "act": 1,
-  "era": "late_bronze",
-  "map": {
-    "width": 64,
-    "height": 64,
-    "biome": "levantine_coast",
-    "seed": 1177,
-    "decorations": ["palms", "ancient_ruins", "beaches"]
-  },
-  "player": {
-    "faction": "city_state_survivors",
-    "resources": { "copper": 600, "tin": 150, "grain": 300, "iron": 0 },
-    "startLocation": { "x": 12, "y": 48 },
-    "unlockedBuildings": ["cyclopean_slab", "acropolis", "granary", "bronze_foundry", "watchtower", "barracks"],
-    "unlockedUnits": ["spearman_militia", "skirmisher", "donkey_caravan"]
-  },
-  "opponents": [
-    {
-      "id": "sea_peoples_raiders",
-      "faction": "sherden_sea_peoples",
-      "aiProfile": "aggressive_raider",
-      "spawnWaves": [
-        { "triggerTimeSeconds": 180, "units": [{ "type": "sea_raider_swordsman", "count": 6 }], "spawnEdge": "west_sea" },
-        { "triggerTimeSeconds": 360, "units": [{ "type": "sea_raider_swordsman", "count": 10 }, { "type": "archer", "count": 4 }], "spawnEdge": "west_sea" }
-      ]
-    }
-  ],
-  "objectives": {
-    "primary": [
-      { "id": "secure_tin_mine", "type": "protect_resource_nodes", "target": "tin_vein_north", "description": "Difendi la cava di stagno settentrionale." },
-      { "id": "survive_time", "type": "survive_waves", "targetSeconds": 600, "description": "Resisti agli sbarchi dei Popoli del Mare per 10 minuti." }
-    ],
-    "secondary": [
-      { "id": "build_port", "type": "construct_building", "buildingType": "coastal_refuge", "description": "Costruisci un rifugio costiero per accogliere i profughi." }
-    ]
-  },
-  "narrative": {
-    "briefing": "Le lettere cuneiformi avvertono: le navi nemiche bruciano le nostre città costiere...",
-    "advisorPortrait": "ugarit_elder",
-    "dialogueTriggers": [
-      { "condition": "first_wave_sighted", "message": "Allarme! Navi straniere con elmi cornuti si avvicinano alla costa!" }
-    ]
-  }
-}
-```
-
-#### Persistenza e Campagna a Nodi Strategici
-* Mappa strategica dell'Egeo/Mediterraneo Orientale: il giocatore seleziona la prossima regione da liberare/difendere.
-* Salvataggio unificato in `localStorage` o file JSON locale (Tauri desktop API) che memorizza:
-  * Livello di ricerca tecnologica (scoperta del ferro, forgiatura avanzata).
-  * Risorse globali accumulate.
-  * Squadre di veterani promossi tra le missioni.
-
----
-
-## 5. Adattamento Tematico: Unità, Edifici e Risorse
-
-| Categoria | Prototipo (Romano) | Ashes of Bronze (Età del Bronzo / Ferro) | Meccanica Chiave |
-| :--- | :--- | :--- | :--- |
-| **Fondamenta** | *Lastricato Romano* | **Terrapieni Ciclopici in Pietra e Fango** | Gli edifici senza terrapieno hanno il 50% di PF in meno. |
-| **Risorsa 1** | *Denarii / Oro* | **Rame (*Copper*)** | Metallo base per l'economia e la produzione primaria. |
-| **Risorsa 2** | *Pietra Cava* | **Stagno (*Tin - Cassiterite*)** | Raro, necessario in rapporto 1:9 col rame per unità in bronzo. |
-| **Risorsa Avanzata** | *N/A* | **Ferro (*Iron*)** | Sbloccato nell'Atto II/III; sostituisce rame+stagno rendendo le armi più economiche e letali. |
-| **Risorsa Cibo** | *Viveri / Grano* | **Grano & Bestiame (*Grain & Herds*)** | Mantiene il cap della popolazione; prodotto da Campi Irrigati e Graniere. |
-| **Unità Raccolta** | *Carro Raccoglitore* | **Carovana d'Assedio / Asino con Ceste** | Raccoglie dai nodi di metallo e scarica alla Fonderia. Controllabile a mano. |
-| **Fanteria Base** | *Legionario* | **Lancieri con Scudo a Torre / Fanteria Micenea** | Bonus difensivo se uniti in formazioni compatte. |
-| **Fanteria Rapida** | *Scout Equite* | **Guerrieri Shardana / Popoli del Mare (Khopesh)** | Fanteria d'assalto rapida con armi ricurve in bronzo. |
-| **Cavalleria / Mezzi** | *Catapulta / Balista* | **Carri da Guerra a 2 Cavalli (*Chariots*)** | Unità mobili da tiro e sfondamento, dominatrici delle pianure dell'Età del Bronzo. |
-| **Assedio Avanzato** | *Onagro Pesante* | **Ariete Coperto / Balista d'Assedio Ittita** | Distruzione mura e palazzi ciclopici nemici. |
-
----
-
-## 6. Piano di Implementazione a Fasi
-
-```mermaid
-gantt
-    title Roadmap di Ristrutturazione e Sviluppo
-    dateFormat  YYYY-MM-DD
-    section Fase 1: Scaffolding
-    Setup Vite, TypeScript & Struttura Cartelle   :2026-11-23, 3d
-    Estrazione Dati & Definizioni Bronzo          :after a1, 3d
-    section Fase 2: Core Engine
-    Motore Canvas a Layer & Viewport Culling      :2026-11-29, 5d
-    Pathfinding A* + Flow Field per Masse         :after a3, 6d
-    Fog of War & Offscreen Buffering              :after a4, 3d
-    section Fase 3: Meccaniche & Entità
-    ECS/Entity Manager & Fondamenta Ciclopiche   :2026-12-07, 5d
-    Sistema Economico (Rame, Stagno, Grano)       :after a6, 4d
-    Combat System & Proiettili                    :after a7, 4d
-    section Fase 4: IA & Campagna
-    FSM Unità & Carovane                          :2026-12-20, 4d
-    Tactical Director (Ondate Popoli del Mare)    :after a9, 5d
-    Campaign Engine & Parser Scenari JSON         :after a10, 5d
-    section Fase 5: Polish & Packaging
-    Pipeline Asset Blender 2.5D                   :2027-01-03, 6d
-    Packaging Desktop Tauri & Distribuzione itch  :after a12, 4d
-```
-
-### Prossimi Passi Operativi Immediati:
-1. Inizializzare la struttura del progetto con `package.json`, configurazione TypeScript e Vite.
-2. Trasferire e tipizzare i dati di gioco (`TERRAIN`, `BUILDING_DEFS`, `UNIT_DEFS`) adattandoli all'Età del Bronzo.
-3. Estrarre il motore audio sintetico (`RomanAudio` -> `BronzeAudioEngine`) in un modulo isolato.
-4. Creare il modulo di Pathfinding A* e Flow Field per sostituire il moto rettilineo del prototipo.
+### 4.4 Declarative Scenarios & Campaign System
+Scenarios are specified in schema-validated JSON files defining maps, starting forces, wave triggers, primary/secondary objectives, and cuneiform tablet dialogue entries.

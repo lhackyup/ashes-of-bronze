@@ -98,9 +98,9 @@ export class HUDController {
       btn.className = 'svga-btn build-btn';
       btn.title = `${def.name} - ${def.description}`;
 
-      let costStr = `${def.cost.copper || 0} R`;
-      if (def.cost.tin) costStr += ` | ${def.cost.tin} S`;
-      if (def.cost.iron) costStr += ` | ${def.cost.iron} F`;
+      let costStr = `${def.cost.copper || 0} C`;
+      if (def.cost.tin) costStr += ` | ${def.cost.tin} T`;
+      if (def.cost.iron) costStr += ` | ${def.cost.iron} Fe`;
 
       btn.innerHTML = `
         <div style="font-weight: bold; font-size: 11px;">${def.name}</div>
@@ -135,7 +135,7 @@ export class HUDController {
       if (actionsBox && selectedUnit.owner === 'player') {
         const stopBtn = document.createElement('button');
         stopBtn.className = 'svga-btn';
-        stopBtn.textContent = 'Alt / Ferma';
+        stopBtn.textContent = 'Halt / Stop';
         stopBtn.onclick = () => {
           selectedUnit.path = [];
           selectedUnit.state = 'IDLE';
@@ -149,14 +149,13 @@ export class HUDController {
       const hpPct = Math.max(0, Math.min(100, (selectedBuilding.hp / selectedBuilding.maxHp) * 100));
       this.inspectorHpFillEl.style.width = `${hpPct}%`;
 
-      // Se l'edificio addestra unità (es. Caserma o Megaron), mostra i pulsanti di reclutamento
       if (actionsBox && selectedBuilding.owner === 'player' && selectedBuilding.def.producesUnits) {
         for (const uId of selectedBuilding.def.producesUnits) {
           const uDef = UNITS[uId];
           if (!uDef) continue;
           const trainBtn = document.createElement('button');
           trainBtn.className = 'svga-btn';
-          trainBtn.textContent = `Recluta ${uDef.name.split(' ')[0]}`;
+          trainBtn.textContent = `Train ${uDef.name.split(' ')[0]}`;
           trainBtn.onclick = () => {
             if (this.onTrainUnit) this.onTrainUnit(uId);
           };
@@ -179,26 +178,26 @@ export class HUDController {
     const cw = this.minimapCanvas.width;
     const ch = this.minimapCanvas.height;
 
-    // Sfondo minimappa
+    // Minimap background
     ctx.fillStyle = '#1c1712';
     ctx.fillRect(0, 0, cw, ch);
 
     const scaleX = cw / (mapW * 48);
     const scaleY = ch / (mapH * 48);
 
-    // Edifici
+    // Buildings
     for (const b of buildings) {
       ctx.fillStyle = b.owner === 'player' ? '#2de0a5' : '#e63946';
       ctx.fillRect(b.tx * 48 * scaleX, b.ty * 48 * scaleY, b.def.width * 48 * scaleX, b.def.height * 48 * scaleY);
     }
 
-    // Unità
+    // Units
     for (const u of units) {
       ctx.fillStyle = u.owner === 'player' ? '#ffd166' : '#ff4d6d';
       ctx.fillRect(u.x * scaleX - 1.5, u.y * scaleY - 1.5, 3, 3);
     }
 
-    // Rettangolo telecamera
+    // Camera viewport rectangle
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 1;
     ctx.strokeRect(

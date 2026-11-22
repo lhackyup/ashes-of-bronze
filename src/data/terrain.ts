@@ -5,7 +5,7 @@ export const TILE_SIZE = 48;
 export const TERRAINS: Record<TerrainType, TerrainDef> = {
   plain: {
     id: 'plain',
-    name: 'Pianura Arida Levantina',
+    name: 'Arid Levantine Plains',
     walkable: true,
     speedMultiplier: 1.0,
     isResource: false,
@@ -13,15 +13,15 @@ export const TERRAINS: Record<TerrainType, TerrainDef> = {
   },
   sand: {
     id: 'sand',
-    name: 'Sabbia Costiera / Duna',
+    name: 'Coastal Sand / Dunes',
     walkable: true,
-    speedMultiplier: 0.75, // rallenta carri e fanteria
+    speedMultiplier: 0.75, // Slows down chariots and infantry
     isResource: false,
     color: '#c4a773'
   },
   water: {
     id: 'water',
-    name: 'Mare / Fiume Profondo',
+    name: 'Deep Sea / River',
     walkable: false,
     speedMultiplier: 0.0,
     isResource: false,
@@ -29,7 +29,7 @@ export const TERRAINS: Record<TerrainType, TerrainDef> = {
   },
   cliff: {
     id: 'cliff',
-    name: 'Rilievo Roccioso Ciclopico',
+    name: 'Cyclopean Rocky Outcrop',
     walkable: false,
     speedMultiplier: 0.0,
     isResource: false,
@@ -37,7 +37,7 @@ export const TERRAINS: Record<TerrainType, TerrainDef> = {
   },
   marsh: {
     id: 'marsh',
-    name: 'Palude Alluvionale',
+    name: 'Alluvial Marsh',
     walkable: true,
     speedMultiplier: 0.55,
     isResource: false,
@@ -45,7 +45,7 @@ export const TERRAINS: Record<TerrainType, TerrainDef> = {
   },
   fertile_soil: {
     id: 'fertile_soil',
-    name: 'Terra Alluvionale Irrigata',
+    name: 'Irrigated Alluvial Soil',
     walkable: true,
     speedMultiplier: 0.95,
     isResource: false,
@@ -53,7 +53,7 @@ export const TERRAINS: Record<TerrainType, TerrainDef> = {
   },
   vein_copper: {
     id: 'vein_copper',
-    name: 'Filone di Malachite / Rame',
+    name: 'Malachite / Copper Vein',
     walkable: false,
     speedMultiplier: 0.0,
     isResource: true,
@@ -66,20 +66,20 @@ export const TERRAINS: Record<TerrainType, TerrainDef> = {
   },
   vein_tin: {
     id: 'vein_tin',
-    name: 'Filone Raro di Cassiterite / Stagno',
+    name: 'Rare Cassiterite / Tin Vein',
     walkable: false,
     speedMultiplier: 0.0,
     isResource: true,
     resourceYield: {
       type: 'tin',
       amountPerHarvest: 5,
-      totalAmount: 450 // Raro come la spezia!
+      totalAmount: 450 // Rare like spice
     },
     color: '#9aa0a6'
   },
   vein_iron: {
     id: 'vein_iron',
-    name: 'Giacimento di Ematite / Ferro Scuro',
+    name: 'Hematite / Dark Iron Vein',
     walkable: false,
     speedMultiplier: 0.0,
     isResource: true,

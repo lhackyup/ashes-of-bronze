@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ASHES OF BRONZE: The Iron Dawn (1200 a.C.)</title>
+  <title>ASHES OF BRONZE: The Iron Dawn (1200 BC)</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&display=swap');
 
@@ -275,64 +275,64 @@
   </style>
 </head>
 <body>
-  <!-- BARRA SUPERIORE RISORSE ED ADVISOR -->
+  <!-- TOP RESOURCES & ADVISOR BAR -->
   <header id="top-bar" class="stone-panel">
     <div class="resource-strip">
       <div class="res-pill">
-        <span class="res-label">Rame</span>
+        <span class="res-label">Copper</span>
         <span id="val-copper" class="res-val" style="color: #2de0a5;">0</span>
       </div>
       <div class="res-pill">
-        <span class="res-label">Stagno</span>
+        <span class="res-label">Tin</span>
         <span id="val-tin" class="res-val" style="color: #c0c6cc;">0</span>
       </div>
       <div class="res-pill">
-        <span class="res-label">Ferro</span>
+        <span class="res-label">Iron</span>
         <span id="val-iron" class="res-val" style="color: #e07a5f;">0</span>
       </div>
       <div class="res-pill">
-        <span class="res-label">Grano</span>
+        <span class="res-label">Grain</span>
         <span id="val-grain" class="res-val" style="color: #ffd166;">0</span>
       </div>
       <div class="res-pill">
-        <span class="res-label">Sussistenza</span>
+        <span class="res-label">Supply</span>
         <span id="val-supply" class="res-val">0/20</span>
       </div>
     </div>
 
-    <!-- BOX CONSIGLIERE STORICO -->
+    <!-- ADVISOR NOTIFICATION BOX -->
     <div id="advisor-box" class="stone-panel">
       <div id="advisor-portrait">BK</div>
-      <div id="advisor-text">Burna-Khabir: Il silenzio cala sull'Egeo. Fortificate la costa...</div>
+      <div id="advisor-text">Burna-Khabir: Silence falls upon the Aegean. Fortify the coast...</div>
     </div>
   </header>
 
-  <!-- CONTENITORE CENTRALE: VIEWPORT + SIDEBAR -->
+  <!-- MAIN CONTAINER: VIEWPORT + SIDEBAR -->
   <main id="main-container">
     <section id="viewport-wrapper">
       <canvas id="game-canvas"></canvas>
     </section>
 
-    <!-- SIDEBAR DESTRA SVGA -->
+    <!-- RIGHT SVGA SIDEBAR -->
     <aside id="sidebar" class="stone-panel">
-      <!-- MINIMAPPA RADAR -->
+      <!-- RADAR MINIMAP -->
       <div id="minimap-frame">
         <canvas id="minimap-canvas" width="200" height="200"></canvas>
       </div>
 
-      <!-- ISPETTORE SELEZIONE -->
+      <!-- SELECTION INSPECTOR -->
       <div id="inspector-panel" class="stone-panel" style="display: none;">
-        <div id="inspector-name">Entità</div>
+        <div id="inspector-name">Entity</div>
         <div class="hp-bar-bg">
           <div id="inspector-hp-fill"></div>
         </div>
-        <div id="inspector-desc">Descrizione dettagliata...</div>
+        <div id="inspector-desc">Detailed entity description...</div>
         <div id="inspector-actions"></div>
       </div>
 
-      <!-- MENU COSTRUZIONE TERRAPIENI & EDIFICI -->
+      <!-- BUILD PANEL -->
       <div id="build-panel" class="stone-panel">
-        <div class="panel-title">Opere Ciclopiche & Forgia</div>
+        <div class="panel-title">Cyclopean Works & Forge</div>
         <div id="build-items-container"></div>
       </div>
     </aside>

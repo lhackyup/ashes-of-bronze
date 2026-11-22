@@ -1,131 +1,100 @@
 # Ashes of Bronze: The Iron Dawn
-## Documento Narrativo, Sceneggiatura e Ambientazioni (1200 – 900 a.C.)
+## Narrative Document, Screenplay, and Settings (1200 – 900 BC)
 
 ---
 
-## 1. Premessa Storica & Visione Narrativa
+## 1. Historical Premise & Narrative Vision
 
-### 1.1 Il Mondo al Collasso (Anno 1177 a.C.)
-Per secoli, il Mediterraneo Orientale è stato una ragnatela cosmopolita di superpotenze connesse da un commercio marittimo d'oro e metalli: il **Grande Egitto del Nuovo Regno**, il **Regno Ittita di Hatti**, i signori guerrieri di **Micene**, e le ricchissime città-stato mercantili della costa come **Ugarit** e **Byblos**.
+### 1.1 The World in Collapse (Year 1177 BC)
+For centuries, the Eastern Mediterranean was a thriving cosmopolitan network of superpowers bound by maritime trade in gold and metals: the **New Kingdom of Egypt**, the **Hittite Empire of Hatti**, the warlords of **Mycenae**, and wealthy coastal merchant city-states such as **Ugarit** and **Byblos**.
 
-Questo intero sistema globale si reggeva su un unico, fragile pilastro: **il Bronzo**.
-Per forgiare il bronzo servono 9 parti di Rame e 1 parte di **Stagno**.
-* Il rame era ovunque (specialmente a Cipro, *Alashiya*).
-* Lo **stagno**, invece, era la risorsa più preziosa e sfuggente del pianeta: viaggiava per migliaia di chilometri da remote montagne dell'Asia Centrale e dell'Iberia attraverso fragili rotte marittime.
+This entire globalized bronze economy rested on a single fragile pillar: **Bronze**.
+Forging bronze requires 9 parts Copper and 1 part **Tin**.
+* Copper was abundant (especially on Cyprus, *Alashiya*).
+* **Tin**, however, was the rarest and most elusive resource in the ancient world: it traveled thousands of kilometers along tenuous overland and maritime routes from remote mountains in Central Asia and Iberia.
 
-Nel 1200 a.C., la catastrofe: una combinazione letale di siccità prolungate, carestie, terremoti a catena e disordini sociali manda in frantumi le rotte carovaniere. In questo vuoto di potere piombano i **Popoli del Mare** (*Shardana, Peleset, Denyen, Lukka, Weshesh*): confederazioni di guerrieri nomadi della navigazione, spinti dalla fame e dalla furia, che distruggono sistematicamente ogni porto, palazzo e miniera.
+Around 1200 BC, catastrophe struck: severe prolonged droughts, widespread famine, earthquake storms, and social rebellions shattered these vital trade networks. Into this power vacuum surged the **Sea Peoples** (*Shardana, Peleset, Denyen, Lukka, Weshesh*): seaward warrior confederations driven by hunger and fury, systematically sacking every port, palace, and mine across the Mediterranean.
 
-> *"Padre mio, le navi del nemico sono giunte; hanno dato fuoco alle nostre città e compiuto atrocità nel paese... La nostra terra è abbandonata a se stessa."*  
-> — Dalle ultime lettere cuneiformi di Ugarit (Tavoletta RS 20.238, 1185 a.C.)
+> *"My father, the ships of the enemy have come; they have burned our cities and committed atrocities in the land... Our country is left unto itself."*  
+> — Last cuneiform letters of Ugarit (Tablet RS 20.238, c. 1185 BC)
 
 ---
 
-## 2. Il Protagonista e la Fazione del Giocatore
+## 2. The Protagonist & Player Faction
 
-Il giocatore assume il ruolo del **Wanax / En** (Sovrano e Signore della Guerra) di una città-stato portuale e fortezza superstite situata tra la costa del Levante e i piedi dei monti dell'Anatolia (chiamata nel gioco **Kadesh-sul-Mare** o **Kar-Sur**).
+The player assumes command as the **Wanax / En** (Ruler and Warlord) of a surviving fortress port city-state positioned between the Levantine coast and the foothills of the Anatolian mountains (known as **Kadesh-on-Sea** or **Kar-Sur**).
 
-Circondato da imperi in cenere, il tuo popolo non combatte per la gloria o per la conquista imperiale, ma per **impedire che la civiltà stessa si estingua nell'oscurità**.
+Surrounded by smoldering empires, your people fight not for imperial conquest, but **to prevent the light of human civilization from being extinguished in darkness**.
 
-### 2.1 I Consiglieri della Corte (Voci Narranti del Gioco)
+### 2.1 The Royal Council (In-Game Advisors)
 
-| Personaggio | Ruolo Narrativo | Voce nel Gameplay / Advisor |
+| Character | Narrative Role | Gameplay / Advisor Voice |
 | :--- | :--- | :--- |
-| **Burna-Khabir** | *Primo Scriba dell'Archivio Cuneiforme* | Interpreta le lettere d'argilla dai regni vicini; notifica eventi della campagna, presagi, condizioni di vittoria e tregue diplomatiche. Voce saggia e solenne. |
-| **Tarkhunta** | *Gran Maestro dei Forni e della Forgia* | Gestisce l'economia metallurgica. All'inizio lamenta disperatamente l'esaurimento dei lingotti di stagno; successivamente guiderà l'esperimento rivoluzionario per fondere il ferro grezzo delle montagne. |
-| **Zalpa** | *Capitana delle Sentinelle e degli Esploratori* | Occhio sul campo; avvisa degli sbarchi navali nemici, individua giacimenti nascosti e comanda i reparti di carri d'assalto veloci. |
+| **Burna-Khabir** | *High Scribe of the Cuneiform Archives* | Translates clay tablets and diplomatic messages; notifies the player of campaign objectives, portents, and strategic alerts. Grave, dignified voice. |
+| **Tarkhunta** | *Grand Master of the Smelters and Forges* | Manages metallurgical production. Initially laments the total exhaustion of tin ingots; later pioneers the revolutionary double-bellows furnace to smelt mountain iron ore. |
+| **Zalpa** | *Captain of the Scouts and War Chariots* | Forward observer on the battlefield; detects enemy naval landings, locates hidden mineral veins, and commands rapid chariot flanking maneuvers. |
 
 ---
 
-## 3. Sceneggiatura della Campagna: Arco Narrativo in 4 Atti (18 Scenari)
+## 3. Campaign Screenplay: 4-Act Narrative Arc (18 Scenarios)
 
 ```mermaid
 flowchart TD
-    Act1["ATTO I: Il Fuoco dal Mare (Scenari 1–5)\nSopravvivenza, Difesa Costiera & Corsa allo Stagno"]
-    Act2["ATTO II: L'Eclissi del Bronzo (Scenari 6–10)\nRotte Spezzate, Guerra Civile & I Forni Segreti dei Monti"]
-    Act3["ATTO III: La Forgia del Ferro (Scenari 11–14)\nRivoluzione Tecnologica: Armi d'Acciaio alle Milizie"]
-    Act4["ATTO IV: L'Alba del Nuovo Mondo (Scenari 15–18)\nScontro Finale contro la Flotta Madre dei Popoli del Mare"]
+    Act1["ACT I: Fire from the Sea (Scenarios 1–5)\nSurvival, Coastal Defense & The Race for Tin"]
+    Act2["ACT II: The Bronze Eclipse (Scenarios 6–10)\nBroken Routes, Civil War & The Secret Mountain Furnaces"]
+    Act3["ACT III: The Iron Forge (Scenarios 11–14)\nTechnological Revolution: Arming the Peasantry with Steel"]
+    Act4["ACT IV: Dawn of the New Age (Scenarios 15–18)\nFinal Confrontation Against the Sea Peoples Grand Fleet"]
 
     Act1 --> Act2 --> Act3 --> Act4
 ```
 
 ---
 
-### ATTO I: Il Fuoco dal Mare (Scenari 1 – 5)
-* **Tema centrale:** Difesa disperata, shock culturale, scarsità improvvisa di risorse.
-* **Trama:**
-  * **Scenario 1: *Le Vele con le Corna*.** Prime navi da guerra con guerrieri con elmo piumato e cornuto assaltano i villaggi costieri. Il giocatore deve radunare i superstiti, costruire terrapieni ciclopici d'emergenza ed evacuare i pescatori.
-  * **Scenario 2: *L'Ultimo Carico di Alashiya*.** Una flotta mercantile proveniente da Cipro con un carico di rame e stagno naufraga tra le scogliere. Corsa contro il tempo per estrarre il carico prima che i predoni Shardana brucino i relitti.
-  * **Scenario 3: *La Porta dei Cedri*.** I Popoli del Mare tentano di tagliare i rifornimenti di legname e grano incendiando le fattorie della valle. Prima introduzione dei carri da guerra per pattugliare le pianure.
-  * **Scenario 4: *Assedio a Kadesh-sul-Mare*.** Prima grande battaglia d'assedio: le torri di vedetta e le mura ciclopiche reggono all'assalto notturno di centinaia di predoni.
-  * **Scenario 5: *Il Silenzio dei Grandi Re*.** Messaggeri arrivano con tavolette spezzate: Hattusa è bruciata, Micene è caduta, l'Egitto ha chiuso i confini del Delta. Il mercato globale è morto: non arriverà mai più stagno dall'oltremare.
+### ACT I: Fire from the Sea (Scenarios 1 – 5)
+* **Core Theme:** Desperate defense, cultural shock, sudden scarcity of tin.
+* **Plot:**
+  * **Scenario 1: *The Horned Sails*.** First war galleys bearing horned-helmet raiders (Shardana) assault coastal fishing villages. The player must evacuate refugees, erect emergency cyclopean slabs, and construct watchtowers.
+  * **Scenario 2: *The Last Cargo of Alashiya*.** A merchant convoy from Cyprus laden with copper and tin ingots runs aground on shallow reefs. A race against time to recover the cargo before raiders burn the wrecks.
+  * **Scenario 3: *The Gate of Cedars*.** Sea Peoples attempt to starve the citadel by torching inland cedar groves and grain stores. First deployment of war chariots to patrol open plains.
+  * **Scenario 4: *Siege of Kadesh-on-Sea*.** First major siege battle: cyclopean ramparts and towers withstand a massive night assault.
+  * **Scenario 5: *The Silence of the Great Kings*.** Messengers arrive bearing shattered tablets: Hattusa has burned, Mycenae has fallen, Egypt has sealed its Delta borders. The global trade network is dead: no tin will ever arrive from overseas again.
 
 ---
 
-### ATTO II: L'Eclissi del Bronzo (Scenari 6 – 10)
-* **Tema centrale:** Il collasso delle risorse nobili, guerre fratricide tra sopravvissuti, spedizione nell'ignoto.
-* **Trama:**
-  * **Scenario 6: *La Guerra degli Stracci e del Bronzo*.** Le città-stato vicine, disperate per la mancanza di metallo per le armature, attaccano le nostre carovane. Scontro fratricida per l'ultimo nodo di cassiterite (stagno).
-  * **Scenario 7: *Nel Cuore delle Gole di Pietra*.** Esaurito lo stagno, la città non può più equipaggiare nuovi soldati d'élite. Tarkhunta propone una spedizione proibita verso le montagne del Tauro, terre selvagge di tribù montane che forgiano "pietre scure cadute dal cielo".
-  * **Scenario 8: *L'Imboscata dei Popoli del Fiume*.** Avanzata in gole strette dove i carri non possono manovrare. Battaglia tattica di fanteria leggera, frombolieri e trappole.
-  * **Scenario 9: *I Fabbri Eretici*.** Incontro con una casta di artigiani montani che estraggono minerale di ferro e lo scaldano con forni a mantice doppio. Protezione del loro villaggio da un'incursione punitiva dei mercenari rivali.
-  * **Scenario 10: *La Prima Lama Nera*.** Rientro alla capitale mentre una colonna d'invasione tenta di distruggere i convogli di minerale. Tarkhunta presenta la prima spada in ferro forgiato: fragile e rozza rispetto al bronzo lucido, ma ricavabile da roccia abbondante e senza bisogno di stagno.
+### ACT II: The Bronze Eclipse (Scenarios 6 – 10)
+* **Core Theme:** Resource depletion, fratricidal wars between survivors, mountain expeditions.
+* **Plot:**
+  * **Scenario 6: *The War of Rags and Bronze*.** Neighboring city-states, desperate for bronze armor, attack our supply caravans to seize our remaining tin ingots.
+  * **Scenario 7: *Into the Stone Gorges*.** Tin supplies are exhausted; noble bronze chariots can no longer be repaired. Tarkhunta proposes an expedition into the Taurus Mountains, homelands of mountain tribes who work "dark stones fallen from the sky."
+  * **Scenario 8: *Ambush in the River Gorges*.** Tactical combat in tight rocky defiles where chariots cannot maneuver. Dominated by slingers, javeliniers, and defensive shields.
+  * **Scenario 9: *The Heretic Smiths*.** Discovery of a mountain enclave smelting hematite iron ore using double-chamber bellows. Defend their village from rival warlord raiders.
+  * **Scenario 10: *The First Black Blade*.** Return convoy escorts iron ore back to the capital. Tarkhunta presents the first forged iron sword: rougher than shining bronze, but smeltable from abundant local rock without requiring tin.
 
 ---
 
-### ATTO III: La Forgia del Ferro (Scenari 11 – 14)
-* **Tema centrale:** La democratizzazione della guerra, industrializzazione arcaica, ribaltamento dei rapporti di forza.
-* **Trama:**
-  * **Scenario 11: *Fiamme nel Bosco Sacro*.** Costruzione del primo grande distretto di Forni di Riduzione del Ferro. Produzione massiccia di armi in ferro battuto.
-  * **Scenario 12: *L'Esercito del Popolo*.** Nel vecchio mondo del bronzo, solo l'aristocrazia sui carri poteva permettersi corazza e spada. Con il ferro, il giocatore arma centinaia di contadini e miliziani. Primo scontro campale in cui la fanteria economica in ferro sbaraglia i vecchi e costosissimi carri di bronzo di una dinastia rivale.
-  * **Scenario 13: *Liberazione della Valle dell'Oronte*.** Riconquista dei granai e delle rotte fluviali perdute; bonifica dei territori occupati dai predoni Lukka.
-  * **Scenario 14: *I Forgiatori del Levante*.** La notizia della nuova metallurgia si diffonde. Una coalizione di signori della guerra tenta di impadronirsi dei forni. Difesa coordinata con truppe pesanti d'assalto dotate di picche e scudi rinforzati in ferro.
+### ACT III: The Iron Forge (Scenarios 11 – 14)
+* **Core Theme:** Democratization of warfare, archaic industrialization, shifting balance of power.
+* **Plot:**
+  * **Scenario 11: *Flames in the Sacred Grove*.** Construction of the first large-scale iron bloomery district. Mass production of forged iron spearheads.
+  * **Scenario 12: *The People's Army*.** In the old bronze world, only wealthy chariot aristocrats could afford arms. With abundant iron, the player equips hundreds of levy spearmen. First pitch battle: an inexpensive iron phalanx shatters the costly bronze chariot corps of a rival dynasty.
+  * **Scenario 13: *Liberation of the Orontes Valley*.** Reconquest of agricultural floodplains and granaries occupied by Lukka pillagers.
+  * **Scenario 14: *The Levantine Founders*.** Word of the new iron weapons spreads. A coalition of warlords attacks to capture the furnaces. Coordinated defense using heavy iron assault infantry.
 
 ---
 
-### ATTO IV: L'Alba del Nuovo Mondo (Scenari 15 – 18)
-* **Tema centrale:** Il confronto finale epocale, la sconfitta della marea nomade, rinascita della civiltà.
-* **Trama:**
-  * **Scenario 15: *La Notte dei Moli Bruciati*.** I capi dei Popoli del Mare comprendono che Kadesh-sul-Mare è l'ultimo bastione organizzato che impedisce il loro dominio totale sulla costa. Sbarchi su larga scala su tre fronti.
-  * **Scenario 16: *La Battaglia delle Fauci di Pietra*.** Imboscata titanica in una valle fortificata: utilizzo di baliste arcaiche montate su terrapieni e barriere di fuoco per incanalare l'orda nemica.
-  * **Scenario 17: *Il Giudizio di Alashiya*.** Spedizione navale di contrattacco verso Cipro per sradicare la roccaforte marittima principale dei predoni Shardana e liberare le rotte del Mediterraneo.
-  * **Scenario 18: *L'Alba d'Acciaio*.** L'ultimo Re dei Popoli del Mare assedia la capitale con macchine d'assedio catturate e un'armata oceanica. Difesa a oltranza e contrattacco finale con l'esercito d'acciaio. La vittoria segna la fine dell'Età del Bronzo e l'inizio della nuova civiltà del Ferro.
+### ACT IV: Dawn of the New Age (Scenarios 15 – 18)
+* **Core Theme:** The ultimate clash, defeat of the migratory horde, birth of Iron Age civilization.
+* **Plot:**
+  * **Scenario 15: *Night of the Burning Docks*.** Sea Peoples chieftains realize Kar-Sur is the last organized stronghold blocking total conquest of the coast. Three-pronged amphibious landings.
+  * **Scenario 16: *The Battle of Stone Jaws*.** Titan canyon ambush: cyclopean bastion towers with ballistas and pitch barriers channel the enemy horde into kill zones.
+  * **Scenario 17: *The Judgment of Alashiya*.** Counter-offensive naval raid to Cyprus to neutralize the primary maritime base of the Shardana raiders.
+  * **Scenario 18: *The Iron Dawn*.** The supreme Sea Peoples warlord marches on the capital with captured siege rams and a vast fleet. Total decisive battle: the iron army triumphs over the bronze horde. Out of the ashes of the Bronze Age, the Iron Age is born.
 
 ---
 
-## 4. Le Ambientazioni & I Biomi
+## 4. Environments & Biomes
 
-Il gioco attraversa quattro grandi biomi visivi e tattici, ciascuno con implicazioni sul gameplay:
-
-```mermaid
-graph LR
-    B1["1. Costa Levantina & Scogliere"] --- B2["2. Valli Fluviali & Campi di Grano"]
-    B2 --- B3["3. Gole del Tauro & Miniere"]
-    B3 --- B4["4. Metropoli Ciclopiche in Rovina"]
-```
-
-### 1. Costa Levantina & Scogliere d'Egeo
-* **Estetica:** Acque turchesi, banchi di sabbia dorata, palme da dattero, scogliere di roccia bianca e relitti di navi rovesciate.
-* **Gameplay:** Terreno vulnerabile a sbarchi rapidi; la sabbia riduce la velocità dei carri del 25%; l'acqua salata è un ostacolo naturale ma i guadi permettono raid a sorpresa.
-
-### 2. Valli Fluviali Alluvionali (Oronte ed Eufrate)
-* **Estetica:** Terreni d'argilla bruna, canneti fluviali, canali d'irrigazione geometrici e ampi campi di grano dorato.
-* **Gameplay:** Altissima resa economica per i granai; terreno ideale per la carica dei carri da guerra a due cavalli; fiumi attraversabili solo tramite ponti di chiatte o guadi fortificabili.
-
-### 3. Altipiani del Tauro e Gole Anatoliche
-* **Estetica:** Roccia scura e calcarea, pini montani sparsi, crepacci impervi e fumo denso che sale dai forni rupestri.
-* **Gameplay:** Nessun carro consentito o forte penalità di movimento; terreno dominato da schermagliatori, arcieri e imboscate da posizioni elevate; sede dei ricchi nodi di rame e delle uniche cave di minerale di ferro.
-
-### 4. Città Fortificate e Rovine Ciclopiche
-* **Estetica:** Mura megalitiche con blocchi di pietra poligonale incastrati a secco, porte dei leoni, palazzi a megaron con pilastri di cedro dipinti di rosso ocra e ziggurat scalinate.
-* **Gameplay:** Punti di strozzatura brutali; le fondamenta ciclopiche sono indispensabili per montare torri d'artiglieria arcaica e resistere agli arieti coperti.
-
----
-
-## 5. Tono dei Dialoghi e Documenti Storici
-
-La narrazione in-game viene presentata attraverso:
-1. **Tavolette Cuneiformi e Sigilli Cilindrici:** Il briefing di ogni missione si apre con il calco di una tavoletta d'argilla incisa in caratteri cuneiformi o geroglifici arcaici, tradotta dalla voce del consigliere Burna-Khabir.
-2. **Messaggeri a Cavallo e Fumo di Segnalazione:** Gli allarmi durante la partita arrivano con effetti sonori di corni d'ariete o bronzi percorsi, con messaggi concisi e drammatici:
-   * *"Mio Signore! Il fumo sale dal promontorio di Byblos: le navi dai becchi d'uccello sono entrate nel porto!"*
-   * *"Tarkhunta ci avverte: le scorte di stagno sono a zero. I fabbri non possono completare la corazza dei carri."*
-   * *"I forni cantano con il minerale nero della montagna: le nuove picche sono pronte per le milizie."*
+1. **Levantine Coast & Aegean Bluffs:** Turquoise water, sand dunes, date palms, burning fishing huts, shipwrecks. Sand reduces chariot speed by 25%.
+2. **Alluvial River Valleys (Orontes & Euphrates):** Fertile clay, irrigation canals, and golden wheat fields. High economic output for granaries; optimal terrain for chariot charges.
+3. **Taurus Plateaus & Anatolian Gorges:** Dark limestone cliffs, scattered pine trees, steep ravines. Inaccessible to chariots; rich in copper veins and iron hematite deposits.
+4. **Fortified Citadels & Cyclopean Ruins:** Megalithic polygonal masonry, Lion Gates, megaron palaces with painted cedar columns, and stepped temple platforms.

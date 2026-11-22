@@ -190,7 +190,7 @@ class GameApp {
     if (!this.economy.canAfford(def.cost)) {
       EventBus.get().emit('advisor:message', {
         speaker: 'burna_khabir',
-        text: 'Risorse insufficienti per reclutare questa unità!',
+        text: 'Insufficient resources to train this unit!',
         isAlert: true
       });
       return;
@@ -199,7 +199,7 @@ class GameApp {
     if (!this.economy.hasAvailableSupply(def.supplyCost)) {
       EventBus.get().emit('advisor:message', {
         speaker: 'burna_khabir',
-        text: 'Raggiunto il limite massimo di sussistenza! Costruite altri granai.',
+        text: 'Maximum supply capacity reached! Construct additional granaries.',
         isAlert: true
       });
       return;
@@ -248,7 +248,7 @@ class GameApp {
           } else {
             EventBus.get().emit('advisor:message', {
               speaker: 'burna_khabir',
-              text: 'Risorse insufficienti per erigere questa struttura!',
+              text: 'Insufficient resources to erect this structure!',
               isAlert: true
             });
           }
