@@ -23,7 +23,8 @@ export class AStar {
     graph: GridGraph,
     start: GridCoord,
     goal: GridCoord,
-    maxSearchSteps = 3000
+    maxSearchSteps = 3000,
+    blockedTileKeys?: Set<number>
   ): GridCoord[] {
     if (!graph.isInBounds(start.tx, start.ty) || !graph.isInBounds(goal.tx, goal.ty)) {
       return [];
@@ -92,6 +93,11 @@ export class AStar {
       for (const n of neighbors) {
         const nKey = toKey(n.tx, n.ty);
         if (closedSet.has(nKey)) continue;
+
+        // Skip tiles dynamically blocked by stationary units
+        if (blockedTileKeys && blockedTileKeys.has(nKey) && (n.tx !== targetGoal.tx || n.ty !== targetGoal.ty)) {
+          continue;
+        }
 
         const tileCost = graph.getTileCost(n.tx, n.ty);
         const isDiag = n.tx !== current.tx && n.ty !== current.ty;

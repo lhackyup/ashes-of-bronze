@@ -146,11 +146,11 @@ class GameApp {
     this.spawnBuilding('acropolis', 'player', pStart.tx, pStart.ty, true);
     this.spawnBuilding('bronze_foundry', 'player', pStart.tx + 5, pStart.ty, true);
 
-    // Spawn starting units
-    this.spawnUnit('donkey_caravan', 'player', (pStart.tx + 2) * TILE_SIZE, (pStart.ty + 5) * TILE_SIZE);
-    this.spawnUnit('spear_militia', 'player', (pStart.tx - 2) * TILE_SIZE, (pStart.ty + 3) * TILE_SIZE);
-    this.spawnUnit('spear_militia', 'player', (pStart.tx - 2) * TILE_SIZE, (pStart.ty + 5) * TILE_SIZE);
-    this.spawnUnit('skirmisher', 'player', (pStart.tx - 4) * TILE_SIZE, (pStart.ty + 4) * TILE_SIZE);
+    // Spawn starting units at exact tile centers
+    this.spawnUnit('donkey_caravan', 'player', (pStart.tx + 2) * TILE_SIZE + 24, (pStart.ty + 5) * TILE_SIZE + 24);
+    this.spawnUnit('spear_militia', 'player', (pStart.tx - 2) * TILE_SIZE + 24, (pStart.ty + 3) * TILE_SIZE + 24);
+    this.spawnUnit('spear_militia', 'player', (pStart.tx - 2) * TILE_SIZE + 24, (pStart.ty + 5) * TILE_SIZE + 24);
+    this.spawnUnit('skirmisher', 'player', (pStart.tx - 4) * TILE_SIZE + 24, (pStart.ty + 4) * TILE_SIZE + 24);
 
     this.camera.centerOn(pStart.tx * TILE_SIZE, pStart.ty * TILE_SIZE);
     this.resizeCanvas();
@@ -559,8 +559,25 @@ class GameApp {
       spawnTx = this.selectedBuilding.tx + Math.floor(this.selectedBuilding.def.width / 2);
       spawnTy = this.selectedBuilding.ty + this.selectedBuilding.def.height;
     }
-    const spawned = this.spawnUnit(unitDefId, 'player', spawnTx * TILE_SIZE + 12, spawnTy * TILE_SIZE + 12);
-    spawned.y += 10;
+
+    // Ensure spawn tile is not occupied; if occupied, find nearest free adjacent tile
+    if (this.units.some(un => un.hp > 0 && Math.floor(un.x / TILE_SIZE) === spawnTx && Math.floor(un.y / TILE_SIZE) === spawnTy)) {
+      for (let dy = 0; dy <= 2; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          const cx = spawnTx + dx;
+          const cy = spawnTy + dy;
+          if (cx >= 6 && this.gridGraph.isInBounds(cx, cy) && this.gridGraph.isWalkable(cx, cy)) {
+            if (!this.units.some(un => un.hp > 0 && Math.floor(un.x / TILE_SIZE) === cx && Math.floor(un.y / TILE_SIZE) === cy)) {
+              spawnTx = cx;
+              spawnTy = cy;
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    this.spawnUnit(unitDefId, 'player', spawnTx * TILE_SIZE + 24, spawnTy * TILE_SIZE + 24);
     EventBus.get().emit('audio:command');
     EventBus.get().emit('fx:floating_text', {
       text: `${def.name.split(' ')[0].toUpperCase()} READY`,
@@ -991,10 +1008,22 @@ class GameApp {
           }
         }
 
-        // Navigate using A* pathfinding
+        // Navigate using A* pathfinding avoiding tiles of stationary units
         const startTx = Math.floor(u.x / TILE_SIZE);
         const startTy = Math.floor(u.y / TILE_SIZE);
-        const pathCoords = AStar.findPath(this.gridGraph, { tx: startTx, ty: startTy }, { tx: unitTargetTx, ty: unitTargetTy });
+
+        const blockedKeys = new Set<number>();
+        for (const other of this.units) {
+          if (other.id !== u.id && other.hp > 0 && !this.selectedUnits.includes(other)) {
+            const otx = Math.floor(other.x / TILE_SIZE);
+            const oty = Math.floor(other.y / TILE_SIZE);
+            if (otx !== unitTargetTx || oty !== unitTargetTy) {
+              blockedKeys.add(oty * this.gridGraph.width + otx);
+            }
+          }
+        }
+
+        const pathCoords = AStar.findPath(this.gridGraph, { tx: startTx, ty: startTy }, { tx: unitTargetTx, ty: unitTargetTy }, 3000, blockedKeys);
 
         if (pathCoords.length > 0) {
           u.path = pathCoords.map(c => ({

@@ -72,12 +72,18 @@ export class TacticalDirector {
         const dir = this.flowField.getVectorAt(tx, ty);
 
         if (dir.x !== 0 || dir.y !== 0) {
-          const nextTarget = {
-            x: u.x + dir.x * TILE_SIZE * 2,
-            y: u.y + dir.y * TILE_SIZE * 2
-          };
-          u.path = [nextTarget];
-          u.state = 'MOVE_TO';
+          const stepX = Math.round(dir.x);
+          const stepTy = Math.round(dir.y);
+          const nextTx = tx + stepX;
+          const nextTy = ty + stepTy;
+
+          if (graph.isInBounds(nextTx, nextTy) && graph.isWalkable(nextTx, nextTy) && nextTx >= 6) {
+            u.path = [{
+              x: nextTx * TILE_SIZE + 24,
+              y: nextTy * TILE_SIZE + 24
+            }];
+            u.state = 'MOVE_TO';
+          }
         }
       }
     }
@@ -109,9 +115,9 @@ export class TacticalDirector {
 
     for (const unitReq of wave.units) {
       for (let c = 0; c < unitReq.count; c++) {
-        // Disembark directly onto the beach dunes (tx = 7)
+        // Disembark directly onto the beach dunes (tx = 7) at exact tile centers
         let spawnTx = 7;
-        let spawnTy = midTy + (c - unitReq.count / 2) * 1.5;
+        let spawnTy = Math.floor(midTy + (c - unitReq.count / 2) * 2);
 
         if (wave.spawnEdge === 'east') spawnTx = graph.width - 3;
         if (wave.spawnEdge === 'north') {
