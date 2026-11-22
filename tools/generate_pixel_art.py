@@ -200,23 +200,65 @@ def generate_buildings():
             draw.rectangle([ix, iy, ix + 12, iy + 6], fill=hex_to_rgb(PAL_BRONZE[1]), outline=hex_to_rgb("#000000"))
         img.save(f"public/assets/buildings/bldg_foundry_{owner}.png")
 
-    # 3. Granary / Windtrap & Silos (2x2 tiles = 64x64)
+    # 3. Granary & Water Well (2x2 tiles = 96x96)
     for owner, team_pal in [("player", PAL_TEAM_PLAYER), ("sea_peoples", PAL_TEAM_ENEMY)]:
-        img = Image.new("RGBA", (64, 64), (0, 0, 0, 0))
+        img = Image.new("RGBA", (96, 96), (0, 0, 0, 0))
         draw = ImageDraw.Draw(img)
-        draw.rectangle([4, 6, 60, 58], fill=hex_to_rgb("#000000", 160))
-        draw_bevel_box(draw, 2, 4, 60, 56, hex_to_rgb(PAL_CONCRETE[2]), hex_to_rgb(PAL_CONCRETE[0]), hex_to_rgb(PAL_CONCRETE[4]))
+        # Drop shadow
+        draw.rectangle([6, 12, 92, 88], fill=hex_to_rgb("#000000", 140))
+        # Stone yard terrace
+        draw_bevel_box(draw, 4, 18, 88, 70, hex_to_rgb(PAL_CONCRETE[2]), hex_to_rgb(PAL_CONCRETE[0]), hex_to_rgb(PAL_CONCRETE[4]))
 
-        # Armored circular silo dome (Windtrap louvers style)
-        draw.ellipse([8, 8, 56, 38], fill=hex_to_rgb("#a37439"), outline=hex_to_rgb("#000000"))
-        for lx in range(16, 48, 5):
-            draw.line([lx, 14, lx, 32], fill=hex_to_rgb("#38230c"), width=2)
+        # Granary storehouse stilt piers
+        for px in (8, 22, 38, 50):
+            draw.rectangle([px, 72, px + 8, 84], fill=hex_to_rgb("#4a4136"), outline=hex_to_rgb("#29221b"))
+        # Elevated wooden floor
+        draw.rectangle([6, 68, 58, 73], fill=hex_to_rgb("#5c3a21"), outline=hex_to_rgb("#382212"))
 
-        # Bottom delivery gate
-        draw_bevel_box(draw, 24, 38, 16, 20, hex_to_rgb("#1f1710"), hex_to_rgb("#3b2d20"), hex_to_rgb("#0a0705"))
-        # Grain sacks
-        for sx, sy in [(10, 44), (16, 48), (46, 46)]:
-            draw.ellipse([sx, sy, sx + 8, sy + 6], fill=hex_to_rgb("#e0d4c1"), outline=hex_to_rgb("#000000"))
+        # Mudbrick walls & timber framing
+        draw_bevel_box(draw, 8, 28, 48, 40, hex_to_rgb("#c7b6a2"), hex_to_rgb("#e3d8cc"), hex_to_rgb("#857663"))
+        for tx in (8, 30, 52):
+            draw.rectangle([tx, 28, tx + 4, 68], fill=hex_to_rgb("#6b4423"))
+        draw.rectangle([8, 46, 56, 49], fill=hex_to_rgb("#6b4423"))
+
+        # Grain delivery doorway
+        draw_bevel_box(draw, 14, 48, 14, 20, hex_to_rgb("#24160c"), hex_to_rgb("#422817"), hex_to_rgb("#0a0604"))
+        draw.rectangle([16, 52, 18, 54], fill=hex_to_rgb("#fbbf24")) # Bronze stud
+
+        # Pitched terracotta roof
+        roof_c = "#992b1b" if owner == "player" else "#1d4e89"
+        roof_hi = "#d94834" if owner == "player" else "#2b6cb0"
+        draw_bevel_box(draw, 6, 8, 52, 22, hex_to_rgb(roof_c), hex_to_rgb(roof_hi), hex_to_rgb("#3b100a"))
+        draw.polygon([(6, 12), (32, 2), (58, 12)], fill=hex_to_rgb("#e6dfd3"), outline=hex_to_rgb("#786e63"))
+
+        # Grain sacks & amphorae
+        for sx, sy in [(32, 68), (42, 70), (37, 62)]:
+            draw.ellipse([sx, sy, sx + 9, sy + 7], fill=hex_to_rgb("#d97706"), outline=hex_to_rgb("#451a03"))
+        draw.ellipse([32, 77, 36, 81], fill=hex_to_rgb("#fef08a")) # Spilled grain
+
+        # Terracotta jar
+        draw.ellipse([50, 64, 57, 76], fill=hex_to_rgb("#c2410c"), outline=hex_to_rgb("#431407"))
+
+        # Freshwater Well (Right side)
+        draw.ellipse([64, 52, 88, 76], fill=hex_to_rgb(PAL_CONCRETE[2]), outline=hex_to_rgb("#1f1a14"))
+        # Deep sparkling water
+        draw.ellipse([68, 56, 84, 72], fill=hex_to_rgb("#0284c7"), outline=hex_to_rgb("#e0f2fe"))
+        draw.ellipse([72, 60, 80, 68], fill=hex_to_rgb("#082f49"))
+
+        # Well timber posts & roof canopy
+        draw.rectangle([66, 32, 69, 58], fill=hex_to_rgb("#5c3a21"))
+        draw.rectangle([85, 32, 88, 58], fill=hex_to_rgb("#5c3a21"))
+        draw.rectangle([64, 30, 90, 33], fill=hex_to_rgb("#5c3a21"))
+        draw.polygon([(63, 30), (77, 22), (91, 30)], fill=hex_to_rgb("#3d2515"), outline=hex_to_rgb("#1f130a"))
+
+        # Bucket & rope
+        draw.line([77, 33, 77, 46], fill=hex_to_rgb("#e2ceb5"), width=1)
+        draw.rectangle([74, 46, 80, 52], fill=hex_to_rgb("#78350f"), outline=hex_to_rgb("#fbbf24"))
+        draw.rectangle([75, 47, 79, 49], fill=hex_to_rgb("#38bdf8"))
+
+        # Water trough in front
+        draw_bevel_box(draw, 64, 78, 24, 10, hex_to_rgb(PAL_CONCRETE[3]), hex_to_rgb(PAL_CONCRETE[1]), hex_to_rgb(PAL_CONCRETE[4]))
+        draw.rectangle([66, 80, 86, 86], fill=hex_to_rgb("#38bdf8"))
         img.save(f"public/assets/buildings/bldg_granary_{owner}.png")
 
     # 4. Barracks / Infantry Depot (3x3 tiles = 96x96)

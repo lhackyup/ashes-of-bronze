@@ -575,20 +575,353 @@ export class SVGAProceduralBank {
         ctx.beginPath(); ctx.arc(72, 42, 15, 0, Math.PI * 2); ctx.stroke();
       }));
 
-      // 3. Granary (2x2 tiles = 96x96)
+      // 3. Granary & Freshwater Well (2x2 tiles = 96x96)
       this.buildingSprites.set(`granary_${owner}`, this.makeBuildingSprite(96, (ctx) => {
-        ctx.fillStyle = '#b8afa4';
-        ctx.fillRect(6, 14, 82, 74);
+        // --- A. Cobblestone Yard & Shaded Terrace Base ---
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+        ctx.fillRect(4, 16, 88, 74);
 
-        this.drawRoofTiles(ctx, 8, 12, 80, 36, cMain, cHi);
-        ctx.fillStyle = '#7a7066';
-        ctx.fillRect(10, 48, 76, 38);
-
-        // Sacks of grain
-        for (let sx = 20; sx <= 66; sx += 14) {
-          ctx.fillStyle = '#ffd166';
-          ctx.beginPath(); ctx.arc(sx, 74, 6, 0, Math.PI * 2); ctx.fill();
+        // Stone terrace flagstones
+        ctx.fillStyle = '#6e6459';
+        ctx.fillRect(4, 18, 88, 70);
+        ctx.fillStyle = '#8a7f72';
+        for (let fx = 6; fx < 88; fx += 14) {
+          for (let fy = 20; fy < 86; fy += 12) {
+            ctx.fillRect(fx, fy, 12, 10);
+            ctx.strokeStyle = '#473f36';
+            ctx.strokeRect(fx, fy, 12, 10);
+          }
         }
+
+        // --- B. Granary Building (Left Section: x: 4..58, y: 12..84) ---
+        // 1. Megalithic Foundation Stilt Piers (elevates timber floor to repel rodents & dampness)
+        const piers = [6, 20, 36, 48];
+        for (const px of piers) {
+          const pierG = ctx.createLinearGradient(px, 72, px + 8, 84);
+          pierG.addColorStop(0, '#a39788');
+          pierG.addColorStop(1, '#4a4136');
+          ctx.fillStyle = pierG;
+          ctx.fillRect(px, 72, 8, 12);
+          ctx.strokeStyle = '#29221b';
+          ctx.strokeRect(px, 72, 8, 12);
+        }
+        // Dark ventilated crawlspace under floor
+        ctx.fillStyle = '#211a14';
+        ctx.fillRect(5, 74, 52, 6);
+
+        // Heavy Cedar floor beams
+        ctx.fillStyle = '#5c3a21';
+        ctx.fillRect(4, 69, 54, 5);
+        ctx.fillStyle = '#805230';
+        ctx.fillRect(4, 69, 54, 1.5);
+
+        // 2. Main Storehouse Walls (Sunbaked Mudbrick with Cedar Timber Framework)
+        const wallG = ctx.createLinearGradient(5, 28, 56, 70);
+        wallG.addColorStop(0, '#d9cbba');
+        wallG.addColorStop(0.5, '#c7b6a2');
+        wallG.addColorStop(1, '#9e8e7a');
+        ctx.fillStyle = wallG;
+        ctx.fillRect(6, 30, 50, 40);
+
+        // Mudbrick horizontal mortar lines
+        ctx.strokeStyle = 'rgba(84, 71, 57, 0.35)';
+        ctx.lineWidth = 1;
+        for (let my = 36; my < 70; my += 6) {
+          ctx.beginPath();
+          ctx.moveTo(7, my);
+          ctx.lineTo(55, my);
+          ctx.stroke();
+        }
+
+        // Cedar corner posts and bracing
+        ctx.fillStyle = '#6b4423';
+        ctx.fillRect(6, 30, 5, 40); // Left post
+        ctx.fillRect(51, 30, 5, 40); // Right post
+        ctx.fillRect(29, 30, 4, 40); // Center post
+        ctx.fillRect(6, 48, 50, 3); // Horizontal timber tie-beam
+        ctx.fillStyle = '#8d5b32';
+        ctx.fillRect(6, 30, 1.5, 40);
+        ctx.fillRect(29, 30, 1.5, 40);
+
+        // Arched Granary Intake Door
+        ctx.fillStyle = '#1c130c';
+        ctx.fillRect(13, 50, 13, 20);
+        ctx.beginPath();
+        ctx.arc(19.5, 50, 6.5, Math.PI, 0);
+        ctx.fill();
+        // Bronze studded wooden door leaves
+        ctx.fillStyle = '#422817';
+        ctx.fillRect(14, 51, 11, 18);
+        ctx.fillStyle = '#fbbf24'; // Bronze rivets & ring handle
+        ctx.fillRect(15, 54, 2, 2);
+        ctx.fillRect(22, 54, 2, 2);
+        ctx.fillRect(21, 60, 2.5, 2.5);
+
+        // Access timber ramp leading into door
+        ctx.fillStyle = '#5c3a21';
+        ctx.beginPath();
+        ctx.moveTo(11, 74); ctx.lineTo(26, 74); ctx.lineTo(28, 82); ctx.lineTo(9, 82);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#382212';
+        ctx.stroke();
+
+        // 3. Upper Grain Loft / Attic Louver Window
+        ctx.fillStyle = '#261b12';
+        ctx.fillRect(14, 34, 11, 10);
+        // Cedar louvers
+        ctx.fillStyle = '#784725';
+        ctx.fillRect(14, 36, 11, 1.5);
+        ctx.fillRect(14, 39, 11, 1.5);
+        ctx.fillRect(14, 42, 11, 1.5);
+
+        // Hoist crane timber arm jutting from gable
+        ctx.fillStyle = '#5c3a21';
+        ctx.fillRect(19, 16, 3, 16);
+        ctx.fillRect(19, 16, 14, 3);
+        // Dangling hemp hoist rope with bronze hook
+        ctx.strokeStyle = '#d4b996';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(31, 19);
+        ctx.lineTo(31, 38);
+        ctx.stroke();
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(30, 38, 3, 3);
+
+        // 4. Beehive Silo Dome Annex (Rear-Left)
+        const siloG = ctx.createLinearGradient(0, 18, 16, 48);
+        siloG.addColorStop(0, '#c79d63');
+        siloG.addColorStop(1, '#66451e');
+        ctx.fillStyle = siloG;
+        ctx.beginPath();
+        ctx.ellipse(8, 28, 7, 12, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#38230c';
+        ctx.stroke();
+        // Bronze reinforcing hoops on silo
+        ctx.strokeStyle = '#d97706';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(8, 28, 7, 0, Math.PI);
+        ctx.stroke();
+
+        // 5. Pitched Cedar Shake / Terracotta Tile Roof
+        this.drawRoofTiles(ctx, 4, 10, 54, 22, cMain, cHi);
+        // Triangular pediment front
+        ctx.fillStyle = '#e6dfd3';
+        ctx.beginPath();
+        ctx.moveTo(4, 14); ctx.lineTo(31, 3); ctx.lineTo(58, 14);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#786e63';
+        ctx.stroke();
+
+        // Faction Pennant on Roof Peak
+        ctx.fillStyle = '#5c3a21';
+        ctx.fillRect(30, -2, 2, 7);
+        ctx.fillStyle = cMain;
+        ctx.beginPath();
+        ctx.moveTo(32, -2); ctx.lineTo(44, 1); ctx.lineTo(32, 4);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = cTrim;
+        ctx.fillRect(32, 0, 2, 3);
+
+        // --- C. Stored Harvest: Burlap Sacks, Amphorae & Wheat Sheaves ---
+        // 1. Stacked Burlap Grain Sacks (Golden / Amber with tied cord necks)
+        const sacks = [
+          { x: 33, y: 70, w: 10, h: 8, rot: -0.1 },
+          { x: 43, y: 72, w: 10, h: 8, rot: 0.1 },
+          { x: 37, y: 64, w: 10, h: 8, rot: 0.05 }
+        ];
+        for (const s of sacks) {
+          ctx.save();
+          ctx.translate(s.x, s.y);
+          ctx.rotate(s.rot);
+          const sackG = ctx.createRadialGradient(4, 3, 1, 5, 4, 7);
+          sackG.addColorStop(0, '#fde68a');
+          sackG.addColorStop(0.5, '#d97706');
+          sackG.addColorStop(1, '#78350f');
+          ctx.fillStyle = sackG;
+          ctx.beginPath();
+          ctx.ellipse(5, 4, s.w / 2, s.h / 2, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = '#451a03';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+          // Tied sack neck tuft
+          ctx.fillStyle = '#fef08a';
+          ctx.fillRect(3, -2, 4, 3);
+          ctx.fillStyle = '#78350f';
+          ctx.fillRect(3.5, 0, 3, 1);
+          ctx.restore();
+        }
+
+        // Open sack with spilled golden wheat grains
+        ctx.fillStyle = '#fef08a';
+        ctx.beginPath();
+        ctx.ellipse(33, 79, 4, 2.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ca8a04';
+        ctx.fillRect(30, 80, 2, 1.5);
+        ctx.fillRect(35, 80, 2, 1.5);
+        ctx.fillRect(33, 81.5, 2, 1.5);
+
+        // 2. Terracotta Storage Pithoi / Jars
+        const jars = [
+          { x: 49, y: 62, w: 7, h: 14 },
+          { x: 55, y: 67, w: 6, h: 11 }
+        ];
+        for (const j of jars) {
+          const jarG = ctx.createLinearGradient(j.x, j.y, j.x + j.w, j.y + j.h);
+          jarG.addColorStop(0, '#ea580c');
+          jarG.addColorStop(0.4, '#c2410c');
+          jarG.addColorStop(1, '#431407');
+          ctx.fillStyle = jarG;
+          ctx.beginPath();
+          ctx.ellipse(j.x + j.w / 2, j.y + j.h * 0.6, j.w / 2, j.h * 0.4, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillRect(j.x + j.w * 0.2, j.y, j.w * 0.6, j.h * 0.3);
+          ctx.strokeStyle = '#270c04';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+          // Jar rim
+          ctx.fillStyle = '#fed7aa';
+          ctx.fillRect(j.x + j.w * 0.1, j.y - 1, j.w * 0.8, 2);
+        }
+
+        // --- D. The Freshwater Well & Watering Trough (Right Section: x: 62..94, y: 28..88) ---
+        // 1. Wet cobblestone splash circle
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.4)';
+        ctx.beginPath();
+        ctx.ellipse(78, 68, 14, 8, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 2. Circular Stone Well-Curb (Dry-laid masonry)
+        const wellG = ctx.createLinearGradient(66, 52, 90, 76);
+        wellG.addColorStop(0, '#d1c7bc');
+        wellG.addColorStop(0.3, '#9c8e7e');
+        wellG.addColorStop(0.8, '#574d42');
+        wellG.addColorStop(1, '#2d251e');
+        ctx.fillStyle = wellG;
+        ctx.fillRect(66, 54, 24, 20);
+        ctx.strokeStyle = '#1f1a14';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(66, 54, 24, 20);
+
+        // Well masonry block lines
+        ctx.strokeStyle = 'rgba(30, 24, 18, 0.45)';
+        ctx.beginPath();
+        ctx.moveTo(66, 60); ctx.lineTo(90, 60);
+        ctx.moveTo(66, 67); ctx.lineTo(90, 67);
+        ctx.moveTo(74, 54); ctx.lineTo(74, 60);
+        ctx.moveTo(82, 60); ctx.lineTo(82, 67);
+        ctx.moveTo(76, 67); ctx.lineTo(76, 74);
+        ctx.stroke();
+
+        // Upper stone curb rim ellipse
+        ctx.fillStyle = '#b8ada0';
+        ctx.beginPath();
+        ctx.ellipse(78, 54, 12, 6, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#382f25';
+        ctx.stroke();
+
+        // 3. Deep Crystal Water Reservoir
+        const waterG = ctx.createRadialGradient(77, 53, 1, 78, 54, 10);
+        waterG.addColorStop(0, '#e0f2fe'); // Sunlight reflection
+        waterG.addColorStop(0.25, '#38bdf8'); // Clear turquoise
+        waterG.addColorStop(0.65, '#0284c7'); // Deep spring blue
+        waterG.addColorStop(1, '#082f49'); // Abyssal well depths
+        ctx.fillStyle = waterG;
+        ctx.beginPath();
+        ctx.ellipse(78, 54, 9, 4.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Glistening surface ripples
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.65)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(77, 53, 3, 0, Math.PI * 1.5);
+        ctx.stroke();
+
+        // 4. Timber Well Gallows, Windlass Spindle & Canopy
+        // Upright cedar timber posts
+        ctx.fillStyle = '#5c3a21';
+        ctx.fillRect(66, 32, 3, 26);
+        ctx.fillRect(87, 32, 3, 26);
+        ctx.fillStyle = '#85532f';
+        ctx.fillRect(66, 32, 1, 26);
+        ctx.fillRect(87, 32, 1, 26);
+
+        // Overhead timber crossbeam
+        ctx.fillStyle = '#5c3a21';
+        ctx.fillRect(64, 32, 28, 3.5);
+
+        // Protective wooden canopy hood
+        ctx.fillStyle = '#3d2515';
+        ctx.beginPath();
+        ctx.moveTo(63, 32); ctx.lineTo(78, 24); ctx.lineTo(93, 32);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#1f130a';
+        ctx.stroke();
+        // Canopy peak trim
+        ctx.fillStyle = cTrim;
+        ctx.fillRect(76.5, 22.5, 3, 3);
+
+        // Winch axle spindle with wound hemp rope
+        ctx.fillStyle = '#3d2617';
+        ctx.fillRect(69, 38, 18, 3.5);
+        ctx.fillStyle = '#e2ceb5'; // Rope coils
+        for (let rx = 72; rx <= 82; rx += 2) {
+          ctx.fillRect(rx, 37.5, 1.5, 4.5);
+        }
+        // Crank handle
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(89, 39, 4, 1.5);
+        ctx.fillRect(92, 37, 1.5, 5);
+
+        // Hanging well rope & bucket brimming with water
+        ctx.strokeStyle = '#e2ceb5';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(77, 41);
+        ctx.lineTo(77, 48);
+        ctx.stroke();
+
+        // Bronze / Cedar bucket
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(74, 48, 6, 6);
+        ctx.fillStyle = '#38bdf8'; // Water inside bucket
+        ctx.fillRect(75, 48, 4, 1.5);
+        ctx.fillStyle = '#fbbf24'; // Bronze bucket bands
+        ctx.fillRect(74, 50, 6, 1);
+        ctx.fillRect(74, 53, 6, 1);
+
+        // 5. Hewn Stone Water Trough / Animal Basin (Front of well)
+        const troughG = ctx.createLinearGradient(63, 76, 89, 88);
+        troughG.addColorStop(0, '#948779');
+        troughG.addColorStop(1, '#423930');
+        ctx.fillStyle = troughG;
+        ctx.fillRect(63, 76, 26, 11);
+        ctx.strokeStyle = '#211c17';
+        ctx.strokeRect(63, 76, 26, 11);
+
+        // Filled trough water
+        const tWaterG = ctx.createLinearGradient(65, 78, 87, 85);
+        tWaterG.addColorStop(0, '#38bdf8');
+        tWaterG.addColorStop(1, '#0284c7');
+        ctx.fillStyle = tWaterG;
+        ctx.fillRect(65, 78, 22, 7);
+        // Water surface glints & droplets
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(67, 79, 3, 1);
+        ctx.fillRect(76, 80, 2, 1);
+        // Droplet dripping from bucket into trough
+        ctx.fillStyle = '#7dd3fc';
+        ctx.fillRect(76.5, 71, 1.5, 2.5);
       }));
 
       // 4. Barracks (3x3 tiles = 144x144)
