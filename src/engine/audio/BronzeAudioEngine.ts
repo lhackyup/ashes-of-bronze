@@ -2,10 +2,18 @@ import { EventBus } from '../../core/EventBus.ts';
 
 export class BronzeAudioEngine {
   private ctx: AudioContext | null = null;
+  private masterGain: GainNode | null = null;
+  private bgmGain: GainNode | null = null;
+  private sfxGain: GainNode | null = null;
+
   private isMuted: boolean = false;
   private bgmPlaying: boolean = false;
   private bgmIntervalId: number | null = null;
   private bgmStep: number = 0;
+
+  private masterVol: number = 1.0;
+  private bgmVol: number = 0.7;
+  private sfxVol: number = 0.85;
 
   // Scala modale arcaica egea/anatolica (Modo Frigio / Eolio antico)
   private readonly bgmMelody = [
@@ -24,11 +32,44 @@ export class BronzeAudioEngine {
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
       if (!AudioCtx) return false;
       this.ctx = new AudioCtx();
+
+      this.masterGain = this.ctx.createGain();
+      this.masterGain.gain.setValueAtTime(this.isMuted ? 0 : this.masterVol, this.ctx.currentTime);
+      this.masterGain.connect(this.ctx.destination);
+
+      this.bgmGain = this.ctx.createGain();
+      this.bgmGain.gain.setValueAtTime(this.bgmVol, this.ctx.currentTime);
+      this.bgmGain.connect(this.masterGain);
+
+      this.sfxGain = this.ctx.createGain();
+      this.sfxGain.gain.setValueAtTime(this.sfxVol, this.ctx.currentTime);
+      this.sfxGain.connect(this.masterGain);
     }
     if (this.ctx.state === 'suspended') {
       this.ctx.resume();
     }
     return true;
+  }
+
+  public setMasterVolume(v: number): void {
+    this.masterVol = Math.max(0, Math.min(1, v));
+    if (this.masterGain && this.ctx) {
+      this.masterGain.gain.setValueAtTime(this.isMuted ? 0 : this.masterVol, this.ctx.currentTime);
+    }
+  }
+
+  public setBGMVolume(v: number): void {
+    this.bgmVol = Math.max(0, Math.min(1, v));
+    if (this.bgmGain && this.ctx) {
+      this.bgmGain.gain.setValueAtTime(this.bgmVol, this.ctx.currentTime);
+    }
+  }
+
+  public setSFXVolume(v: number): void {
+    this.sfxVol = Math.max(0, Math.min(1, v));
+    if (this.sfxGain && this.ctx) {
+      this.sfxGain.gain.setValueAtTime(this.sfxVol, this.ctx.currentTime);
+    }
   }
 
   private setupEventListeners(): void {
@@ -63,7 +104,7 @@ export class BronzeAudioEngine {
 
   // --- Effetti Sonori Sintetizzati ---
 
-  public playTone(freq: number, type: OscillatorType, duration: number, gainVal = 0.15): void {
+  public playTone(freq: number, type: OscillatorType, duration: number, gainVal = 0.15, isBGM = false): void {
     if (this.isMuted || !this.initContext() || !this.ctx) return;
 
     try {
@@ -77,12 +118,13 @@ export class BronzeAudioEngine {
       gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
 
       osc.connect(gain);
-      gain.connect(this.ctx.destination);
+      const destination = (isBGM ? this.bgmGain : this.sfxGain) || this.masterGain || this.ctx.destination;
+      gain.connect(destination);
 
       osc.start(now);
       osc.stop(now + duration);
     } catch {
-      // Ignora errori da policy audio browser non toccato
+      // Ignore audio policy errors
     }
   }
 
@@ -111,11 +153,13 @@ export class BronzeAudioEngine {
 
       noise.connect(filter);
       filter.connect(gain);
-      gain.connect(this.ctx.destination);
+      gain.connect(this.sfxGain || this.masterGain || this.ctx.destination);
 
       noise.start(now);
       noise.stop(now + duration);
-    } catch {}
+    } catch {
+      // Ignore
+    }
   }
 
   public playClick(): void {
@@ -212,11 +256,11 @@ export class BronzeAudioEngine {
       const note = this.bgmMelody[this.bgmStep % this.bgmMelody.length];
       if (note > 0) {
         const freq = 440 * Math.pow(2, (note - 69) / 12);
-        this.playTone(freq, 'triangle', 0.45, 0.04);
+        this.playTone(freq, 'triangle', 0.45, 0.04, true);
 
         // Tamburo di fondo ogni 4 battute
         if (this.bgmStep % 4 === 0) {
-          this.playTone(75, 'sine', 0.35, 0.09);
+          this.playTone(75, 'sine', 0.35, 0.09, true);
         }
       }
       this.bgmStep++;

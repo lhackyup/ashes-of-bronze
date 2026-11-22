@@ -1,6 +1,7 @@
 import { EventBus } from '../core/EventBus.ts';
 import { SVGAProceduralBank } from '../engine/rendering/SVGAProceduralBank.ts';
 import { MissionStats, ObjectiveProgress } from '../campaign/ObjectiveManager.ts';
+import { SaveManager } from '../services/SaveManager.ts';
 
 export class DebriefingModal {
   private overlayEl: HTMLElement | null = null;
@@ -52,6 +53,16 @@ export class DebriefingModal {
     const chronicleText = isVictory
       ? 'The sea churns red with the blood of the horned raiders. By blade, bow, and the unyielding strength of our cyclopean foundations, Kadesh-on-Sea has held fast! The cassiterite is secured in our storehouses, and the fires of our foundries will keep our people armed through the collapsing age.'
       : 'The walls of our acropolis have crumbled into dust. The sea raiders have overrun our hearths, and our people scatter into the wilderness. The memory of our colony dissolves into the ashes of bronze...';
+
+    if (isVictory) {
+      SaveManager.get().markScenarioCompleted('scenario_01_horned_sails', 'scenario_02_last_cargo_alashiya', {
+        scenarioId: 'scenario_01_horned_sails',
+        title: 'Scenario I: The Horned Sails',
+        act: 1,
+        entry: chronicleText,
+        bestTimeSeconds: stats.elapsedSeconds
+      });
+    }
 
     const minutes = Math.floor(stats.elapsedSeconds / 60);
     const seconds = Math.floor(stats.elapsedSeconds % 60);

@@ -21,6 +21,11 @@ import { AssetLoader } from './engine/rendering/AssetLoader.ts';
 import { ObjectiveManager } from './campaign/ObjectiveManager.ts';
 import { CouncilModal } from './ui/CouncilModal.ts';
 import { DebriefingModal } from './ui/DebriefingModal.ts';
+import { TitleScreen } from './ui/TitleScreen.ts';
+import { CampaignMapModal } from './ui/CampaignMapModal.ts';
+import { ChronicleModal } from './ui/ChronicleModal.ts';
+import { SettingsModal } from './ui/SettingsModal.ts';
+import { SaveManager } from './services/SaveManager.ts';
 
 class GameApp {
   private canvas!: HTMLCanvasElement;
@@ -36,9 +41,16 @@ class GameApp {
   private tacticalDirector!: TacticalDirector;
   private hud!: HUDController;
 
+  private titleScreen!: TitleScreen;
+  private campaignMapModal!: CampaignMapModal;
+  private chronicleModal!: ChronicleModal;
+  private settingsModal!: SettingsModal;
   private objectiveManager!: ObjectiveManager;
   private councilModal!: CouncilModal;
   private debriefingModal!: DebriefingModal;
+
+  private isGamePaused: boolean = true;
+  private gameSpeedMultiplier: number = 1.0;
   private hasHarvestedFirstTin: boolean = false;
   private hasWarnedWatchtower: boolean = false;
 
@@ -116,33 +128,107 @@ class GameApp {
       this.trainUnit(unitDefId);
     };
 
-    // Instantiate Campaign Objective Manager & Modals
+    // Initialize Settings from SaveManager
+    const initialSettings = SaveManager.get().getSettings();
+    this.gameSpeedMultiplier = initialSettings.gameSpeed || 1.0;
+    this.camera.panSpeed = initialSettings.panSpeed || 650;
+
+    // Instantiate Campaign Transversal Modals & Menus
+    this.titleScreen = new TitleScreen();
+    this.campaignMapModal = new CampaignMapModal();
+    this.chronicleModal = new ChronicleModal();
+    this.settingsModal = new SettingsModal(this.audio);
+
     this.objectiveManager = new ObjectiveManager(scenario);
     this.councilModal = new CouncilModal(() => {
+      this.isGamePaused = false;
       this.audio.startBGM();
     });
     this.debriefingModal = new DebriefingModal(
       () => window.location.reload(),
-      () => window.location.reload()
+      () => {
+        this.campaignMapModal.show();
+      }
     );
+
+    // Title Screen button actions
+    this.titleScreen.onContinue = () => {
+      this.titleScreen.hide();
+      this.councilModal.show();
+    };
+    this.titleScreen.onOpenMap = () => {
+      this.campaignMapModal.show();
+    };
+    this.titleScreen.onOpenChronicle = () => {
+      this.chronicleModal.show();
+    };
+    this.titleScreen.onOpenSettings = () => {
+      this.settingsModal.show(false);
+    };
+    this.titleScreen.onNewCampaign = () => {
+      window.location.reload();
+    };
+
+    // Strategic Map actions
+    this.campaignMapModal.onSelectScenario = (_scenarioId: string) => {
+      this.titleScreen.hide();
+      this.councilModal.show();
+    };
+
+    // Settings Modal actions
+    this.settingsModal.onResume = () => {
+      this.isGamePaused = false;
+    };
+    this.settingsModal.onRestartScenario = () => {
+      window.location.reload();
+    };
+    this.settingsModal.onOpenCouncil = () => {
+      this.councilModal.show();
+    };
+    this.settingsModal.onReturnToMap = () => {
+      this.campaignMapModal.show();
+    };
+    this.settingsModal.onReturnToTitle = () => {
+      this.isGamePaused = true;
+      this.titleScreen.show();
+    };
+    this.settingsModal.onSpeedChanged = (speed: number) => {
+      this.gameSpeedMultiplier = speed;
+    };
+    this.settingsModal.onPanSpeedChanged = (panSpeed: number) => {
+      this.camera.panSpeed = panSpeed;
+    };
+
+    // Wire Top Bar Buttons
+    document.getElementById('btn-open-council')?.addEventListener('click', () => {
+      this.councilModal.show();
+    });
+    document.getElementById('btn-open-map')?.addEventListener('click', () => {
+      this.campaignMapModal.show();
+    });
+    document.getElementById('btn-open-chronicle')?.addEventListener('click', () => {
+      this.chronicleModal.show();
+    });
+    document.getElementById('btn-open-settings')?.addEventListener('click', () => {
+      this.isGamePaused = true;
+      this.settingsModal.show(true);
+    });
 
     // Wire Victory / Defeat events
     EventBus.get().on('scenario:victory', (data: any) => {
+      this.isGamePaused = true;
       this.debriefingModal.showVictory(data.stats, data.objectives);
     });
     EventBus.get().on('scenario:defeat', (data: any) => {
+      this.isGamePaused = true;
       this.debriefingModal.showDefeat(data.reason, data.stats, data.objectives);
-    });
-
-    // Wire Top Bar War Council button
-    document.getElementById('btn-open-council')?.addEventListener('click', () => {
-      this.councilModal.show();
     });
 
     this.setupInputHandlers();
 
-    // Show initial War Council briefing to introduce the crisis, advisors, and mandates
-    this.councilModal.show();
+    // Show initial Title Screen on startup
+    this.isGamePaused = true;
+    this.titleScreen.show();
 
     // Send initial narrative advisor briefing
     EventBus.get().emit('advisor:message', {
@@ -283,7 +369,14 @@ class GameApp {
   private setupInputHandlers(): void {
     window.addEventListener('keydown', (e) => {
       this.keysDown.add(e.code);
-      if (e.code === 'KeyM') {
+      if (e.code === 'Escape') {
+        this.isGamePaused = !this.isGamePaused;
+        if (this.isGamePaused) {
+          this.settingsModal.show(true);
+        } else {
+          this.settingsModal.hide();
+        }
+      } else if (e.code === 'KeyM') {
         const muted = this.audio.toggleMute();
         console.log('Audio muted:', muted);
       } else if (e.code === 'Equal' || e.code === 'NumpadAdd') {
@@ -756,10 +849,13 @@ class GameApp {
 
   private gameLoop(timestamp: number): void {
     if (!this.lastTime) this.lastTime = timestamp;
-    const dt = Math.min(0.1, (timestamp - this.lastTime) / 1000);
+    const rawDt = Math.min(0.1, (timestamp - this.lastTime) / 1000);
     this.lastTime = timestamp;
 
-    this.update(dt);
+    if (!this.isGamePaused) {
+      const dt = rawDt * this.gameSpeedMultiplier;
+      this.update(dt);
+    }
     this.render();
 
     requestAnimationFrame((t) => this.gameLoop(t));
