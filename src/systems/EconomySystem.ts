@@ -17,6 +17,9 @@ export class EconomySystem {
     timber: 500
   };
 
+  private warnedNearMax: Record<string, boolean> = {};
+  private warnedFull: Record<string, boolean> = {};
+
   constructor(initialResources: Partial<ResourcePool> = {}) {
     this.resources = {
       copper: initialResources.copper ?? 400,
@@ -81,6 +84,50 @@ export class EconomySystem {
     if (changed) {
       EventBus.get().emit('economy:storage_changed', this.storageMax);
       EventBus.get().emit('economy:changed', this.resources);
+      this.checkStorageAlerts();
+    }
+  }
+
+  public checkStorageAlerts(): void {
+    const types: ResourceType[] = ['copper', 'tin', 'stone', 'timber', 'iron', 'grain'];
+    for (const t of types) {
+      const cur = this.resources[t] || 0;
+      const max = this.storageMax[t] || 500;
+      const ratio = cur / max;
+
+      if (ratio >= 1.0) {
+        if (!this.warnedFull[t]) {
+          this.warnedFull[t] = true;
+          this.warnedNearMax[t] = true;
+          const isOre = t === 'copper' || t === 'tin' || t === 'iron';
+          const speaker = isOre ? 'tarkhunta' : 'burna_khabir';
+          const speakerName = isOre ? 'Tarkhunta' : 'Burna-Khabir';
+          const resName = t.toUpperCase();
+          EventBus.get().emit('advisor:message', {
+            speaker,
+            text: `${speakerName}: Wanax! Our storerooms for ${resName} are 100% FULL (${Math.floor(cur)}/${max})! Build a ${isOre ? 'Bronze Foundry' : 'Granary'} or spend resources!`,
+            isAlert: true
+          });
+          EventBus.get().emit('audio:combat_hit');
+        }
+      } else if (ratio >= 0.85) {
+        if (!this.warnedNearMax[t]) {
+          this.warnedNearMax[t] = true;
+          const isOre = t === 'copper' || t === 'tin' || t === 'iron';
+          const speaker = isOre ? 'tarkhunta' : 'burna_khabir';
+          const speakerName = isOre ? 'Tarkhunta' : 'Burna-Khabir';
+          const resName = t.charAt(0).toUpperCase() + t.slice(1);
+          const pct = Math.floor(ratio * 100);
+          EventBus.get().emit('advisor:message', {
+            speaker,
+            text: `${speakerName}: Wanax, heed my counsel! Our ${resName} stockpile approaches capacity (${Math.floor(cur)}/${max} — ${pct}%)! Erect a ${isOre ? 'Bronze Foundry' : 'Granary'} before our donkeys are halted.`,
+            isAlert: false
+          });
+        }
+      } else if (ratio < 0.75) {
+        this.warnedNearMax[t] = false;
+        this.warnedFull[t] = false;
+      }
     }
   }
 
@@ -115,6 +162,7 @@ export class EconomySystem {
     if (cost.timber) this.resources.timber -= cost.timber;
 
     EventBus.get().emit('economy:changed', this.resources);
+    this.checkStorageAlerts();
     return true;
   }
 
@@ -125,6 +173,7 @@ export class EconomySystem {
       if (toAdd > 0) {
         this.resources[type] += toAdd;
         EventBus.get().emit('economy:changed', this.resources);
+        this.checkStorageAlerts();
       }
       return toAdd;
     }

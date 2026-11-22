@@ -18,6 +18,21 @@ export class HUDController {
   private resGrainEl!: HTMLElement;
   private resSupplyEl!: HTMLElement;
 
+  private capCopperEl: HTMLElement | null = null;
+  private capTinEl: HTMLElement | null = null;
+  private capStoneEl: HTMLElement | null = null;
+  private capTimberEl: HTMLElement | null = null;
+  private capIronEl: HTMLElement | null = null;
+  private capGrainEl: HTMLElement | null = null;
+
+  private barCopperEl: HTMLElement | null = null;
+  private barTinEl: HTMLElement | null = null;
+  private barStoneEl: HTMLElement | null = null;
+  private barTimberEl: HTMLElement | null = null;
+  private barIronEl: HTMLElement | null = null;
+  private barGrainEl: HTMLElement | null = null;
+  private barSupplyEl: HTMLElement | null = null;
+
   private advisorPortraitEl!: HTMLImageElement | HTMLDivElement;
   private advisorTextEl!: HTMLElement;
 
@@ -50,6 +65,21 @@ export class HUDController {
     this.resGrainEl = document.getElementById('val-grain')!;
     this.resSupplyEl = document.getElementById('val-supply')!;
 
+    this.capCopperEl = document.getElementById('cap-copper');
+    this.capTinEl = document.getElementById('cap-tin');
+    this.capStoneEl = document.getElementById('cap-stone');
+    this.capTimberEl = document.getElementById('cap-timber');
+    this.capIronEl = document.getElementById('cap-iron');
+    this.capGrainEl = document.getElementById('cap-grain');
+
+    this.barCopperEl = document.getElementById('bar-copper');
+    this.barTinEl = document.getElementById('bar-tin');
+    this.barStoneEl = document.getElementById('bar-stone');
+    this.barTimberEl = document.getElementById('bar-timber');
+    this.barIronEl = document.getElementById('bar-iron');
+    this.barGrainEl = document.getElementById('bar-grain');
+    this.barSupplyEl = document.getElementById('bar-supply');
+
     this.advisorPortraitEl = document.getElementById('advisor-portrait')! as HTMLImageElement;
     this.advisorTextEl = document.getElementById('advisor-text')!;
 
@@ -76,26 +106,52 @@ export class HUDController {
     let latestMax: Record<string, number> = { copper: 500, tin: 500, iron: 500, grain: 500, stone: 500, timber: 500 };
 
     const updateDisplay = () => {
-      const format = (cur: number, max: number, el: HTMLElement | null, baseColor: string) => {
-        if (!el) return;
+      const format = (
+        cur: number,
+        max: number,
+        valEl: HTMLElement | null,
+        capEl: HTMLElement | null,
+        barEl: HTMLElement | null,
+        baseColor: string
+      ) => {
         const val = Math.floor(cur);
+        const safeMax = Math.max(1, max);
+        const ratio = Math.min(1.0, cur / safeMax);
+        const pct = Math.floor(ratio * 100);
         const isFull = cur >= max;
-        el.textContent = `${val}/${max}`;
-        if (isFull) {
-          el.style.color = '#ef4444';
-          el.title = `Storage Full (${val}/${max})! Construct Granary or Foundry to expand.`;
-        } else {
-          el.style.color = baseColor;
-          el.title = `Stored: ${val} / Capacity: ${max}`;
+        const isNearFull = ratio >= 0.85;
+
+        if (valEl) {
+          valEl.textContent = `${val} / ${max}`;
+          if (isFull) {
+            valEl.style.color = '#ef4444';
+            valEl.title = `STORAGE FULL (${val}/${max})! Build a Granary or Foundry to expand.`;
+          } else if (isNearFull) {
+            valEl.style.color = '#fbbf24';
+            valEl.title = `Stockpile nearing maximum capacity (${pct}% - ${val}/${max})!`;
+          } else {
+            valEl.style.color = baseColor;
+            valEl.title = `Stockpile: ${val} / Max Capacity: ${max} (${pct}%)`;
+          }
+        }
+
+        if (capEl) {
+          capEl.textContent = `${pct}%`;
+          capEl.style.color = isFull ? '#ef4444' : (isNearFull ? '#fbbf24' : '#8c7d6b');
+        }
+
+        if (barEl) {
+          barEl.style.width = `${pct}%`;
+          barEl.style.backgroundColor = isFull ? '#ef4444' : (isNearFull ? '#fbbf24' : baseColor);
         }
       };
 
-      format(latestRes.copper, latestMax.copper, this.resCopperEl, '#2de0a5');
-      format(latestRes.tin, latestMax.tin, this.resTinEl, '#c0c6cc');
-      format(latestRes.stone, latestMax.stone, this.resStoneEl, '#e2e8f0');
-      format(latestRes.timber, latestMax.timber, this.resTimberEl, '#f59e0b');
-      format(latestRes.iron, latestMax.iron, this.resIronEl, '#e07a5f');
-      format(latestRes.grain, latestMax.grain, this.resGrainEl, '#ffd166');
+      format(latestRes.copper, latestMax.copper, this.resCopperEl, this.capCopperEl, this.barCopperEl, '#2de0a5');
+      format(latestRes.tin, latestMax.tin, this.resTinEl, this.capTinEl, this.barTinEl, '#c0c6cc');
+      format(latestRes.stone, latestMax.stone, this.resStoneEl, this.capStoneEl, this.barStoneEl, '#e2e8f0');
+      format(latestRes.timber, latestMax.timber, this.resTimberEl, this.capTimberEl, this.barTimberEl, '#f59e0b');
+      format(latestRes.iron, latestMax.iron, this.resIronEl, this.capIronEl, this.barIronEl, '#e07a5f');
+      format(latestRes.grain, latestMax.grain, this.resGrainEl, this.capGrainEl, this.barGrainEl, '#ffd166');
     };
 
     bus.on('economy:changed', (res: ResourcePool) => {
@@ -110,6 +166,11 @@ export class HUDController {
 
     bus.on('economy:supply_changed', (data: { max: number; used: number }) => {
       if (this.resSupplyEl) this.resSupplyEl.textContent = `${data.used}/${data.max}`;
+      if (this.barSupplyEl) {
+        const sPct = Math.min(100, Math.floor((data.used / Math.max(1, data.max)) * 100));
+        this.barSupplyEl.style.width = `${sPct}%`;
+        this.barSupplyEl.style.backgroundColor = data.used >= data.max ? '#ef4444' : '#fbbf24';
+      }
     });
 
     bus.on('advisor:message', (data: { speaker: string; text: string; isAlert?: boolean }) => {
