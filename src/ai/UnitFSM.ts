@@ -150,8 +150,11 @@ export class UnitFSM {
       if (u.attackCooldown <= 0) {
         u.attackCooldown = u.def.attackCooldown || 1.0;
 
-        if (u.def.category === 'skirmisher' || u.def.category === 'chariot') {
-          combat.fireProjectile(u.x, u.y, u.targetEntityId, isBuilding, u.def.damage || 15, 'arrow');
+        if (u.def.category === 'skirmisher') {
+          combat.fireProjectile(u.x, u.y, u.targetEntityId, isBuilding, u.def.damage || 12, 'sling_stone');
+          EventBus.get().emit('audio:arrow');
+        } else if (u.def.category === 'chariot') {
+          combat.fireProjectile(u.x, u.y, u.targetEntityId, isBuilding, u.def.damage || 28, 'arrow');
           EventBus.get().emit('audio:arrow');
         } else {
           // Attacco corpo a corpo immediato

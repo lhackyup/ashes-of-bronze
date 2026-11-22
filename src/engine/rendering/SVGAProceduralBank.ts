@@ -1749,52 +1749,431 @@ export class SVGAProceduralBank {
           ctx.fillRect(-24 + Math.random() * 8, 4 + Math.random() * 5, 2, 2);
         }
       }
-    } else if (u.def.category === 'chariot') {
-      // 2-Horse Chariot
-      ctx.fillStyle = '#5c3a21';
-      ctx.fillRect(-14, -6 + bob * 0.5, 28, 12);
-      ctx.fillStyle = cMain;
-      ctx.fillRect(-12, -4 + bob * 0.5, 24, 4);
-      // Wheels
-      ctx.fillStyle = '#1c1917';
-      ctx.beginPath(); ctx.arc(-8, 8, 6, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(8, 8, 6, 0, Math.PI * 2); ctx.fill();
-    } else {
-      // Infantry / Spearman / Raider
+    } else if (u.def.category === 'chariot' || u.defId === 'war_chariot') {
+      // 2-Horse Royal War Chariot
+      const gallop = isMoving ? Math.sin(animPhase * 1.6) * 4 : 0;
+      
+      // Ground dust when racing
+      if (isMoving) {
+        ctx.fillStyle = 'rgba(217, 119, 6, 0.3)';
+        ctx.beginPath();
+        ctx.arc(-16, 10 + Math.random() * 2, 4 + Math.random() * 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Two Galloping Steeds (chestnut coats)
+      for (const horseOffset of [-5, 5]) {
+        ctx.save();
+        ctx.translate(14, horseOffset);
+        // Horse body
+        ctx.fillStyle = '#7c2d12';
+        ctx.fillRect(-10, -5 + gallop * 0.4, 20, 10);
+        // Horse neck & head
+        ctx.fillStyle = '#7c2d12';
+        ctx.fillRect(6, -11 + gallop * 0.6, 7, 8);
+        ctx.fillStyle = '#451a03'; // Mane
+        ctx.fillRect(4, -13 + gallop * 0.6, 4, 4);
+        // Muzzle
+        ctx.fillStyle = '#9a3412';
+        ctx.fillRect(11, -9 + gallop * 0.6, 4, 5);
+        // Plumed bridle / crest
+        ctx.fillStyle = cTrim;
+        ctx.fillRect(7, -15 + gallop * 0.6, 3, 4);
+        // Galloping legs
+        ctx.fillStyle = '#591c0b';
+        ctx.fillRect(-8 + gallop, 5, 3, 8);
+        ctx.fillRect(5 - gallop, 5, 3, 8);
+        ctx.restore();
+      }
+
+      // Wooden Chariot Chassis & Draught Pole
       ctx.fillStyle = '#78350f';
+      ctx.fillRect(-2, -1, 14, 3); // Center draught pole
+      ctx.fillStyle = '#92400e';
+      ctx.fillRect(-16, -9 + bob * 0.4, 15, 18); // Cab body
+      ctx.fillStyle = cMain;
+      ctx.fillRect(-15, -7 + bob * 0.4, 13, 14); // Royal painted cab front
+      ctx.strokeStyle = cTrim;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(-15, -7 + bob * 0.4, 13, 14);
+
+      // Charioteer / Royal Archer in cab
+      ctx.fillStyle = '#d97706'; // Bronze scale cuirass
+      ctx.fillRect(-11, -12 + bob * 0.5, 6, 8);
+      ctx.fillStyle = '#cbd5e1'; // Helmet
+      ctx.fillRect(-10, -17 + bob * 0.5, 5, 5);
+      ctx.fillStyle = cTrim; // Crest
+      ctx.fillRect(-9, -20 + bob * 0.5, 3, 3);
+      // Composite Bow held ready
+      ctx.strokeStyle = '#451a03';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(-3, -10 + bob * 0.5, 7, -Math.PI / 3, Math.PI / 3);
+      ctx.stroke();
+
+      // Bronze Spoked Wheels
+      const wheelRot = animPhase * 2.5;
+      for (const wy of [-10, 10]) {
+        ctx.save();
+        ctx.translate(-9, wy);
+        ctx.rotate(wheelRot);
+        ctx.fillStyle = '#451a03';
+        ctx.beginPath(); ctx.arc(0, 0, 7, 0, Math.PI * 2); ctx.stroke();
+        ctx.fillStyle = '#fbbf24'; // Bronze hub
+        ctx.beginPath(); ctx.arc(0, 0, 2.5, 0, Math.PI * 2); ctx.fill();
+        // 4 Spokes
+        ctx.strokeStyle = '#d97706';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(-6, 0); ctx.lineTo(6, 0);
+        ctx.moveTo(0, -6); ctx.lineTo(0, 6);
+        ctx.stroke();
+        ctx.restore();
+      }
+    } else if (u.defId === 'skirmisher') {
+      // --- LEVANTINE SLINGER (Agile, bleached linen, leather stone pouch, whirling sling) ---
+      const isAttacking = u.state === 'ATTACK_TARGET' && u.attackCooldown > 0;
+      const slingPhase = (Date.now() / (isAttacking ? 60 : 120));
+      const slingRot = isAttacking ? slingPhase * 2 : (isMoving ? Math.sin(animPhase) * 0.8 : 0.4);
+
+      // Agile bare legs with leather sandals
+      ctx.fillStyle = '#bfa58d';
+      ctx.fillRect(-4, 3, 3, 9 + bob);
+      ctx.fillRect(2, 3, 3, 9 - bob);
+      // Leather sandals
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(-4, 11 + bob, 4, 2);
+      ctx.fillRect(2, 11 - bob, 4, 2);
+
+      // Light Bleached Linen Tunic / Kilt
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(-5, -6 + bob * 0.5, 10, 10);
+      ctx.fillStyle = cMain; // Faction sash border
+      ctx.fillRect(-5, 0 + bob * 0.5, 10, 2.5);
+
+      // Leather Stone Satchel / Sling Pouch at hip
+      ctx.fillStyle = '#854d0e';
+      ctx.fillRect(3, -2 + bob * 0.5, 4, 5);
+      ctx.strokeStyle = '#583c1d';
+      ctx.lineWidth = 0.8;
+      ctx.strokeRect(3, -2 + bob * 0.5, 4, 5);
+
+      // Head & Red/Blue Cloth Headband
+      ctx.fillStyle = '#bfa58d';
+      ctx.fillRect(-3, -12 + bob * 0.5, 6, 6);
+      ctx.fillStyle = '#451a03'; // Curly dark Mediterranean hair
+      ctx.fillRect(-3, -14 + bob * 0.5, 6, 3);
+      ctx.fillStyle = cMain; // Cloth Headband
+      ctx.fillRect(-4, -13 + bob * 0.5, 8, 2);
+
+      // WHIRLING LEATHER SLING & RIVER STONE
+      ctx.save();
+      ctx.translate(-2, -14 + bob * 0.5);
+      ctx.rotate(slingRot);
+      ctx.strokeStyle = '#92400e';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(9, -7);
+      ctx.stroke();
+      // Stone in sling cradle
+      ctx.fillStyle = '#94a3b8';
+      ctx.beginPath();
+      ctx.arc(9, -7, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+      // Motion blur trail when whirling
+      if (isAttacking || isMoving) {
+        ctx.strokeStyle = 'rgba(203, 213, 225, 0.4)';
+        ctx.beginPath();
+        ctx.arc(0, 0, 11, slingRot - 0.9, slingRot);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // Free Left Arm holding ready river stone
+      ctx.fillStyle = '#bfa58d';
+      ctx.fillRect(-7, -4 + bob * 0.5, 3, 6);
+      ctx.fillStyle = '#cbd5e1'; // River stone in hand
+      ctx.beginPath(); ctx.arc(-6, 2 + bob * 0.5, 1.8, 0, Math.PI * 2); ctx.fill();
+
+    } else if (u.defId === 'bronze_swordsman') {
+      // --- KHOPESH BRONZE WARRIOR (Royal Elite, gleaming bronze cuirass, crested helm, golden sickle-sword) ---
+      const isAttacking = u.state === 'ATTACK_TARGET' && u.attackCooldown > 0;
+      const slashAngle = isAttacking ? Math.sin((u.attackCooldown / (u.def.attackCooldown || 1.0)) * Math.PI) * 1.4 : 0;
+
+      // Heavy bronze greaves on legs
+      ctx.fillStyle = '#b45309';
+      ctx.fillRect(-5, 3, 3.5, 9 + bob);
+      ctx.fillRect(2, 3, 3.5, 9 - bob);
+      ctx.fillStyle = '#fbbf24'; // Greave shine
+      ctx.fillRect(-5, 5 + bob, 1, 6);
+      ctx.fillRect(2, 5 - bob, 1, 6);
+
+      // Pleated Royal Kilt with gold embroidery
+      ctx.fillStyle = cMain;
+      ctx.fillRect(-6, -3 + bob * 0.5, 12, 7);
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillRect(-6, 2 + bob * 0.5, 12, 1.5);
+
+      // Gleaming Cast Bronze Muscle Cuirass / Breastplate
+      ctx.fillStyle = '#d97706';
+      ctx.fillRect(-5, -9 + bob * 0.5, 10, 8);
+      ctx.fillStyle = '#fde047'; // Specular highlight on bronze pectoral
+      ctx.fillRect(-4, -8 + bob * 0.5, 3, 3);
+      ctx.fillRect(1, -8 + bob * 0.5, 3, 3);
+
+      // Ornate Crested Bronze Royal Helmet
+      ctx.fillStyle = '#d97706';
+      ctx.beginPath();
+      ctx.arc(0, -12 + bob * 0.5, 5, Math.PI, 0);
+      ctx.fill();
+      // Tall crimson horsehair crest plume
+      ctx.fillStyle = '#dc2626';
+      ctx.fillRect(-2, -21 + bob * 0.5, 4, 8);
+      ctx.fillStyle = '#fbbf24'; // Crest holder socket
+      ctx.fillRect(-2, -14 + bob * 0.5, 4, 2);
+
+      // Embossed Circular Bronze Aspis Shield with Sunburst Boss
+      ctx.save();
+      ctx.translate(-7, -4 + bob * 0.5);
+      ctx.fillStyle = '#b45309';
+      ctx.beginPath(); ctx.arc(0, 0, 7.5, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#fde047';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+      ctx.fillStyle = '#fde047'; // Sunburst central boss
+      ctx.beginPath(); ctx.arc(0, 0, 3, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+
+      // THE FAMOUS BRONZE KHOPESH SICKLE-SWORD
+      ctx.save();
+      ctx.translate(5, -6 + bob * 0.5);
+      ctx.rotate(0.3 + slashAngle);
+      // Sword grip & pommel
+      ctx.fillStyle = '#451a03';
+      ctx.fillRect(-1, 0, 2.5, 6);
+      ctx.fillStyle = '#fbbf24'; // Guard
+      ctx.fillRect(-3, -1, 6, 2);
+      // Curved Khopesh sickle blade
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillRect(-1, -10, 2.5, 10); // Straight lower blade
+      // Sickle curve hook
+      ctx.beginPath();
+      ctx.moveTo(-1, -10);
+      ctx.quadraticCurveTo(8, -14, 5, -20);
+      ctx.lineTo(2, -18);
+      ctx.quadraticCurveTo(4, -13, -1, -9);
+      ctx.closePath();
+      ctx.fill();
+      // Polished bronze blade highlight
+      ctx.fillStyle = '#fef08a';
+      ctx.fillRect(0, -9, 1, 7);
+      ctx.restore();
+
+    } else if (u.defId === 'sea_raider') {
+      // --- SEA PEOPLES RAIDER / SHARDANA (Horned helmet with disc, round studded buckler, Naue II broadsword) ---
+      const isAttacking = u.state === 'ATTACK_TARGET' && u.attackCooldown > 0;
+      const chopAngle = isAttacking ? Math.sin((u.attackCooldown / (u.def.attackCooldown || 1.0)) * Math.PI) * 1.5 : 0;
+
+      // Muscular tanned legs
+      ctx.fillStyle = '#a16207';
+      ctx.fillRect(-4, 3, 3.5, 9 + bob);
+      ctx.fillRect(2, 3, 3.5, 9 - bob);
+
+      // Fringed Sea-Raider Kilt with bold diagonal stripes
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(-6, -4 + bob * 0.5, 12, 8);
+      ctx.fillStyle = '#dc2626';
+      ctx.fillRect(-6, -2 + bob * 0.5, 12, 2);
+      ctx.fillRect(-6, 2 + bob * 0.5, 12, 1.5);
+
+      // Tanned chest with crossed leather harness
+      ctx.fillStyle = '#a16207';
+      ctx.fillRect(-5, -9 + bob * 0.5, 10, 6);
+      ctx.strokeStyle = '#451a03';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(-5, -9 + bob * 0.5); ctx.lineTo(5, -3 + bob * 0.5);
+      ctx.moveTo(5, -9 + bob * 0.5); ctx.lineTo(-5, -3 + bob * 0.5);
+      ctx.stroke();
+
+      // LEGENDARY SHARDANA HORNED HELMET WITH CENTRAL SOLAR DISC
+      ctx.fillStyle = '#94a3b8'; // Bronze/pewter helmet cap
+      ctx.beginPath();
+      ctx.arc(0, -11 + bob * 0.5, 5, Math.PI, 0);
+      ctx.fill();
+      // Curved Bull Horns on sides
+      ctx.strokeStyle = '#f8fafc';
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      // Left horn curving up
+      ctx.moveTo(-4, -12 + bob * 0.5);
+      ctx.quadraticCurveTo(-9, -15 + bob * 0.5, -7, -19 + bob * 0.5);
+      // Right horn curving up
+      ctx.moveTo(4, -12 + bob * 0.5);
+      ctx.quadraticCurveTo(9, -15 + bob * 0.5, 7, -19 + bob * 0.5);
+      ctx.stroke();
+      // Central bronze solar disc
+      ctx.fillStyle = '#fbbf24';
+      ctx.beginPath();
+      ctx.arc(0, -17 + bob * 0.5, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Round Studded Wooden Buckler Shield
+      ctx.save();
+      ctx.translate(-7, -4 + bob * 0.5);
+      ctx.fillStyle = '#78350f'; // Dark wood
+      ctx.beginPath(); ctx.arc(0, 0, 6.5, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#d97706';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      // Bronze rivets around rim
+      ctx.fillStyle = '#fbbf24';
+      for (let a = 0; a < Math.PI * 2; a += Math.PI / 3) {
+        ctx.fillRect(Math.cos(a) * 4.5 - 0.7, Math.sin(a) * 4.5 - 0.7, 1.5, 1.5);
+      }
+      ctx.restore();
+
+      // Straight Double-Edged Naue II Bronze Broadsword
+      ctx.save();
+      ctx.translate(5, -6 + bob * 0.5);
+      ctx.rotate(0.4 + chopAngle);
+      ctx.fillStyle = '#451a03'; // Grip
+      ctx.fillRect(-1, 0, 2, 5);
+      ctx.fillStyle = '#fbbf24'; // Crossguard
+      ctx.fillRect(-3, -1, 6, 2);
+      // Broadsword blade
+      ctx.fillStyle = '#e2e8f0';
+      ctx.fillRect(-1.5, -16, 3, 16);
+      ctx.fillStyle = '#cbd5e1';
+      ctx.beginPath();
+      ctx.moveTo(-1.5, -16); ctx.lineTo(0, -20); ctx.lineTo(1.5, -16);
+      ctx.fill();
+      ctx.restore();
+
+    } else if (u.defId === 'iron_infantry') {
+      // --- HEAVY IRON ASSAULT INFANTRY (Iron scale coat, conical iron spangenhelm, heavy iron pike) ---
+      const isAttacking = u.state === 'ATTACK_TARGET' && u.attackCooldown > 0;
+      const thrust = isAttacking ? Math.sin((u.attackCooldown / (u.def.attackCooldown || 1.0)) * Math.PI) * 9 : 0;
+
+      // Dark iron greaves
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(-5, 4, 3.5, 8 + bob);
+      ctx.fillRect(2, 4, 3.5, 8 - bob);
+
+      // Dark Iron Scale Cuirass & Tunic
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(-6, -8 + bob * 0.5, 12, 13);
+      ctx.fillStyle = '#475569'; // Iron scales
+      for (let r = 0; r < 3; r++) {
+        for (let c = 0; c < 4; c++) {
+          ctx.fillRect(-5 + c * 2.5, -6 + r * 2.5 + bob * 0.5, 2, 2);
+        }
+      }
+
+      // Conical Iron Helmet with Cheek Guards
+      ctx.fillStyle = '#475569';
+      ctx.beginPath();
+      ctx.moveTo(-5, -9 + bob * 0.5);
+      ctx.lineTo(0, -18 + bob * 0.5);
+      ctx.lineTo(5, -9 + bob * 0.5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#94a3b8'; // Iron ridge highlight
+      ctx.fillRect(-0.5, -18 + bob * 0.5, 1, 9);
+
+      // Heavy Iron-Rimmed Shield
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(-9, -6 + bob * 0.5, 6, 14);
+      ctx.strokeStyle = '#64748b';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(-9, -6 + bob * 0.5, 6, 14);
+      ctx.fillStyle = '#94a3b8'; // Central iron boss
+      ctx.beginPath(); ctx.arc(-6, 1 + bob * 0.5, 2, 0, Math.PI * 2); ctx.fill();
+
+      // Long Iron-Headed Heavy Pike
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(4, 9);
+      ctx.lineTo(5, -20 - thrust);
+      ctx.stroke();
+      // Sharp Iron Spearhead
+      ctx.fillStyle = '#94a3b8';
+      ctx.beginPath();
+      ctx.moveTo(5, -25 - thrust);
+      ctx.lineTo(2, -20 - thrust);
+      ctx.lineTo(8, -20 - thrust);
+      ctx.fill();
+
+    } else {
+      // --- TOWER-SHIELD SPEARMAN (`spear_militia` and default infantry) ---
+      const isAttacking = u.state === 'ATTACK_TARGET' && u.attackCooldown > 0;
+      const thrust = isAttacking ? Math.sin((u.attackCooldown / (u.def.attackCooldown || 1.0)) * Math.PI) * 9 : 0;
+
+      // Legs with bronze greaves
+      ctx.fillStyle = '#b45309';
       ctx.fillRect(-5, 4, 3.5, 8 + bob);
       ctx.fillRect(2, 4, 3.5, 8 - bob);
 
       // Torso & Tunic
       ctx.fillStyle = cMain;
       ctx.fillRect(-6, -8 + bob * 0.5, 12, 13);
-      ctx.fillStyle = '#94a3b8';
-      ctx.fillRect(-5, -6 + bob * 0.5, 10, 7); // Breastplate
+      ctx.fillStyle = '#d97706'; // Bronze chest protection
+      ctx.fillRect(-5, -6 + bob * 0.5, 10, 7);
 
-      // Helmet & Crest
-      ctx.fillStyle = '#cbd5e1';
+      // Boar's Tusk Helmet (layered ivory bands)
+      ctx.fillStyle = '#fef08a';
       ctx.beginPath();
       ctx.arc(0, -10 + bob * 0.5, 5.5, Math.PI, 0);
       ctx.fill();
+      // Helmet ivory horizontal ridges
+      ctx.strokeStyle = '#78350f';
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(-5, -12 + bob * 0.5); ctx.lineTo(5, -12 + bob * 0.5);
+      ctx.moveTo(-4, -14 + bob * 0.5); ctx.lineTo(4, -14 + bob * 0.5);
+      ctx.stroke();
+      // Tall horsehair crest
       ctx.fillStyle = cTrim;
-      ctx.fillRect(-2, -18 + bob * 0.5, 4, 6);
+      ctx.fillRect(-2, -19 + bob * 0.5, 4, 6);
 
-      // Tower Shield
-      ctx.fillStyle = cMain;
-      ctx.fillRect(-9, -7 + bob * 0.5, 5, 15);
-      ctx.strokeStyle = cTrim;
-      ctx.lineWidth = 1;
-      ctx.strokeRect(-9, -7 + bob * 0.5, 5, 15);
+      // AUTHENTIC FIGURE-OF-EIGHT MYCENAEAN TOWER SHIELD (Oxhide with spots)
+      ctx.save();
+      ctx.translate(-8, -1 + bob * 0.5);
+      // Outer 8-shape / hourglass body shield
+      ctx.fillStyle = '#f1f5f9'; // Cowhide base
+      ctx.beginPath();
+      ctx.arc(0, -6, 5, 0, Math.PI * 2);
+      ctx.arc(0, 4, 5.5, 0, Math.PI * 2);
+      ctx.fill();
+      // Bronze rim
+      ctx.strokeStyle = '#d97706';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+      // Cowhide dark blotches
+      ctx.fillStyle = '#451a03';
+      ctx.fillRect(-2, -8, 3, 3);
+      ctx.fillRect(0, 2, 4, 3);
+      ctx.fillRect(-3, 4, 3, 3);
+      // Central bronze boss stud
+      ctx.fillStyle = '#fbbf24';
+      ctx.beginPath(); ctx.arc(0, -1, 1.8, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
 
-      // Spear
-      ctx.strokeStyle = '#473d31';
+      // Long Bronze Dory Spear (Thrusting forward on attack)
+      ctx.strokeStyle = '#583c1d';
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(4, 8); ctx.lineTo(6, -20);
+      ctx.moveTo(4, 9);
+      ctx.lineTo(6, -21 - thrust);
       ctx.stroke();
-      ctx.fillStyle = cTrim;
+      // Gleaming Leaf-Shaped Bronze Spearhead
+      ctx.fillStyle = '#fbbf24';
       ctx.beginPath();
-      ctx.moveTo(6, -24); ctx.lineTo(3, -19); ctx.lineTo(9, -19);
+      ctx.moveTo(6, -26 - thrust);
+      ctx.lineTo(2.5, -20 - thrust);
+      ctx.lineTo(9.5, -20 - thrust);
       ctx.fill();
     }
 

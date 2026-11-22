@@ -1092,12 +1092,66 @@ class GameApp {
       }
     }
 
-    // 3. In-flight combat projectiles
-    ctx.fillStyle = '#ffdf73';
+    // 3. In-flight combat projectiles (Arrows with fletchings & Whirling Sling Stones)
     for (const p of this.combat.projectiles) {
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
-      ctx.fill();
+      let targetX = p.x;
+      let targetY = p.y;
+      if (p.targetIsBuilding) {
+        const tb = this.buildings.find(b => b.id === p.targetId);
+        if (tb) { targetX = tb.centerX; targetY = tb.centerY; }
+      } else {
+        const tu = this.units.find(u => u.id === p.targetId);
+        if (tu) { targetX = tu.x; targetY = tu.y; }
+      }
+      const angle = Math.atan2(targetY - p.y, targetX - p.x);
+
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(angle);
+
+      if (p.kind === 'sling_stone') {
+        // High-velocity river pebble with dust vapor trail
+        ctx.fillStyle = 'rgba(148, 163, 184, 0.45)';
+        ctx.beginPath();
+        ctx.arc(-6, 0, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#64748b';
+        ctx.beginPath();
+        ctx.arc(0, 0, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#cbd5e1';
+        ctx.beginPath();
+        ctx.arc(0.5, -0.5, 1.2, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        // Ballistic arrow with wooden shaft, bronze head & white feathers
+        ctx.strokeStyle = '#78350f';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(-8, 0);
+        ctx.lineTo(6, 0);
+        ctx.stroke();
+
+        // White feather fletching
+        ctx.fillStyle = '#f8fafc';
+        ctx.beginPath();
+        ctx.moveTo(-8, -2.5);
+        ctx.lineTo(-4, 0);
+        ctx.lineTo(-8, 2.5);
+        ctx.closePath();
+        ctx.fill();
+
+        // Gleaming bronze arrowhead
+        ctx.fillStyle = '#fbbf24';
+        ctx.beginPath();
+        ctx.moveTo(8, 0);
+        ctx.lineTo(4, -2.5);
+        ctx.lineTo(4, 2.5);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      ctx.restore();
     }
 
     // 4. Fog of War
