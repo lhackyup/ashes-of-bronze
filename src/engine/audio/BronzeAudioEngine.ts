@@ -42,6 +42,7 @@ export class BronzeAudioEngine {
     bus.on('audio:combat_hit', () => this.playCombatHit());
     bus.on('audio:arrow', () => this.playArrowWhoosh());
     bus.on('audio:explosion', () => this.playExplosion());
+    bus.on('audio:objective_complete', () => this.playObjectiveComplete());
     bus.on('audio:victory', () => this.playVictoryFanfare());
     bus.on('audio:defeat', () => this.playDefeatSound());
   }
@@ -175,6 +176,13 @@ export class BronzeAudioEngine {
   public playExplosion(): void {
     this.playTone(90, 'sawtooth', 0.45, 0.3);
     this.playNoise(0.5, 450, 0.35);
+  }
+
+  public playObjectiveComplete(): void {
+    const notes = [523.25, 659.25, 783.99]; // C5, E5, G5 bright bronze chime
+    notes.forEach((f, idx) => {
+      setTimeout(() => this.playTone(f, 'sine', 0.22, 0.15), idx * 110);
+    });
   }
 
   public playVictoryFanfare(): void {

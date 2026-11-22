@@ -7,6 +7,7 @@ import { BuildingEntity } from '../entities/BuildingEntity.ts';
 import { Camera2D } from '../engine/camera/Camera2D.ts';
 import { SVGAProceduralBank } from '../engine/rendering/SVGAProceduralBank.ts';
 import { TILE_SIZE } from '../data/terrain.ts';
+import { ObjectiveProgress } from '../campaign/ObjectiveManager.ts';
 
 export class HUDController {
   private resCopperEl!: HTMLElement;
@@ -17,6 +18,9 @@ export class HUDController {
 
   private advisorPortraitEl!: HTMLImageElement | HTMLDivElement;
   private advisorTextEl!: HTMLElement;
+
+  private objectivesListEl: HTMLElement | null = null;
+  private trackerTimerEl: HTMLElement | null = null;
 
   private inspectorPanelEl!: HTMLElement;
   private inspectorNameEl!: HTMLElement;
@@ -52,10 +56,17 @@ export class HUDController {
 
     this.minimapCanvas = document.getElementById('minimap-canvas')! as HTMLCanvasElement;
     this.minimapCtx = this.minimapCanvas.getContext('2d')!;
+
+    this.objectivesListEl = document.getElementById('objectives-list');
+    this.trackerTimerEl = document.getElementById('tracker-wave-timer');
   }
 
   private setupListeners(): void {
     const bus = EventBus.get();
+
+    bus.on('objectives:updated', (objs: ObjectiveProgress[]) => {
+      this.updateObjectives(objs);
+    });
 
     bus.on('economy:changed', (res: ResourcePool) => {
       if (this.resCopperEl) this.resCopperEl.textContent = Math.floor(res.copper).toString();
@@ -207,5 +218,47 @@ export class HUDController {
       (camera.viewportWidth / camera.zoom) * scaleX,
       (camera.viewportHeight / camera.zoom) * scaleY
     );
+  }
+
+  public updateWaveTimer(countdown: number | null): void {
+    if (!this.trackerTimerEl) return;
+    if (countdown !== null) {
+      this.trackerTimerEl.textContent = `Wave in: ${countdown}s`;
+      this.trackerTimerEl.style.color = countdown <= 15 ? '#ef4444' : '#ffd166';
+    } else {
+      this.trackerTimerEl.textContent = 'All Waves Beaten';
+      this.trackerTimerEl.style.color = '#2de0a5';
+    }
+  }
+
+  public updateObjectives(objectives: ObjectiveProgress[]): void {
+    if (!this.objectivesListEl) return;
+    this.objectivesListEl.innerHTML = '';
+
+    for (const obj of objectives) {
+      const item = document.createElement('div');
+      item.style.display = 'flex';
+      item.style.alignItems = 'flex-start';
+      item.style.gap = '6px';
+      item.style.lineHeight = '1.25';
+
+      let icon = '<span style="color: #ffd166; font-weight: bold;">[ ]</span>';
+      let textStyle = 'color: #e8dccb;';
+      if (obj.isCompleted) {
+        icon = '<span style="color: #2de0a5; font-weight: bold;">[✓]</span>';
+        textStyle = 'color: #a0c49d; text-decoration: line-through;';
+      } else if (obj.isFailed) {
+        icon = '<span style="color: #ef4444; font-weight: bold;">[✕]</span>';
+        textStyle = 'color: #ef4444;';
+      }
+
+      let progressStr = '';
+      if (!obj.isCompleted && obj.targetAmount && obj.targetAmount > 1) {
+        progressStr = ` <span style="color: #ffd166; font-size: 11px;">(${obj.currentAmount || 0}/${obj.targetAmount})</span>`;
+      }
+
+      item.innerHTML = `${icon} <span style="${textStyle}">${obj.description}${progressStr}</span>`;
+      this.objectivesListEl.appendChild(item);
+    }
   }
 }

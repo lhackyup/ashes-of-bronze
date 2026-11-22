@@ -307,12 +307,43 @@
       <div id="advisor-portrait">BK</div>
       <div id="advisor-text">Burna-Khabir: Silence falls upon the Aegean. Fortify the coast...</div>
     </div>
+
+    <!-- WAR COUNCIL BUTTON -->
+    <button id="btn-open-council" class="svga-btn" style="height: 40px; padding: 2px 14px; font-weight: bold; flex-shrink: 0; font-size: 12px; border-color: var(--bronze-bright);">
+      🏛 War Council
+    </button>
   </header>
 
   <!-- MAIN CONTAINER: VIEWPORT + SIDEBAR -->
   <main id="main-container">
     <section id="viewport-wrapper">
       <canvas id="game-canvas"></canvas>
+
+      <!-- LIVE OBJECTIVES TRACKER -->
+      <div id="objectives-tracker" class="stone-panel" style="
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        width: 290px;
+        padding: 8px 12px;
+        border-radius: 4px;
+        border: 1px solid var(--bronze-gold);
+        background: rgba(22, 17, 13, 0.9);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+        pointer-events: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        z-index: 5;
+      ">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #4a3e33; padding-bottom: 3px;">
+          <span style="font-family: 'Cinzel', serif; font-size: 11px; font-weight: bold; color: var(--bronze-bright); letter-spacing: 0.5px;">
+            MANDATES & OBJECTIVES
+          </span>
+          <span id="tracker-wave-timer" style="font-size: 11px; color: #ffd166; font-family: 'Cinzel', serif; font-weight: bold;"></span>
+        </div>
+        <div id="objectives-list" style="display: flex; flex-direction: column; gap: 4px; font-size: 12px;"></div>
+      </div>
     </section>
 
     <!-- RIGHT SVGA SIDEBAR -->

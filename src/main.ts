@@ -18,6 +18,9 @@ import { UNITS } from './data/units.ts';
 import { EventBus } from './core/EventBus.ts';
 import { SVGAProceduralBank } from './engine/rendering/SVGAProceduralBank.ts';
 import { AssetLoader } from './engine/rendering/AssetLoader.ts';
+import { ObjectiveManager } from './campaign/ObjectiveManager.ts';
+import { CouncilModal } from './ui/CouncilModal.ts';
+import { DebriefingModal } from './ui/DebriefingModal.ts';
 
 class GameApp {
   private canvas!: HTMLCanvasElement;
@@ -32,6 +35,12 @@ class GameApp {
   private combat!: CombatSystem;
   private tacticalDirector!: TacticalDirector;
   private hud!: HUDController;
+
+  private objectiveManager!: ObjectiveManager;
+  private councilModal!: CouncilModal;
+  private debriefingModal!: DebriefingModal;
+  private hasHarvestedFirstTin: boolean = false;
+  private hasWarnedWatchtower: boolean = false;
 
   private units: UnitEntity[] = [];
   private buildings: BuildingEntity[] = [];
@@ -107,7 +116,33 @@ class GameApp {
       this.trainUnit(unitDefId);
     };
 
+    // Instantiate Campaign Objective Manager & Modals
+    this.objectiveManager = new ObjectiveManager(scenario);
+    this.councilModal = new CouncilModal(() => {
+      this.audio.startBGM();
+    });
+    this.debriefingModal = new DebriefingModal(
+      () => window.location.reload(),
+      () => window.location.reload()
+    );
+
+    // Wire Victory / Defeat events
+    EventBus.get().on('scenario:victory', (data: any) => {
+      this.debriefingModal.showVictory(data.stats, data.objectives);
+    });
+    EventBus.get().on('scenario:defeat', (data: any) => {
+      this.debriefingModal.showDefeat(data.reason, data.stats, data.objectives);
+    });
+
+    // Wire Top Bar War Council button
+    document.getElementById('btn-open-council')?.addEventListener('click', () => {
+      this.councilModal.show();
+    });
+
     this.setupInputHandlers();
+
+    // Show initial War Council briefing to introduce the crisis, advisors, and mandates
+    this.councilModal.show();
 
     // Send initial narrative advisor briefing
     EventBus.get().emit('advisor:message', {
@@ -192,6 +227,19 @@ class GameApp {
       this.gridGraph.setFoundation(tx, ty, b.def.width, b.def.height, true);
     } else {
       this.gridGraph.setBuildingOccupied(tx, ty, b.def.width, b.def.height, true);
+    }
+
+    if (owner === 'player' && this.objectiveManager) {
+      this.objectiveManager.recordBuildingErected(defId);
+    }
+
+    if (owner === 'player' && defId === 'watchtower' && !this.hasWarnedWatchtower) {
+      this.hasWarnedWatchtower = true;
+      EventBus.get().emit('advisor:message', {
+        speaker: 'zalpa',
+        text: 'The Watchtower is manned! We now command sight of the western dunes and coastline.',
+        isAlert: false
+      });
     }
 
     EventBus.get().emit('audio:build');
@@ -452,8 +500,13 @@ class GameApp {
         this.economy
       );
 
-      // Remove fallen units
+      // Remove fallen units and record casualties
       if (u.hp <= 0) {
+        if (u.owner === 'sea_peoples') {
+          this.objectiveManager.recordEnemyKilled();
+        } else if (u.owner === 'player') {
+          this.objectiveManager.recordFriendlyLost();
+        }
         this.units.splice(i, 1);
       }
     }
@@ -483,6 +536,30 @@ class GameApp {
 
     // Update Sea Peoples AI Tactical Director
     this.tacticalDirector.update(dt, this.gridGraph, this.units, 12, 28);
+
+    // Update Campaign Objective Progression & Evaluation
+    if (this.objectiveManager) {
+      this.objectiveManager.update(
+        dt,
+        this.buildings,
+        this.units,
+        this.economy,
+        this.tacticalDirector
+      );
+    }
+
+    // Contextual narrative check: first tin harvested by caravans
+    if (!this.hasHarvestedFirstTin && this.economy.resources.tin > 120) {
+      this.hasHarvestedFirstTin = true;
+      EventBus.get().emit('advisor:message', {
+        speaker: 'tarkhunta',
+        text: 'The caravans return with cassiterite! Stoke the foundry flames—true bronze is at hand!',
+        isAlert: false
+      });
+    }
+
+    // Update live HUD countdown timer for enemy waves
+    this.hud.updateWaveTimer(this.tacticalDirector.getNextWaveCountdown());
 
     // Update Fog of War
     this.fogRenderer.resetVisibility();

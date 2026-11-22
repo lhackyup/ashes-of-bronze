@@ -100,4 +100,18 @@ export class TacticalDirector {
       }
     }
   }
+
+  public getRemainingWavesCount(): number {
+    return this.waves.length;
+  }
+
+  public getElapsedTime(): number {
+    return this.elapsedTime;
+  }
+
+  public getNextWaveCountdown(): number | null {
+    return this.waves.length > 0
+      ? Math.max(0, Math.ceil(this.waves[0].triggerTimeSeconds - this.elapsedTime))
+      : null;
+  }
 }
