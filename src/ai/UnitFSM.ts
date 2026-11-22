@@ -56,15 +56,16 @@ export class UnitFSM {
     units: UnitEntity[],
     buildings: BuildingEntity[]
   ): void {
-    // Se è un'unità da combattimento, cerca nemici vicini entro raggio di guardia (4 tile)
+    // Se è un'unità da combattimento, cerca nemici vicini entro raggio di guardia (8 tile)
     if (u.def.category === 'infantry' || u.def.category === 'skirmisher' || u.def.category === 'chariot') {
-      const aggroRange = (u.def.attackRange || 2) * TILE_SIZE + 96;
+      const aggroRange = (u.def.attackRange || 2) * TILE_SIZE + 320;
       for (const other of units) {
         if (other.owner !== u.owner && other.hp > 0) {
           const dist = Math.hypot(other.x - u.x, other.y - u.y);
           if (dist <= aggroRange) {
             u.targetEntityId = other.id;
             u.state = 'ATTACK_TARGET';
+            u.path = [];
             return;
           }
         }
@@ -411,12 +412,36 @@ export class UnitFSM {
         }
       }
     } else {
-      // Avvicinati al perimetro esterno del bersaglio (fermandosi all'esterno delle mura)
-      const step = u.def.speed * TILE_SIZE * dt;
-      const moveDist = isBuilding ? Math.min(step, Math.max(0, dist - attackRangePx * 0.4)) : step;
-      if (dist > 0) {
-        u.x += (attackDx / dist) * moveDist;
-        u.y += (attackDy / dist) * moveDist;
+      // Out of attack range: close distance towards target using pathfinding along the grid
+      const curTx = Math.floor(u.x / TILE_SIZE);
+      const curTy = Math.floor(u.y / TILE_SIZE);
+      const destTx = Math.floor(targetX / TILE_SIZE);
+      const destTy = Math.floor(targetY / TILE_SIZE);
+
+      // Recompute path towards target if we have no path or if target is distant
+      if (u.path.length === 0 || (dist > TILE_SIZE * 2 && u.path.length <= 1)) {
+        const pathCoords = AStar.findPath(_graph, { tx: curTx, ty: curTy }, { tx: destTx, ty: destTy }, 2000);
+        if (pathCoords.length > 0) {
+          const finalCoords = (pathCoords.length > 1 && pathCoords[0].tx === curTx && pathCoords[0].ty === curTy)
+            ? pathCoords.slice(1)
+            : pathCoords;
+          u.path = finalCoords.map(c => ({
+            x: Math.max(6 * TILE_SIZE + 24, c.tx * TILE_SIZE + 24),
+            y: c.ty * TILE_SIZE + 24
+          }));
+        }
+      }
+
+      if (u.path.length > 0) {
+        this.handleMove(u, dt, _graph, units);
+      } else {
+        const step = u.def.speed * TILE_SIZE * dt;
+        const moveDist = isBuilding ? Math.min(step, Math.max(0, dist - attackRangePx * 0.4)) : step;
+        if (dist > 0) {
+          u.x += (attackDx / dist) * moveDist;
+          u.y += (attackDy / dist) * moveDist;
+          if (u.x < 6 * TILE_SIZE + 24) u.x = 6 * TILE_SIZE + 24;
+        }
       }
     }
   }

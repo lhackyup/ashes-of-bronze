@@ -1,8 +1,9 @@
-import { ScenarioData, WaveDefinition } from '../data/types.ts';
+import { ScenarioData, WaveDefinition, GridCoord } from '../data/types.ts';
 import { UnitEntity } from '../entities/UnitEntity.ts';
 import { BuildingEntity } from '../entities/BuildingEntity.ts';
 import { GridGraph } from '../engine/pathfinding/GridGraph.ts';
 import { FlowField } from '../engine/pathfinding/FlowField.ts';
+import { AStar } from '../engine/pathfinding/AStar.ts';
 import { EventBus } from '../core/EventBus.ts';
 import { TILE_SIZE } from '../data/terrain.ts';
 
@@ -82,6 +83,16 @@ export class TacticalDirector {
               x: nextTx * TILE_SIZE + 24,
               y: nextTy * TILE_SIZE + 24
             }];
+            u.state = 'MOVE_TO';
+          }
+        } else {
+          // Flow field neutral or stalled: plan direct march towards player target
+          const pathCoords = AStar.findPath(graph, { tx, ty }, { tx: targetTx, ty: targetTy }, 2000);
+          if (pathCoords.length > 1) {
+            u.path = pathCoords.slice(1, 6).map((c: GridCoord) => ({
+              x: Math.max(6 * TILE_SIZE + 24, c.tx * TILE_SIZE + 24),
+              y: c.ty * TILE_SIZE + 24
+            }));
             u.state = 'MOVE_TO';
           }
         }

@@ -707,6 +707,21 @@ class GameApp {
         x: e.clientX - rect.left,
         y: e.clientY - rect.top
       };
+
+      // Hover feedback: if friendly combat units are selected and hovering over an enemy, show crosshair
+      if (this.selectedUnits.some(u => u.owner === 'player' && u.hp > 0)) {
+        const hoverPos = this.camera.screenToWorld(this.dragCurrent.x, this.dragCurrent.y);
+        const hoverTx = Math.floor(hoverPos.x / TILE_SIZE);
+        const hoverTy = Math.floor(hoverPos.y / TILE_SIZE);
+        const hoverEnemy = this.units.find(
+          u => u.owner !== 'player' && u.hp > 0 &&
+          (Math.hypot(u.x - hoverPos.x, u.y - hoverPos.y) < 28 ||
+           (Math.floor(u.x / TILE_SIZE) === hoverTx && Math.floor(u.y / TILE_SIZE) === hoverTy))
+        );
+        this.canvas.style.cursor = hoverEnemy ? 'crosshair' : 'default';
+      } else {
+        this.canvas.style.cursor = 'default';
+      }
     });
 
     window.addEventListener('mouseup', (e) => {
@@ -728,6 +743,44 @@ class GameApp {
     );
 
     const isClick = Math.abs(this.dragStart.x - this.dragCurrent.x) < 6 && Math.abs(this.dragStart.y - this.dragCurrent.y) < 6;
+
+    // DIRECT ATTACK TARGETING ON CLICK:
+    // If the player already has friendly troops selected and clicks on an enemy unit, issue an attack command!
+    if (isClick) {
+      const friendlyTroops = this.selectedUnits.filter(u => u.owner === 'player' && u.hp > 0);
+      if (friendlyTroops.length > 0) {
+        const clickTx = Math.floor(p1.x / TILE_SIZE);
+        const clickTy = Math.floor(p1.y / TILE_SIZE);
+        const clickedEnemy = this.units.find(
+          u => u.owner !== 'player' && u.hp > 0 &&
+          (Math.hypot(u.x - p1.x, u.y - p1.y) < 30 ||
+           (Math.floor(u.x / TILE_SIZE) === clickTx && Math.floor(u.y / TILE_SIZE) === clickTy))
+        );
+
+        if (clickedEnemy) {
+          for (const u of friendlyTroops) {
+            u.targetMineCoord = null;
+            u.targetEntityId = clickedEnemy.id;
+            u.state = 'ATTACK_TARGET';
+            u.path = [];
+          }
+
+          EventBus.get().emit('audio:command');
+          EventBus.get().emit('fx:floating_text', {
+            text: 'ATTACK ENEMY!',
+            color: '#ef4444',
+            x: clickedEnemy.x,
+            y: clickedEnemy.y - 28
+          });
+          EventBus.get().emit('fx:combat_hit', {
+            x: clickedEnemy.x,
+            y: clickedEnemy.y,
+            color: '#ef4444'
+          });
+          return;
+        }
+      }
+    }
 
     for (const u of this.units) u.isSelected = false;
     for (const b of this.buildings) b.isSelected = false;
@@ -840,8 +893,31 @@ class GameApp {
 
     // Check if clicking on an enemy entity
     const targetEnemyUnit = this.units.find(
-      u => u.owner !== 'player' && Math.hypot(u.x - wx, u.y - wy) < 24
+      u => u.owner !== 'player' && u.hp > 0 &&
+      (Math.hypot(u.x - wx, u.y - wy) < 32 ||
+       (Math.floor(u.x / TILE_SIZE) === targetTx && Math.floor(u.y / TILE_SIZE) === targetTy))
     );
+
+    // Check if clicking on an enemy building
+    const targetEnemyBuilding = this.buildings.find(
+      b => b.owner !== 'player' && b.hp > 0 &&
+      targetTx >= b.tx && targetTx < b.tx + b.def.width &&
+      targetTy >= b.ty && targetTy < b.ty + b.def.height
+    );
+
+    if (targetEnemyUnit) {
+      EventBus.get().emit('fx:floating_text', {
+        text: 'ATTACK!',
+        color: '#ef4444',
+        x: targetEnemyUnit.x,
+        y: targetEnemyUnit.y - 28
+      });
+      EventBus.get().emit('fx:combat_hit', {
+        x: targetEnemyUnit.x,
+        y: targetEnemyUnit.y,
+        color: '#ef4444'
+      });
+    }
 
     // Check if clicking on a friendly storehouse / dropoff building (Acropolis, Granary, Foundry, Smelter)
     const targetFriendlyBuilding = this.buildings.find(
@@ -876,6 +952,12 @@ class GameApp {
         u.targetMineCoord = null;
         u.targetEntityId = targetEnemyUnit.id;
         u.state = 'ATTACK_TARGET';
+        u.path = [];
+      } else if (targetEnemyBuilding) {
+        u.targetMineCoord = null;
+        u.targetEntityId = targetEnemyBuilding.id;
+        u.state = 'ATTACK_TARGET';
+        u.path = [];
       } else if (
         targetFriendlyBuilding &&
         u.def.category === 'worker' &&
