@@ -46,6 +46,9 @@ export class UnitFSM {
         this.handleHarvestCycle(u, dt, graph, buildings, economy, tileRenderer, decorations);
         break;
     }
+
+    // Physical collision enforcement: no unit may penetrate solid building interiors
+    UnitFSM.resolveBuildingCollisions(u, buildings);
   }
 
   private static handleIdle(
@@ -152,17 +155,36 @@ export class UnitFSM {
     let targetX = 0;
     let targetY = 0;
     let isBuilding = false;
+    let dist = 0;
+    let attackDx = 0;
+    let attackDy = 0;
+    const attackRangePx = (u.def.attackRange || 1.2) * TILE_SIZE;
 
     const targetUnit = units.find(unit => unit.id === u.targetEntityId);
     if (targetUnit) {
       targetX = targetUnit.x;
       targetY = targetUnit.y;
+      attackDx = targetX - u.x;
+      attackDy = targetY - u.y;
+      dist = Math.hypot(attackDx, attackDy);
     } else {
       const targetB = buildings.find(b => b.id === u.targetEntityId);
       if (targetB) {
         targetX = targetB.centerX;
         targetY = targetB.centerY;
         isBuilding = true;
+
+        // Calculate closest point on the exterior wall of the building
+        const bMinX = targetB.tx * TILE_SIZE;
+        const bMaxX = (targetB.tx + targetB.def.width) * TILE_SIZE;
+        const bMinY = targetB.ty * TILE_SIZE;
+        const bMaxY = (targetB.ty + targetB.def.height) * TILE_SIZE;
+
+        const clampX = Math.max(bMinX, Math.min(bMaxX, u.x));
+        const clampY = Math.max(bMinY, Math.min(bMaxY, u.y));
+        attackDx = clampX - u.x;
+        attackDy = clampY - u.y;
+        dist = Math.hypot(attackDx, attackDy);
       } else {
         // Bersaglio morto o non trovato
         u.targetEntityId = null;
@@ -170,11 +192,6 @@ export class UnitFSM {
         return;
       }
     }
-
-    const dx = targetX - u.x;
-    const dy = targetY - u.y;
-    const dist = Math.hypot(dx, dy);
-    const attackRangePx = (u.def.attackRange || 1.2) * TILE_SIZE;
 
     if (dist <= attackRangePx) {
       // In gittata: ferma il movimento e attacca
@@ -252,10 +269,47 @@ export class UnitFSM {
         }
       }
     } else {
-      // Avvicinati al bersaglio
+      // Avvicinati al perimetro esterno del bersaglio (fermandosi all'esterno delle mura)
       const step = u.def.speed * TILE_SIZE * dt;
-      u.x += (dx / dist) * step;
-      u.y += (dy / dist) * step;
+      const moveDist = isBuilding ? Math.min(step, Math.max(0, dist - attackRangePx * 0.4)) : step;
+      if (dist > 0) {
+        u.x += (attackDx / dist) * moveDist;
+        u.y += (attackDy / dist) * moveDist;
+      }
+    }
+  }
+
+  // --- Strict Building Collision Barrier (Prevents entering building interiors) ---
+  public static resolveBuildingCollisions(u: UnitEntity, buildings: BuildingEntity[]): void {
+    const r = 11; // Unit collision radius
+    for (const b of buildings) {
+      // Foundations are flat ground slabs that units can walk over freely
+      if (b.defId === 'cyclopean_slab') continue;
+
+      const bMinX = b.tx * TILE_SIZE;
+      const bMaxX = (b.tx + b.def.width) * TILE_SIZE;
+      const bMinY = b.ty * TILE_SIZE;
+      const bMaxY = (b.ty + b.def.height) * TILE_SIZE;
+
+      // Check AABB overlap with unit circle
+      if (u.x + r > bMinX && u.x - r < bMaxX && u.y + r > bMinY && u.y - r < bMaxY) {
+        // Eject unit to the closest exterior face of the building
+        const distLeft = (u.x + r) - bMinX;
+        const distRight = bMaxX - (u.x - r);
+        const distTop = (u.y + r) - bMinY;
+        const distBottom = bMaxY - (u.y - r);
+
+        const minDist = Math.min(distLeft, distRight, distTop, distBottom);
+        if (minDist === distLeft) {
+          u.x = bMinX - r;
+        } else if (minDist === distRight) {
+          u.x = bMaxX + r;
+        } else if (minDist === distTop) {
+          u.y = bMinY - r;
+        } else {
+          u.y = bMaxY + r;
+        }
+      }
     }
   }
 
