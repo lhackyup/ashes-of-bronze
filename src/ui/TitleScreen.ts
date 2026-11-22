@@ -26,7 +26,7 @@ export class TitleScreen {
       width: 100%;
       height: 100%;
       background: radial-gradient(circle at center, #241a13 0%, #110d0a 65%, #050403 100%);
-      display: flex;
+      display: none;
       flex-direction: column;
       align-items: center;
       justify-content: center;

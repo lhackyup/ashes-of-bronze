@@ -24,7 +24,7 @@ export class CouncilModal {
       width: 100%;
       height: 100%;
       background: rgba(8, 6, 5, 0.88);
-      display: flex;
+      display: none;
       align-items: center;
       justify-content: center;
       z-index: 1000;

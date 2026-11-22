@@ -141,28 +141,33 @@ class GameApp {
 
     this.objectiveManager = new ObjectiveManager(scenario);
     this.councilModal = new CouncilModal(() => {
+      this.closeAllModals();
       this.isGamePaused = false;
       this.audio.startBGM();
     });
     this.debriefingModal = new DebriefingModal(
       () => window.location.reload(),
       () => {
+        this.closeAllModals();
         this.campaignMapModal.show();
       }
     );
 
     // Title Screen button actions
     this.titleScreen.onContinue = () => {
-      this.titleScreen.hide();
+      this.closeAllModals();
       this.councilModal.show();
     };
     this.titleScreen.onOpenMap = () => {
+      this.closeAllModals();
       this.campaignMapModal.show();
     };
     this.titleScreen.onOpenChronicle = () => {
+      this.closeAllModals();
       this.chronicleModal.show();
     };
     this.titleScreen.onOpenSettings = () => {
+      this.closeAllModals();
       this.settingsModal.show(false);
     };
     this.titleScreen.onNewCampaign = () => {
@@ -171,24 +176,36 @@ class GameApp {
 
     // Strategic Map actions
     this.campaignMapModal.onSelectScenario = (_scenarioId: string) => {
-      this.titleScreen.hide();
+      this.closeAllModals();
       this.councilModal.show();
+    };
+    this.campaignMapModal.onClose = () => {
+      this.closeAllModals();
+    };
+
+    // Chronicle Modal actions
+    this.chronicleModal.onClose = () => {
+      this.closeAllModals();
     };
 
     // Settings Modal actions
     this.settingsModal.onResume = () => {
+      this.closeAllModals();
       this.isGamePaused = false;
     };
     this.settingsModal.onRestartScenario = () => {
       window.location.reload();
     };
     this.settingsModal.onOpenCouncil = () => {
+      this.closeAllModals();
       this.councilModal.show();
     };
     this.settingsModal.onReturnToMap = () => {
+      this.closeAllModals();
       this.campaignMapModal.show();
     };
     this.settingsModal.onReturnToTitle = () => {
+      this.closeAllModals();
       this.isGamePaused = true;
       this.titleScreen.show();
     };
@@ -201,15 +218,19 @@ class GameApp {
 
     // Wire Top Bar Buttons
     document.getElementById('btn-open-council')?.addEventListener('click', () => {
+      this.closeAllModals();
       this.councilModal.show();
     });
     document.getElementById('btn-open-map')?.addEventListener('click', () => {
+      this.closeAllModals();
       this.campaignMapModal.show();
     });
     document.getElementById('btn-open-chronicle')?.addEventListener('click', () => {
+      this.closeAllModals();
       this.chronicleModal.show();
     });
     document.getElementById('btn-open-settings')?.addEventListener('click', () => {
+      this.closeAllModals();
       this.isGamePaused = true;
       this.settingsModal.show(true);
     });
@@ -366,10 +387,20 @@ class GameApp {
     EventBus.get().emit('audio:command');
   }
 
+  private closeAllModals(): void {
+    if (this.titleScreen) this.titleScreen.hide();
+    if (this.councilModal) this.councilModal.hide();
+    if (this.campaignMapModal) this.campaignMapModal.hide();
+    if (this.chronicleModal) this.chronicleModal.hide();
+    if (this.settingsModal) this.settingsModal.hide();
+  }
+
   private setupInputHandlers(): void {
     window.addEventListener('keydown', (e) => {
       this.keysDown.add(e.code);
       if (e.code === 'Escape') {
+        // If an overlay modal is open, Escape closes it and resumes
+        this.closeAllModals();
         this.isGamePaused = !this.isGamePaused;
         if (this.isGamePaused) {
           this.settingsModal.show(true);
