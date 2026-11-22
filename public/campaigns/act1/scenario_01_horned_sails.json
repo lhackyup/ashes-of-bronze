@@ -1,0 +1,121 @@
+{
+  "id": "scenario_01_horned_sails",
+  "title": "Scenario I: Le Vele con le Corna",
+  "act": 1,
+  "era": "late_bronze",
+  "map": {
+    "width": 48,
+    "height": 48,
+    "biome": "levantine_coast",
+    "seed": 1177
+  },
+  "player": {
+    "faction": "player",
+    "startPosition": { "tx": 12, "ty": 28 },
+    "initialResources": {
+      "copper": 550,
+      "tin": 120,
+      "iron": 0,
+      "grain": 250,
+      "stone": 200,
+      "timber": 180
+    },
+    "unlockedBuildings": [
+      "cyclopean_slab",
+      "acropolis",
+      "granary",
+      "bronze_foundry",
+      "barracks",
+      "watchtower"
+    ],
+    "unlockedUnits": [
+      "donkey_caravan",
+      "spear_militia",
+      "skirmisher",
+      "bronze_swordsman"
+    ]
+  },
+  "opponents": [
+    {
+      "id": "sea_raiders_fleet",
+      "faction": "sea_peoples",
+      "aiProfile": "aggressive_raider",
+      "waves": [
+        {
+          "triggerTimeSeconds": 90,
+          "spawnEdge": "west",
+          "units": [
+            { "type": "sea_raider", "count": 3 }
+          ],
+          "advisorWarning": "Zalpa: Vele scure al largo delle secche a occidente! Tre scialuppe hanno toccato la riva!"
+        },
+        {
+          "triggerTimeSeconds": 190,
+          "spawnEdge": "west",
+          "units": [
+            { "type": "sea_raider", "count": 6 }
+          ],
+          "advisorWarning": "Zalpa: Altri incursori shardana risalgono le dune! Proteggete la fonderia e le carovane!"
+        },
+        {
+          "triggerTimeSeconds": 320,
+          "spawnEdge": "west",
+          "units": [
+            { "type": "sea_raider", "count": 10 }
+          ],
+          "advisorWarning": "Burna-Khabir: L'assalto principale è giunto. Mantenete compatti gli scudi a torre o saremo sommersi!"
+        }
+      ]
+    }
+  ],
+  "objectives": {
+    "primary": [
+      {
+        "id": "build_watchtower",
+        "type": "build_structure",
+        "description": "Erigi una Torre di Vedetta Ciclopica per monitorare la costa e il mare.",
+        "targetId": "watchtower",
+        "targetAmount": 1,
+        "isPrimary": true
+      },
+      {
+        "id": "gather_tin",
+        "type": "gather_resource",
+        "description": "Accumula almeno 200 unità di Stagno per rifornire la forgia del Wanax.",
+        "targetAmount": 200,
+        "isPrimary": true
+      },
+      {
+        "id": "survive_sea_peoples",
+        "type": "survive_time",
+        "description": "Resisti e sconfiggi tutte le ondate di sbarco dei Popoli del Mare (6 minuti).",
+        "targetSeconds": 360,
+        "isPrimary": true
+      }
+    ],
+    "secondary": [
+      {
+        "id": "keep_foundry_alive",
+        "type": "protect_entity",
+        "description": "Non perdere la Fonderia del Bronzo durante le incursioni nemici.",
+        "isPrimary": false
+      }
+    ]
+  },
+  "narrative": {
+    "briefing": "Anno 1182 a.C. Le coste dell'Egeo bruciano. Dalle acque del Grande Verde spuntano navi con prora a testa d'uccello ed equipaggi con elmi cornuti. A Kadesh-sul-Mare, il nostro popolo deve fortificare le difese: posiziona i terrapieni ciclopici, estrai il prezioso stagno dalle sabbie e respingi i primi sbarchi dei Popoli del Mare.",
+    "advisorPortrait": "burna_khabir",
+    "dialogues": [
+      {
+        "condition": "start",
+        "speaker": "burna_khabir",
+        "message": "Mio Wanax, le lettere dagli altri regni non arrivano più. I sacerdoti leggono le viscere: la terra tremerà e il mare vomiterà fuoco e ferro. Prepariamoci."
+      },
+      {
+        "condition": "tin_depleted",
+        "speaker": "tarkhunta",
+        "message": "Nobile Signore, i depositi di stagno scarseggiano. Se non proteggiamo i pochi filoni rimasti, dovremo combattere con lance di selce!"
+      }
+    ]
+  }
+}

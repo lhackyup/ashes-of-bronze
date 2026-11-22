@@ -1,0 +1,47 @@
+type EventCallback<T = any> = (data: T) => void;
+
+export class EventBus {
+  private static instance: EventBus;
+  private listeners: Map<string, Set<EventCallback>> = new Map();
+
+  private constructor() {}
+
+  public static get(): EventBus {
+    if (!EventBus.instance) {
+      EventBus.instance = new EventBus();
+    }
+    return EventBus.instance;
+  }
+
+  public on<T = any>(event: string, callback: EventCallback<T>): () => void {
+    if (!this.listeners.has(event)) {
+      this.listeners.set(event, new Set());
+    }
+    this.listeners.get(event)!.add(callback);
+
+    return () => this.off(event, callback);
+  }
+
+  public off<T = any>(event: string, callback: EventCallback<T>): void {
+    const list = this.listeners.get(event);
+    if (list) {
+      list.delete(callback);
+      if (list.size === 0) {
+        this.listeners.delete(event);
+      }
+    }
+  }
+
+  public emit<T = any>(event: string, data?: T): void {
+    const list = this.listeners.get(event);
+    if (list) {
+      for (const cb of list) {
+        try {
+          cb(data);
+        } catch (err) {
+          console.error(`[EventBus] Error in event listener for ${event}:`, err);
+        }
+      }
+    }
+  }
+}

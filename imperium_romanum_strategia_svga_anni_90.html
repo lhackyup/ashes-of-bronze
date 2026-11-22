@@ -1,0 +1,3624 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IMPERIUM ROMANUM - Strategia SVGA (1999 Edition)</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&display=swap');
+
+        :root {
+            --marble-light: #e6dfd3;
+            --marble-mid: #c7bdb0;
+            --marble-dark: #7d7366;
+            --marble-shadow: #3b342c;
+            --bronze-light: #e0b86b;
+            --bronze-mid: #a67c37;
+            --bronze-dark: #4f3812;
+            --imperial-red: #8c1919;
+            --imperial-red-hi: #bd2424;
+            --gold-text: #ffdf73;
+            --obsidian: #161310;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #0e0c0a;
+            color: #f5efe6;
+            font-family: 'Crimson Pro', Georgia, serif;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .marble-panel {
+            background:
+                radial-gradient(circle at 20% 20%, rgba(255,255,255,0.12) 0%, transparent 50%),
+                linear-gradient(160deg, #544b41 0%, #38312a 55%, #26211c 100%);
+            border-top: 2px solid var(--bronze-light);
+            border-left: 2px solid var(--bronze-mid);
+            border-right: 2px solid #1a1510;
+            border-bottom: 2px solid #1a1510;
+            box-shadow: inset 0 0 12px rgba(0,0,0,0.65), 0 2px 6px rgba(0,0,0,0.8);
+        }
+
+        .bronze-inset {
+            background: linear-gradient(180deg, #1d1814 0%, #29221c 100%);
+            border-top: 2px solid #110e0b;
+            border-left: 2px solid #110e0b;
+            border-right: 2px solid var(--bronze-mid);
+            border-bottom: 2px solid var(--bronze-mid);
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.8);
+        }
+
+        .svga-btn {
+            background: linear-gradient(180deg, #6e5d4b 0%, #473b2f 50%, #332a21 100%);
+            border-top: 2px solid var(--bronze-light);
+            border-left: 2px solid var(--bronze-light);
+            border-right: 2px solid var(--bronze-dark);
+            border-bottom: 2px solid var(--bronze-dark);
+            border-radius: 3px;
+            color: #fff6e5;
+            font-family: 'Cinzel', serif;
+            font-weight: 700;
+            font-size: 12px;
+            letter-spacing: 0.4px;
+            cursor: pointer;
+            text-shadow: 1px 1px 2px #000;
+            box-shadow: 0 2px 3px rgba(0,0,0,0.6);
+            padding: 5px 10px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            transition: all 0.12s ease;
+        }
+
+        .svga-btn:hover:not(:disabled) {
+            background: linear-gradient(180deg, #87725c 0%, #594a3b 50%, #403429 100%);
+            border-color: #ffe89e;
+            color: var(--gold-text);
+        }
+
+        .svga-btn:active:not(:disabled) {
+            transform: translateY(1px);
+            border-top-color: var(--bronze-dark);
+            border-left-color: var(--bronze-dark);
+        }
+
+        .svga-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .svga-btn.active-tab {
+            background: linear-gradient(180deg, var(--imperial-red-hi) 0%, var(--imperial-red) 60%, #5c0e0e 100%);
+            border-color: var(--bronze-light);
+            color: var(--gold-text);
+            box-shadow: inset 0 0 8px rgba(255, 215, 0, 0.35);
+        }
+
+        .svga-btn.roman-primary {
+            background: linear-gradient(180deg, #c22727 0%, #871414 55%, #590b0b 100%);
+            border: 2px solid var(--bronze-light);
+            color: var(--gold-text);
+            font-size: 14px;
+            padding: 10px 22px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.3);
+        }
+
+        #top-bar {
+            height: 54px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 4px 10px;
+            gap: 10px;
+            z-index: 10;
+            flex-shrink: 0;
+        }
+
+        .resource-strip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .res-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 3px;
+            min-width: 105px;
+        }
+
+        .res-icon {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            box-shadow: inset 0 -2px 3px rgba(0,0,0,0.6), 0 1px 2px #000;
+        }
+
+        .res-label {
+            font-family: 'Cinzel', serif;
+            font-size: 11px;
+            color: #c9bca9;
+            display: block;
+            line-height: 1;
+        }
+
+        .res-val {
+            font-family: 'Cinzel', serif;
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--gold-text);
+            text-shadow: 1px 1px 1px #000;
+            line-height: 1.1;
+        }
+
+        .res-val.danger { color: #ff5c5c; }
+
+        #advisor-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+            height: 44px;
+            padding: 2px 10px;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        #advisor-portrait {
+            width: 38px;
+            height: 38px;
+            border: 2px solid var(--bronze-light);
+            border-radius: 3px;
+            flex-shrink: 0;
+            box-shadow: 0 2px 4px #000;
+        }
+
+        #advisor-text {
+            font-size: 16px;
+            font-weight: 600;
+            color: #f7e6b5;
+            text-shadow: 1px 1px 2px #000;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .top-controls {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        #main-container {
+            display: flex;
+            flex: 1;
+            width: 100%;
+            height: calc(100% - 54px);
+            overflow: hidden;
+        }
+
+        #viewport-wrapper {
+            position: relative;
+            flex: 1;
+            height: 100%;
+            background: #090807;
+            overflow: hidden;
+            cursor: crosshair;
+        }
+
+        #game-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        #group-bar {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            display: flex;
+            gap: 6px;
+            z-index: 15;
+            pointer-events: auto;
+        }
+
+        .group-badge {
+            background: rgba(28, 22, 17, 0.88);
+            border: 1px solid var(--bronze-mid);
+            color: var(--gold-text);
+            font-family: 'Cinzel', serif;
+            font-size: 11px;
+            padding: 3px 7px;
+            border-radius: 3px;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.7);
+        }
+        .group-badge:hover { border-color: #fff; }
+
+        #sidebar {
+            width: 310px;
+            max-width: 38vw;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            padding: 8px;
+            gap: 8px;
+            z-index: 10;
+            flex-shrink: 0;
+        }
+
+        #minimap-frame {
+            padding: 4px;
+            border-radius: 4px;
+            background: linear-gradient(135deg, var(--bronze-mid), var(--bronze-dark));
+        }
+
+        #minimap-container {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            max-height: 205px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border-radius: 2px;
+        }
+
+        #minimap-canvas {
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        #radar-offline {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle, rgba(35,28,22,0.92) 0%, rgba(16,12,9,0.97) 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 12px;
+            color: #c2b29b;
+            font-size: 14px;
+            line-height: 1.3;
+            pointer-events: none;
+        }
+
+        #inspector-panel {
+            padding: 8px;
+            border-radius: 3px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            min-height: 112px;
+        }
+
+        .inspector-header {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        #inspector-icon {
+            width: 52px;
+            height: 52px;
+            border: 2px solid var(--bronze-light);
+            border-radius: 3px;
+            background: radial-gradient(circle, #382f27 0%, #171310 100%);
+            flex-shrink: 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.7);
+        }
+
+        .inspector-info {
+            flex: 1;
+            overflow: hidden;
+        }
+
+        #inspector-name {
+            font-family: 'Cinzel', serif;
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--gold-text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        #inspector-desc {
+            font-size: 13px;
+            color: #dcd0be;
+            line-height: 1.15;
+            margin-top: 2px;
+        }
+
+        .hp-bar-bg {
+            width: 100%;
+            height: 8px;
+            background: #1c0909;
+            border: 1px solid #594a3b;
+            border-radius: 2px;
+            margin-top: 4px;
+            overflow: hidden;
+        }
+
+        .hp-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #2b9348, #55a630);
+            width: 100%;
+            transition: width 0.15s;
+        }
+
+        .cargo-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #d97706, #fbbf24);
+            width: 0%;
+            transition: width 0.15s;
+        }
+
+        #inspector-actions {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            margin-top: 2px;
+        }
+
+        #inspector-actions .svga-btn {
+            font-size: 11px;
+            padding: 3px 7px;
+            flex: 1;
+        }
+
+        #build-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            padding: 6px;
+            border-radius: 3px;
+        }
+
+        .build-tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 6px;
+        }
+
+        .build-tabs .svga-btn {
+            flex: 1;
+            font-size: 12px;
+            padding: 5px;
+        }
+
+        #build-grid {
+            flex: 1;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+            align-content: start;
+            padding-right: 2px;
+        }
+
+        #build-grid::-webkit-scrollbar { width: 6px; }
+        #build-grid::-webkit-scrollbar-track { background: #1a1511; }
+        #build-grid::-webkit-scrollbar-thumb { background: var(--bronze-mid); border-radius: 3px; }
+
+        .build-card {
+            position: relative;
+            background: linear-gradient(180deg, #332b23 0%, #1f1a15 100%);
+            border: 1px solid var(--bronze-mid);
+            border-radius: 4px;
+            padding: 5px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.6);
+            transition: all 0.12s;
+            overflow: hidden;
+        }
+
+        .build-card:hover:not(.locked) {
+            border-color: var(--gold-text);
+            background: linear-gradient(180deg, #473b30 0%, #2b241d 100%);
+            transform: translateY(-1px);
+        }
+
+        .build-card.locked {
+            opacity: 0.42;
+            cursor: not-allowed;
+            filter: grayscale(0.6);
+        }
+
+        .build-card.ready-to-place {
+            border: 2px solid #4ade80;
+            animation: pulseReady 1.1s infinite alternate;
+        }
+
+        @keyframes pulseReady {
+            from { box-shadow: 0 0 4px rgba(74, 222, 128, 0.4); }
+            to { box-shadow: 0 0 14px rgba(74, 222, 128, 0.95); }
+        }
+
+        .build-card canvas {
+            width: 52px;
+            height: 52px;
+            margin-bottom: 3px;
+            border-radius: 2px;
+        }
+
+        .build-card-title {
+            font-family: 'Cinzel', serif;
+            font-size: 11px;
+            font-weight: 700;
+            color: #fff6e5;
+            line-height: 1.15;
+        }
+
+        .build-card-cost {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--gold-text);
+            margin-top: 1px;
+        }
+
+        .build-progress-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 5px;
+            background: linear-gradient(90deg, #f59e0b, #fef08a);
+            box-shadow: 0 0 6px #f59e0b;
+            transition: width 0.08s linear;
+        }
+
+        .build-ready-badge {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            right: 3px;
+            background: linear-gradient(90deg, #15803d, #22c55e, #15803d);
+            color: #fff;
+            font-family: 'Cinzel', serif;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px;
+            border-radius: 2px;
+            box-shadow: 0 1px 3px #000;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(8, 6, 5, 0.85);
+            backdrop-filter: blur(3px);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .modal-box {
+            max-width: 820px;
+            width: 100%;
+            max-height: 92vh;
+            overflow-y: auto;
+            padding: 24px;
+            border-radius: 6px;
+            text-align: center;
+            position: relative;
+        }
+
+        .roman-title {
+            font-family: 'Cinzel', serif;
+            font-weight: 900;
+            color: var(--gold-text);
+            text-shadow: 0 2px 0 var(--imperial-red), 0 4px 10px #000;
+            font-size: clamp(22px, 3.6vw, 34px);
+            letter-spacing: 1.5px;
+            margin: 0 0 6px 0;
+        }
+
+        .roman-subtitle {
+            font-size: 18px;
+            font-style: italic;
+            color: #e3d6c1;
+            margin-bottom: 16px;
+        }
+
+        #campaign-canvas {
+            width: 100%;
+            max-width: 660px;
+            height: 300px;
+            border: 3px solid var(--bronze-mid);
+            border-radius: 4px;
+            margin: 0 auto 16px auto;
+            display: block;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.8);
+        }
+
+        .mission-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+            margin-bottom: 18px;
+            text-align: left;
+        }
+
+        .mission-card {
+            padding: 12px;
+            background: linear-gradient(180deg, #2b241d 0%, #1c1713 100%);
+            border: 2px solid var(--bronze-dark);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .mission-card:hover:not(.locked) {
+            border-color: var(--bronze-light);
+        }
+
+        .mission-card.selected {
+            border-color: var(--gold-text);
+            background: linear-gradient(180deg, #423326 0%, #291f17 100%);
+            box-shadow: 0 0 12px rgba(255, 223, 115, 0.25);
+        }
+
+        .mission-card.completed { border-color: #22c55e; }
+        .mission-card.locked { opacity: 0.45; cursor: not-allowed; }
+
+        #mobile-action-bar {
+            display: none;
+            position: absolute;
+            bottom: 12px;
+            left: 12px;
+            gap: 6px;
+            z-index: 20;
+        }
+
+        @media (max-width: 860px) {
+            #sidebar { width: 220px; }
+            #mobile-action-bar { display: flex; }
+            #minimap-container { max-height: 145px; }
+            #build-grid { grid-template-columns: 1fr; }
+            .res-pill { min-width: 80px; padding: 3px 6px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header id="top-bar" class="marble-panel">
+        <div class="resource-strip">
+            <div class="res-pill bronze-inset" title="Denarii (Tesoro Imperiale)">
+                <span class="res-icon" style="background:radial-gradient(circle at 30% 30%, #fff3b0, #d4a373 60%, #8c5a19); color:#3d2506;">₳</span>
+                <div>
+                    <span class="res-label">DENARII</span>
+                    <span id="stat-credits" class="res-val">1200</span>
+                </div>
+            </div>
+            <div class="res-pill bronze-inset" title="Viveri e Supporto Legioni">
+                <span class="res-icon" style="background:radial-gradient(circle at 30% 30%, #a7c957, #386641); color:#fff;">🌾</span>
+                <div>
+                    <span class="res-label">VIVERI</span>
+                    <span id="stat-supply" class="res-val">0/10</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="advisor-box" class="bronze-inset">
+            <canvas id="advisor-portrait" width="64" height="64"></canvas>
+            <div id="advisor-text">SENATUS POPULUSQUE ROMANUS — In attesa dei vostri ordini, Console.</div>
+        </div>
+
+        <div class="top-controls">
+            <button id="btn-audio" class="svga-btn" title="Attiva/Disattiva Musica e Suoni">🔊 AUDIO</button>
+            <button id="btn-speed" class="svga-btn" title="Velocità di gioco">⏩ 1x</button>
+            <button id="btn-help" class="svga-btn" title="Manuale del Console">? GUIDA</button>
+            <button id="btn-campaign" class="svga-btn" title="Mappa dell'Impero">🏛️ IMPERO</button>
+        </div>
+    </header>
+
+    <main id="main-container">
+        <div id="viewport-wrapper">
+            <canvas id="game-canvas"></canvas>
+            <div id="group-bar"></div>
+            <div id="mobile-action-bar">
+                <button id="btn-mode-select" class="svga-btn active-tab">👆 SELEZIONA</button>
+                <button id="btn-mode-command" class="svga-btn">⚔️ ORDINA</button>
+            </div>
+        </div>
+
+        <aside id="sidebar" class="marble-panel">
+            <div id="minimap-frame">
+                <div id="minimap-container" class="bronze-inset">
+                    <canvas id="minimap-canvas" width="192" height="192"></canvas>
+                    <div id="radar-offline">
+                        <span style="font-family:'Cinzel',serif; color:var(--gold-text); font-weight:700; margin-bottom:4px;">MAPPA OSCURATA</span>
+                        <span>Edifica una <b>Torre di Vedetta</b> per attivare la ricognizione</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="inspector-panel" class="bronze-inset">
+                <div class="inspector-header">
+                    <canvas id="inspector-icon" width="64" height="64"></canvas>
+                    <div class="inspector-info">
+                        <div id="inspector-name">Nessuna Selezione</div>
+                        <div id="inspector-desc">Seleziona legioni, carri o edifici sulla mappa</div>
+                        <div id="inspector-hp-wrap" class="hp-bar-bg" style="display:none;">
+                            <div id="inspector-hp-bar" class="hp-bar-fill"></div>
+                        </div>
+                        <div id="inspector-cargo-wrap" class="hp-bar-bg" style="display:none;" title="Carico Oro/Pietra">
+                            <div id="inspector-cargo-bar" class="cargo-bar-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                <div id="inspector-actions"></div>
+            </div>
+
+            <div id="build-panel" class="bronze-inset">
+                <div class="build-tabs">
+                    <button id="tab-buildings" class="svga-btn active-tab">🏛️ EDIFICI</button>
+                    <button id="tab-units" class="svga-btn">🛡️ LEGIONI</button>
+                </div>
+                <div id="build-grid"></div>
+            </div>
+        </aside>
+    </main>
+
+    <div id="campaign-modal" class="modal-overlay">
+        <div class="modal-box marble-panel">
+            <h1 class="roman-title">IMPERIUM ROMANUM</h1>
+            <div class="roman-subtitle">L'Ascesa di Roma — Edizione Strategica SVGA</div>
+
+            <canvas id="campaign-canvas" width="660" height="300"></canvas>
+
+            <div id="mission-list" class="mission-cards"></div>
+
+            <div style="display:flex; justify-content:center; gap:14px; flex-wrap:wrap;">
+                <button id="btn-start-mission" class="svga-btn roman-primary">⚔️ MARCIA IN BATTAGLIA</button>
+                <button id="btn-open-help-from-menu" class="svga-btn">📜 MANUALE DEL CONSOLE</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="help-modal" class="modal-overlay" style="display:none;">
+        <div class="modal-box marble-panel" style="text-align:left;">
+            <h2 class="roman-title" style="font-size:22px; text-align:center;">MANUALE DEL CONSOLE ROMANO</h2>
+            <div style="font-size:16px; line-height:1.45; color:#f0e6d6; display:grid; gap:10px; margin-bottom:18px;">
+                <p><b style="color:var(--gold-text);">1. LASTRICATO E FONDAMENTA:</b> Posiziona il <b>Lastricato Romano</b> sul terreno prima di costruire edifici per garantire massima integrità strutturale.</p>
+                <p><b style="color:var(--gold-text);">2. ECONOMIA E CARRI DA TRASPORTO:</b> Edifica una <b>Cava di Pietra</b>: invierà un <b>Carro da Trasporto</b> ai giacimenti dorati. Puoi anche selezionare i carri e comandarli manualmente con <b>Click Destro</b> su un giacimento, su terreno libero o sulla Cava per scaricare!</p>
+                <p><b style="color:var(--gold-text);">3. LEGIONI E ASSEDIO:</b> La <b>Caserma</b> addestra <i>Legionari</i> e <i>Arcieri</i>. L'<b>Officina d'Assedio</b> schiera la <i>Cavalleria Equites</i> e le catapulte <i>Onagro</i>. La <b>Torre di Vedetta</b> attiva la minimappa e difende la base.</p>
+                <p><b style="color:var(--gold-text);">4. COMANDI TATTICI:</b><br>
+                • <b>Click Sinistro / Trascina / Doppio Click:</b> Seleziona unità, carri o edifici.<br>
+                • <b>Click Destro (o tasto ORDINA su touch):</b> Muovi, attacca nemici, manda il carro a scavare o a scaricare.<br>
+                • <b>Ctrl + 1 / 2 / 3:</b> Assegna un gruppo rapido alle unità selezionate (premi <b>1, 2, 3</b> per richiamarle).<br>
+                • <b>Frecce / WASD:</b> Scorri la visuale sulla mappa.</p>
+            </div>
+            <div style="text-align:center;">
+                <button id="btn-close-help" class="svga-btn roman-primary">HO COMPRESO, AVANTI!</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="result-modal" class="modal-overlay" style="display:none;">
+        <div class="modal-box marble-panel">
+            <h2 id="result-title" class="roman-title">VITTORIA!</h2>
+            <p id="result-desc" class="roman-subtitle">I nemici di Roma sono stati sbaragliati!</p>
+            <div id="result-stats" class="bronze-inset" style="padding:14px; margin-bottom:18px; font-size:18px; color:var(--gold-text);"></div>
+            <button id="btn-result-continue" class="svga-btn roman-primary">CONTINUA LA CAMPAGNA</button>
+        </div>
+    </div>
+
+<script>
+/**
+ * IMPERIUM ROMANUM - Late 90s SVGA High-Color RTS Engine
+ * Interactive & Automated Harvesters, A* / Waypoint-assisted obstacle avoidance,
+ * Pre-rendered procedural high-res sprites (48x48 grid), directional shadows,
+ * multi-part animated Roman troops, atmospheric smoke/fire, control groups.
+ */
+
+// ============================================================================
+// 1. WEB AUDIO API ORCHESTRAL & SFX SYNTHESIZER
+// ============================================================================
+class RomanAudio {
+    constructor() {
+        this.ctx = null;
+        this.enabled = true;
+        this.bgmInterval = null;
+        this.bgmStep = 0;
+        this.melody = [
+            50, 50, 53, 57,  62, 60, 57, 53,
+            55, 55, 58, 62,  65, 64, 62, 57,
+            50, 50, 57, 62,  65, 64, 62, 60,
+            62, 57, 53, 52,  50, 0,  50, 0
+        ];
+    }
+
+    init() {
+        if (!this.ctx) {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (AudioCtx) this.ctx = new AudioCtx();
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+            this.ctx.resume();
+        }
+        this.startBGM();
+    }
+
+    toggle() {
+        this.enabled = !this.enabled;
+        if (!this.enabled) this.stopBGM();
+        else this.init();
+        return this.enabled;
+    }
+
+    playTone(freq, type, duration, vol = 0.07, slideTo = null) {
+        if (!this.enabled || !this.ctx) return;
+        try {
+            const now = this.ctx.currentTime;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, now);
+            if (slideTo) {
+                osc.frequency.exponentialRampToValueAtTime(Math.max(20, slideTo), now + duration);
+            }
+            gain.gain.setValueAtTime(vol, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now);
+            osc.stop(now + duration);
+        } catch (e) {}
+    }
+
+    playNoise(duration, vol = 0.12, filterFreq = 900) {
+        if (!this.enabled || !this.ctx) return;
+        try {
+            const now = this.ctx.currentTime;
+            const bufferSize = Math.floor(this.ctx.sampleRate * duration);
+            const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+
+            const noise = this.ctx.createBufferSource();
+            noise.buffer = buffer;
+            const filter = this.ctx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(filterFreq, now);
+            filter.frequency.exponentialRampToValueAtTime(110, now + duration);
+
+            const gain = this.ctx.createGain();
+            gain.gain.setValueAtTime(vol, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+            noise.connect(filter);
+            filter.connect(gain);
+            gain.connect(this.ctx.destination);
+            noise.start(now);
+        } catch (e) {}
+    }
+
+    sfxClick() { this.playTone(680, 'triangle', 0.05, 0.06); }
+    sfxSelect() { this.playTone(460, 'triangle', 0.08, 0.07, 690); }
+    sfxOrder() { this.playTone(540, 'triangle', 0.1, 0.08, 380); }
+    sfxBuild() {
+        this.playNoise(0.22, 0.14, 650);
+        this.playTone(130, 'triangle', 0.18, 0.11, 65);
+    }
+    sfxComplete() {
+        this.playTone(293.66, 'sawtooth', 0.14, 0.05);
+        setTimeout(() => this.playTone(369.99, 'sawtooth', 0.14, 0.05), 110);
+        setTimeout(() => this.playTone(440.00, 'sawtooth', 0.28, 0.06), 220);
+    }
+    sfxSword() {
+        this.playNoise(0.09, 0.08, 2200);
+        this.playTone(950, 'sawtooth', 0.07, 0.04, 320);
+    }
+    sfxArrow() {
+        this.playTone(880, 'sine', 0.09, 0.05, 380);
+    }
+    sfxCatapult() {
+        this.playNoise(0.28, 0.15, 500);
+        this.playTone(145, 'sawtooth', 0.25, 0.09, 50);
+    }
+    sfxExplosion() {
+        this.playNoise(0.42, 0.22, 450);
+        this.playTone(95, 'sawtooth', 0.35, 0.14, 30);
+    }
+    sfxAlert() {
+        this.playTone(329.63, 'sawtooth', 0.14, 0.07);
+        setTimeout(() => this.playTone(261.63, 'sawtooth', 0.22, 0.07), 140);
+    }
+
+    startBGM() {
+        if (this.bgmInterval) return;
+        this.bgmInterval = setInterval(() => {
+            if (!this.enabled || !this.ctx || this.ctx.state !== 'running') return;
+            const note = this.melody[this.bgmStep % this.melody.length];
+            if (note > 0) {
+                const freq = 440 * Math.pow(2, (note - 69) / 12);
+                this.playTone(freq, 'triangle', 0.28, 0.025);
+                if (this.bgmStep % 4 === 0) {
+                    this.playTone(freq * 0.5, 'sine', 0.35, 0.03);
+                }
+            }
+            this.bgmStep++;
+        }, 310);
+    }
+
+    stopBGM() {
+        if (this.bgmInterval) {
+            clearInterval(this.bgmInterval);
+            this.bgmInterval = null;
+        }
+    }
+}
+
+const audio = new RomanAudio();
+
+// ============================================================================
+// 2. SVGA HIGH-COLOR PRE-RENDERED SPRITE & BIOME ENGINE (48x48 Tiles)
+// ============================================================================
+const TILE_SIZE = 48;
+const MAP_W = 48;
+const MAP_H = 48;
+
+const SpriteBank = {};
+
+function makeCanvas(w, h, fn) {
+    const c = document.createElement('canvas');
+    c.width = w;
+    c.height = h;
+    const ctx = c.getContext('2d');
+    fn(ctx, w, h);
+    return c;
+}
+
+function hash2D(x, y) {
+    const n = Math.sin(x * 127.1 + y * 311.7) * 43758.5453123;
+    return n - Math.floor(n);
+}
+
+function initSVGAArt() {
+    SpriteBank.advisor = makeCanvas(64, 64, (ctx) => {
+        const bgGrad = ctx.createLinearGradient(0, 0, 0, 64);
+        bgGrad.addColorStop(0, '#1e293b');
+        bgGrad.addColorStop(1, '#0f172a');
+        ctx.fillStyle = bgGrad;
+        ctx.fillRect(0, 0, 64, 64);
+
+        const colGrad = ctx.createLinearGradient(4, 0, 18, 0);
+        colGrad.addColorStop(0, '#94a3b8');
+        colGrad.addColorStop(0.5, '#f1f5f9');
+        colGrad.addColorStop(1, '#64748b');
+        ctx.fillStyle = colGrad;
+        ctx.fillRect(4, 4, 14, 56);
+
+        const togaGrad = ctx.createLinearGradient(12, 38, 52, 64);
+        togaGrad.addColorStop(0, '#f8fafc');
+        togaGrad.addColorStop(1, '#cbd5e1');
+        ctx.fillStyle = togaGrad;
+        ctx.beginPath();
+        ctx.ellipse(32, 58, 22, 18, 0, Math.PI, 0);
+        ctx.fill();
+
+        ctx.fillStyle = '#991b1b';
+        ctx.beginPath();
+        ctx.moveTo(20, 42); ctx.lineTo(30, 42); ctx.lineTo(40, 64); ctx.lineTo(28, 64);
+        ctx.fill();
+
+        ctx.fillStyle = '#d99b66';
+        ctx.fillRect(27, 34, 10, 10);
+        const faceGrad = ctx.createRadialGradient(30, 22, 3, 32, 24, 14);
+        faceGrad.addColorStop(0, '#f3c193');
+        faceGrad.addColorStop(1, '#c6834e');
+        ctx.fillStyle = faceGrad;
+        ctx.beginPath();
+        ctx.ellipse(32, 24, 10, 13, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#cbd5e1';
+        ctx.beginPath();
+        ctx.arc(32, 17, 10.5, Math.PI, 0);
+        ctx.fill();
+
+        ctx.strokeStyle = '#eab308';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.arc(32, 20, 11, Math.PI * 1.1, Math.PI * 1.9);
+        ctx.stroke();
+
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(27, 22, 3, 2);
+        ctx.fillRect(34, 22, 3, 2);
+        ctx.strokeStyle = '#7c2d12';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(29, 30); ctx.lineTo(35, 30); ctx.stroke();
+    });
+
+    const biomePalettes = [
+        { base: '#4d6e32', hi: '#628742', lo: '#3a5424', soil: '#7a6648' },
+        { base: '#596635', hi: '#707d44', lo: '#414a26', soil: '#826345' },
+        { base: '#b5945b', hi: '#cca96e', lo: '#967846', soil: '#d4b47a' }
+    ];
+
+    biomePalettes.forEach((pal, bIdx) => {
+        for (let v = 0; v < 4; v++) {
+            SpriteBank[`tile_grass_${bIdx}_${v}`] = makeCanvas(TILE_SIZE, TILE_SIZE, (ctx) => {
+                ctx.fillStyle = pal.base;
+                ctx.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+
+                for (let i = 0; i < 28; i++) {
+                    const rx = hash2D(v * 31 + i, bIdx * 17) * TILE_SIZE;
+                    const ry = hash2D(bIdx * 23, v * 47 + i) * TILE_SIZE;
+                    const rad = 2 + hash2D(i, v) * 5;
+                    ctx.fillStyle = i % 3 === 0 ? pal.hi : (i % 3 === 1 ? pal.lo : pal.soil);
+                    ctx.globalAlpha = 0.35;
+                    ctx.beginPath();
+                    ctx.arc(rx, ry, rad, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.globalAlpha = 1.0;
+
+                ctx.strokeStyle = pal.hi;
+                ctx.lineWidth = 1;
+                for (let i = 0; i < 10; i++) {
+                    const gx = 4 + hash2D(i * 3, v + bIdx) * (TILE_SIZE - 8);
+                    const gy = 6 + hash2D(v + bIdx, i * 7) * (TILE_SIZE - 10);
+                    ctx.beginPath();
+                    ctx.moveTo(gx, gy);
+                    ctx.lineTo(gx - 1.5, gy - 4);
+                    ctx.moveTo(gx + 2, gy);
+                    ctx.lineTo(gx + 3.5, gy - 3.5);
+                    ctx.stroke();
+                }
+            });
+        }
+    });
+
+    SpriteBank.tile_water = makeCanvas(TILE_SIZE, TILE_SIZE, (ctx) => {
+        const wGrad = ctx.createLinearGradient(0, 0, TILE_SIZE, TILE_SIZE);
+        wGrad.addColorStop(0, '#1d4e78');
+        wGrad.addColorStop(0.5, '#276599');
+        wGrad.addColorStop(1, '#184266');
+        ctx.fillStyle = wGrad;
+        ctx.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+
+        ctx.strokeStyle = 'rgba(165, 225, 255, 0.28)';
+        ctx.lineWidth = 1.5;
+        for (let y = 8; y < TILE_SIZE; y += 12) {
+            ctx.beginPath();
+            ctx.moveTo(4, y);
+            ctx.bezierCurveTo(16, y - 3, 30, y + 3, 44, y);
+            ctx.stroke();
+        }
+    });
+
+    SpriteBank.tile_resource = makeCanvas(TILE_SIZE, TILE_SIZE, (ctx) => {
+        ctx.fillStyle = '#5c4d3c';
+        ctx.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+
+        ctx.fillStyle = '#786652';
+        ctx.beginPath();
+        ctx.ellipse(24, 24, 21, 18, 0.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        const nodes = [
+            { x: 15, y: 16, r: 7 }, { x: 31, y: 19, r: 8 },
+            { x: 21, y: 31, r: 7 }, { x: 34, y: 32, r: 5 }
+        ];
+        nodes.forEach(n => {
+            ctx.fillStyle = 'rgba(0,0,0,0.45)';
+            ctx.beginPath(); ctx.arc(n.x + 2, n.y + 2, n.r, 0, Math.PI * 2); ctx.fill();
+
+            const g = ctx.createRadialGradient(n.x - 2, n.y - 2, 1, n.x, n.y, n.r);
+            g.addColorStop(0, '#fff7ae');
+            g.addColorStop(0.45, '#f59e0b');
+            g.addColorStop(1, '#78350f');
+            ctx.fillStyle = g;
+            ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2); ctx.fill();
+        });
+    });
+
+    SpriteBank.tile_slab = makeCanvas(TILE_SIZE, TILE_SIZE, (ctx) => {
+        ctx.fillStyle = '#857d75';
+        ctx.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+
+        const blocks = [
+            [1, 1, 22, 22], [25, 1, 22, 22],
+            [1, 25, 22, 22], [25, 25, 22, 22]
+        ];
+        blocks.forEach(([x, y, w, h]) => {
+            const g = ctx.createLinearGradient(x, y, x + w, y + h);
+            g.addColorStop(0, '#a89f96');
+            g.addColorStop(1, '#6e665f');
+            ctx.fillStyle = g;
+            ctx.fillRect(x, y, w, h);
+
+            ctx.strokeStyle = '#c4bbb1';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(x, y + h); ctx.lineTo(x, y); ctx.lineTo(x + w, y);
+            ctx.stroke();
+
+            ctx.strokeStyle = '#3d3833';
+            ctx.beginPath();
+            ctx.moveTo(x + w, y); ctx.lineTo(x + w, y + h); ctx.lineTo(x, y + h);
+            ctx.stroke();
+        });
+    });
+
+    SpriteBank.tile_rock = makeCanvas(TILE_SIZE, TILE_SIZE, (ctx) => {
+        ctx.fillStyle = '#4a4238';
+        ctx.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        ctx.beginPath(); ctx.ellipse(26, 28, 21, 17, 0, 0, Math.PI * 2); ctx.fill();
+
+        const rGrad = ctx.createLinearGradient(6, 4, 42, 42);
+        rGrad.addColorStop(0, '#9c8e7e');
+        rGrad.addColorStop(0.5, '#6e6254');
+        rGrad.addColorStop(1, '#3b332b');
+        ctx.fillStyle = rGrad;
+        ctx.beginPath();
+        ctx.moveTo(8, 36); ctx.lineTo(6, 16); ctx.lineTo(20, 6);
+        ctx.lineTo(38, 10); ctx.lineTo(43, 30); ctx.lineTo(28, 42);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = 'rgba(255,245,230,0.22)';
+        ctx.beginPath();
+        ctx.moveTo(10, 18); ctx.lineTo(20, 8); ctx.lineTo(32, 14); ctx.lineTo(20, 24);
+        ctx.closePath();
+        ctx.fill();
+    });
+
+    SpriteBank.cypress = makeCanvas(48, 64, (ctx) => {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+        ctx.beginPath();
+        ctx.ellipse(30, 56, 14, 6, 0.3, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#4a3219';
+        ctx.fillRect(21, 46, 5, 11);
+
+        const grad = ctx.createLinearGradient(14, 8, 32, 50);
+        grad.addColorStop(0, '#4f772d');
+        grad.addColorStop(0.5, '#31572c');
+        grad.addColorStop(1, '#132a13');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.moveTo(23.5, 6);
+        ctx.bezierCurveTo(32, 22, 33, 44, 23.5, 48);
+        ctx.bezierCurveTo(14, 44, 15, 22, 23.5, 6);
+        ctx.fill();
+    });
+
+    const drawRoofTiles = (ctx, x, y, w, h, baseColor, hiColor) => {
+        const g = ctx.createLinearGradient(x, y, x, y + h);
+        g.addColorStop(0, hiColor);
+        g.addColorStop(1, baseColor);
+        ctx.fillStyle = g;
+        ctx.fillRect(x, y, w, h);
+
+        ctx.strokeStyle = 'rgba(0,0,0,0.28)';
+        ctx.lineWidth = 1;
+        for (let tx = x + 4; tx < x + w; tx += 5) {
+            ctx.beginPath(); ctx.moveTo(tx, y); ctx.lineTo(tx, y + h); ctx.stroke();
+        }
+        for (let ty = y + 6; ty < y + h; ty += 6) {
+            ctx.beginPath(); ctx.moveTo(x, ty); ctx.lineTo(x + w, ty); ctx.stroke();
+        }
+    };
+
+    const makeBuildingSprite = (size, drawFn) => makeCanvas(size, size, (ctx) => {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.42)';
+        ctx.fillRect(10, 12, size - 12, size - 12);
+        drawFn(ctx, size);
+    });
+
+    ['player', 'enemy'].forEach(owner => {
+        const cMain = owner === 'player' ? '#9e1b1b' : '#1d4e89';
+        const cHi = owner === 'player' ? '#d62828' : '#2b6cb0';
+        const cTrim = owner === 'player' ? '#fbbf24' : '#bae6fd';
+
+        SpriteBank[`b_praetorium_${owner}`] = makeBuildingSprite(96, (ctx) => {
+            ctx.fillStyle = '#d6cfc5';
+            ctx.fillRect(6, 12, 82, 76);
+            ctx.strokeStyle = '#5c5349';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(6, 12, 82, 76);
+
+            drawRoofTiles(ctx, 8, 10, 78, 30, cMain, cHi);
+            ctx.fillStyle = '#e6dfd3';
+            ctx.beginPath();
+            ctx.moveTo(14, 40); ctx.lineTo(47, 22); ctx.lineTo(80, 40);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = '#786e63';
+            ctx.stroke();
+
+            ctx.fillStyle = cTrim;
+            ctx.beginPath(); ctx.arc(47, 33, 6, 0, Math.PI * 2); ctx.fill();
+
+            for (let cx = 12; cx <= 78; cx += 13) {
+                const colG = ctx.createLinearGradient(cx, 0, cx + 6, 0);
+                colG.addColorStop(0, '#948b80');
+                colG.addColorStop(0.4, '#f5f0e6');
+                colG.addColorStop(1, '#6b635a');
+                ctx.fillStyle = colG;
+                ctx.fillRect(cx, 41, 6, 44);
+            }
+
+            ctx.fillStyle = '#1c1815';
+            ctx.fillRect(36, 54, 22, 32);
+            ctx.strokeStyle = cTrim;
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(36, 54, 22, 32);
+        });
+
+        SpriteBank[`b_refinery_${owner}`] = makeBuildingSprite(96, (ctx) => {
+            ctx.fillStyle = '#b8afa4';
+            ctx.fillRect(6, 14, 82, 74);
+
+            drawRoofTiles(ctx, 8, 12, 42, 36, cMain, cHi);
+            ctx.fillStyle = '#7a7066';
+            ctx.fillRect(10, 48, 38, 38);
+
+            ctx.fillStyle = '#26211c';
+            ctx.fillRect(52, 30, 32, 54);
+            const oreG = ctx.createLinearGradient(54, 34, 82, 50);
+            oreG.addColorStop(0, '#fde047');
+            oreG.addColorStop(1, '#b45309');
+            ctx.fillStyle = oreG;
+            ctx.fillRect(55, 35, 26, 14);
+
+            ctx.fillStyle = '#5c3a21';
+            ctx.fillRect(45, 8, 6, 54);
+            ctx.fillRect(45, 8, 32, 6);
+            ctx.strokeStyle = '#d4a373';
+            ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.arc(48, 28, 10, 0, Math.PI * 2); ctx.stroke();
+        });
+
+        SpriteBank[`b_barracks_${owner}`] = makeBuildingSprite(96, (ctx) => {
+            ctx.fillStyle = '#c4bbb0';
+            ctx.fillRect(6, 12, 82, 76);
+
+            drawRoofTiles(ctx, 6, 10, 82, 22, cMain, cHi);
+            ctx.fillStyle = cTrim;
+            ctx.fillRect(12, 28, 70, 3);
+
+            ctx.fillStyle = '#8c7355';
+            ctx.fillRect(14, 36, 66, 46);
+            ctx.strokeStyle = '#4a3d2f';
+            ctx.strokeRect(14, 36, 66, 46);
+
+            for (let sx = 20; sx <= 66; sx += 22) {
+                ctx.fillStyle = cMain;
+                ctx.fillRect(sx, 46, 10, 16);
+                ctx.strokeStyle = cTrim;
+                ctx.strokeRect(sx, 46, 10, 16);
+            }
+        });
+
+        SpriteBank[`b_factory_${owner}`] = makeBuildingSprite(96, (ctx) => {
+            ctx.fillStyle = '#968c82';
+            ctx.fillRect(6, 14, 82, 74);
+
+            drawRoofTiles(ctx, 6, 10, 82, 24, cMain, cHi);
+
+            ctx.fillStyle = '#1f1b18';
+            ctx.fillRect(14, 38, 66, 48);
+
+            const fireG = ctx.createRadialGradient(28, 56, 2, 28, 56, 14);
+            fireG.addColorStop(0, '#fef08a');
+            fireG.addColorStop(0.5, '#f97316');
+            fireG.addColorStop(1, 'rgba(185, 28, 28, 0)');
+            ctx.fillStyle = fireG;
+            ctx.fillRect(16, 44, 24, 24);
+
+            ctx.fillStyle = '#575049';
+            ctx.fillRect(68, 4, 14, 28);
+            ctx.fillStyle = '#292524';
+            ctx.fillRect(70, 4, 10, 4);
+        });
+
+        SpriteBank[`b_tower_${owner}`] = makeBuildingSprite(48, (ctx) => {
+            const towerG = ctx.createLinearGradient(11, 0, 35, 0);
+            towerG.addColorStop(0, '#948b80');
+            towerG.addColorStop(0.4, '#e6dfd3');
+            towerG.addColorStop(1, '#5c5349');
+            ctx.fillStyle = towerG;
+            ctx.fillRect(11, 10, 24, 34);
+
+            drawRoofTiles(ctx, 7, 4, 32, 10, cMain, cHi);
+            ctx.fillStyle = cTrim;
+            ctx.fillRect(19, 6, 8, 5);
+
+            ctx.fillStyle = '#1c1815';
+            ctx.fillRect(20, 20, 6, 16);
+        });
+    });
+
+    const drawUnitPreview = (owner, type) => makeCanvas(48, 48, (ctx) => {
+        const cMain = owner === 'player' ? '#b91c1c' : '#1d4ed8';
+        const cTrim = owner === 'player' ? '#fbbf24' : '#93c5fd';
+
+        ctx.fillStyle = 'rgba(0,0,0,0.4)';
+        ctx.beginPath(); ctx.ellipse(24, 38, 12, 5, 0, 0, Math.PI * 2); ctx.fill();
+
+        if (type === 'harvester') {
+            ctx.fillStyle = '#6b4423'; ctx.fillRect(8, 16, 32, 18);
+            ctx.fillStyle = cMain; ctx.fillRect(10, 18, 28, 5);
+            ctx.fillStyle = '#f59e0b'; ctx.fillRect(13, 23, 22, 8);
+            ctx.fillStyle = '#1c1917';
+            ctx.beginPath(); ctx.arc(15, 35, 5, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(33, 35, 5, 0, Math.PI * 2); ctx.fill();
+        } else if (type === 'legionary') {
+            ctx.fillStyle = '#cbd5e1'; ctx.beginPath(); ctx.arc(24, 13, 6, Math.PI, 0); ctx.fill();
+            ctx.fillStyle = cMain; ctx.fillRect(22, 4, 4, 5);
+            ctx.fillStyle = cMain; ctx.fillRect(17, 15, 14, 14);
+            ctx.fillStyle = cMain; ctx.fillRect(11, 15, 10, 17);
+            ctx.strokeStyle = cTrim; ctx.lineWidth = 1.5; ctx.strokeRect(11, 15, 10, 17);
+            ctx.fillStyle = cTrim; ctx.beginPath(); ctx.arc(16, 23.5, 2.5, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#f1f5f9'; ctx.fillRect(33, 12, 3, 14);
+            ctx.fillStyle = '#92400e'; ctx.fillRect(18, 29, 4, 8); ctx.fillRect(25, 29, 4, 8);
+        } else if (type === 'archer') {
+            ctx.fillStyle = '#78350f'; ctx.beginPath(); ctx.arc(23, 13, 5.5, Math.PI, 0); ctx.fill();
+            ctx.fillStyle = cMain; ctx.fillRect(17, 15, 12, 14);
+            ctx.strokeStyle = '#d97706'; ctx.lineWidth = 2.5;
+            ctx.beginPath(); ctx.arc(27, 22, 10, -Math.PI * 0.45, Math.PI * 0.45); ctx.stroke();
+            ctx.fillStyle = '#92400e'; ctx.fillRect(18, 29, 4, 8); ctx.fillRect(24, 29, 4, 8);
+        } else if (type === 'cavalry') {
+            ctx.fillStyle = '#5c3317'; ctx.fillRect(10, 21, 28, 11);
+            ctx.fillRect(32, 14, 8, 10);
+            ctx.fillRect(12, 32, 4, 7); ctx.fillRect(31, 32, 4, 7);
+            ctx.fillStyle = cMain; ctx.fillRect(18, 12, 10, 11);
+            ctx.fillStyle = '#cbd5e1'; ctx.beginPath(); ctx.arc(23, 10, 5, Math.PI, 0); ctx.fill();
+            ctx.fillStyle = '#f8fafc'; ctx.fillRect(29, 6, 2.5, 22);
+        } else if (type === 'onager') {
+            ctx.fillStyle = '#5c3317'; ctx.fillRect(8, 24, 32, 10);
+            ctx.fillStyle = cMain; ctx.fillRect(12, 19, 24, 5);
+            ctx.fillStyle = '#78350f'; ctx.fillRect(16, 10, 5, 16);
+            ctx.fillStyle = '#f97316'; ctx.beginPath(); ctx.arc(16, 9, 5, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#1c1917';
+            ctx.beginPath(); ctx.arc(14, 35, 5, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(34, 35, 5, 0, Math.PI * 2); ctx.fill();
+        }
+    });
+
+    ['player', 'enemy'].forEach(o => {
+        ['harvester', 'legionary', 'archer', 'cavalry', 'onager'].forEach(t => {
+            SpriteBank[`u_${t}_${o}`] = drawUnitPreview(o, t);
+        });
+    });
+}
+
+// ============================================================================
+// 3. GAME DEFINITIONS & CAMPAIGN DATA
+// ============================================================================
+const TERRAIN = {
+    GRASS: 0,
+    WATER: 1,
+    RESOURCE: 2,
+    SLAB: 3,
+    ROCK: 4
+};
+
+const BUILDING_DEFS = {
+    slab: {
+        id: 'slab',
+        name: 'Lastricato Romano',
+        cost: 50,
+        buildTime: 1.8,
+        size: 1,
+        hp: 100,
+        supply: 0,
+        req: null,
+        isTile: true,
+        desc: 'Fondamenta in pietra squadrata. Garantisce integrità agli edifici.'
+    },
+    refinery: {
+        id: 'refinery',
+        name: 'Cava di Pietra',
+        cost: 350,
+        buildTime: 6.0,
+        size: 2,
+        hp: 650,
+        supply: 4,
+        req: null,
+        desc: 'Include un Carro da Trasporto automatico per estrarre oro e marmo.'
+    },
+    barracks: {
+        id: 'barracks',
+        name: 'Caserma (Castra)',
+        cost: 300,
+        buildTime: 5.0,
+        size: 2,
+        hp: 600,
+        supply: 6,
+        req: null,
+        desc: 'Addestra Legionari pesanti e Arcieri Ausiliari.'
+    },
+    tower: {
+        id: 'tower',
+        name: 'Torre di Vedetta',
+        cost: 220,
+        buildTime: 4.2,
+        size: 1,
+        hp: 420,
+        supply: 0,
+        req: 'barracks',
+        range: 5.8,
+        damage: 24,
+        cooldown: 1.15,
+        desc: 'Sblocca la minimappa tattica e scaglia dardi sui nemici.'
+    },
+    factory: {
+        id: 'factory',
+        name: "Officina d'Assedio",
+        cost: 550,
+        buildTime: 7.5,
+        size: 2,
+        hp: 820,
+        supply: 8,
+        req: 'barracks',
+        desc: 'Schiera la Cavalleria Equites e le catapulte Onagro.'
+    }
+};
+
+const UNIT_DEFS = {
+    harvester: {
+        id: 'harvester',
+        name: 'Carro da Trasporto',
+        cost: 250,
+        buildTime: 4.5,
+        hp: 340,
+        speed: 2.1,
+        range: 1.2,
+        damage: 0,
+        cooldown: 1.0,
+        supplyCost: 1,
+        req: 'refinery',
+        desc: 'Estrae oro e pietra dai giacimenti. Click destro per spostarlo, scavare o scaricare!'
+    },
+    legionary: {
+        id: 'legionary',
+        name: 'Legionario',
+        cost: 120,
+        buildTime: 3.2,
+        hp: 155,
+        speed: 2.3,
+        range: 1.35,
+        damage: 21,
+        cooldown: 0.95,
+        supplyCost: 1,
+        req: 'barracks',
+        desc: 'Fanteria pesante con scutum e gladio. Letale in corpo a corpo.'
+    },
+    archer: {
+        id: 'archer',
+        name: 'Arciere Ausiliario',
+        cost: 140,
+        buildTime: 3.5,
+        hp: 105,
+        speed: 2.5,
+        range: 4.6,
+        damage: 17,
+        cooldown: 1.25,
+        supplyCost: 1,
+        req: 'barracks',
+        desc: 'Colpisce i nemici a distanza con archi compositi.'
+    },
+    cavalry: {
+        id: 'cavalry',
+        name: 'Cavalleria (Equites)',
+        cost: 280,
+        buildTime: 5.2,
+        hp: 250,
+        speed: 3.9,
+        range: 1.45,
+        damage: 34,
+        cooldown: 0.88,
+        supplyCost: 2,
+        req: 'factory',
+        desc: 'Cavalleria rapida per assalti sui fianchi e incursioni.'
+    },
+    onager: {
+        id: 'onager',
+        name: 'Catapulta Onagro',
+        cost: 420,
+        buildTime: 7.0,
+        hp: 210,
+        speed: 1.35,
+        range: 7.2,
+        damage: 68,
+        cooldown: 2.7,
+        splash: 1.6,
+        supplyCost: 3,
+        req: 'factory',
+        desc: 'Lancia massi infuocati a lunga gittata. Devastante sugli edifici.'
+    }
+};
+
+const MISSIONS = [
+    {
+        id: 0,
+        code: 'I. LATIUM',
+        title: 'Le Origini sul Tevere',
+        enemyName: 'Tribù dei Sabini',
+        biome: 0,
+        startCredits: 1250,
+        aiInterval: 38,
+        aiWaveSize: 3,
+        desc: 'Fonda il primo avamposto romano lungo le rive del Tevere, raccogli oro e pietra e conquista il campo fortificato dei Sabini.',
+        mapCoords: { x: 325, y: 155 }
+    },
+    {
+        id: 1,
+        code: 'II. ETRURIA',
+        title: 'La Conquista di Veio',
+        enemyName: 'Lega Etrusca',
+        biome: 1,
+        startCredits: 1450,
+        aiInterval: 30,
+        aiWaveSize: 4,
+        desc: 'Marcia sui colli vulcanici dell’Etruria. Gli Etruschi dispongono di torri e cavalleria: usa gli Onagri per radere al suolo le loro difese.',
+        mapCoords: { x: 298, y: 122 }
+    },
+    {
+        id: 2,
+        code: 'III. AFRICA',
+        title: 'Scontro con Cartagine',
+        enemyName: 'Impero Cartaginese',
+        biome: 2,
+        startCredits: 1750,
+        aiInterval: 24,
+        aiWaveSize: 5,
+        desc: 'Sbarca sulle coste sabbiose del Nord Africa per lo scontro decisivo. Distruggi il Praetorium cartaginese e fonda l’Impero!',
+        mapCoords: { x: 278, y: 245 }
+    }
+];
+
+// ============================================================================
+// 4. GLOBAL STATE
+// ============================================================================
+const state = {
+    screen: 'campaign',
+    currentMissionIdx: 0,
+    unlockedMissions: 1,
+    completedMissions: [false, false, false],
+
+    gameSpeed: 1,
+    credits: 1200,
+    enemyCredits: 1400,
+    timeElapsed: 0,
+    kills: 0,
+    buildingsBuilt: 0,
+
+    terrain: [],
+    terrainVariant: [],
+    decorations: [],
+    resourceAmount: [],
+    fog: [],
+
+    buildings: [],
+    units: [],
+    projectiles: [],
+    particles: [],
+    moveMarkers: [],
+    nextEntityId: 1,
+
+    selectedIds: [],
+    controlGroups: { 1: [], 2: [], 3: [] },
+    activeTab: 'buildings',
+    placingBuildingType: null,
+    touchCommandMode: false,
+
+    buildingProd: null,
+    unitProd: null,
+
+    camX: 0,
+    camY: 0,
+    mouseX: 0,
+    mouseY: 0,
+    isDraggingBox: false,
+    dragStartX: 0,
+    dragStartY: 0,
+    isPanning: false,
+    panStartX: 0,
+    panStartY: 0,
+    lastClickTime: 0,
+    lastClickedEntityId: null,
+
+    aiAttackTimer: 30,
+    aiBuildTimer: 10,
+    advisorTimer: 0,
+    smokeSpawnTimer: 0
+};
+
+function setAdvisorMessage(msg, isAlert = false) {
+    const el = document.getElementById('advisor-text');
+    el.textContent = msg;
+    el.style.color = isAlert ? '#ff6b6b' : '#f7e6b5';
+    state.advisorTimer = 6.0;
+    if (isAlert) audio.sfxAlert();
+}
+
+// ============================================================================
+// 5. MISSION & TERRAIN GENERATION
+// ============================================================================
+function startMission(missionIdx) {
+    audio.init();
+    audio.sfxBuild();
+    state.currentMissionIdx = missionIdx;
+    const m = MISSIONS[missionIdx];
+
+    state.screen = 'playing';
+    state.credits = m.startCredits;
+    state.enemyCredits = m.startCredits + 450;
+    state.timeElapsed = 0;
+    state.kills = 0;
+    state.buildingsBuilt = 0;
+    state.buildings = [];
+    state.units = [];
+    state.projectiles = [];
+    state.particles = [];
+    state.moveMarkers = [];
+    state.decorations = [];
+    state.selectedIds = [];
+    state.controlGroups = { 1: [], 2: [], 3: [] };
+    state.placingBuildingType = null;
+    state.buildingProd = null;
+    state.unitProd = null;
+    state.aiAttackTimer = m.aiInterval;
+    state.aiBuildTimer = 8;
+
+    state.terrain = Array.from({ length: MAP_H }, () => Array(MAP_W).fill(TERRAIN.GRASS));
+    state.terrainVariant = Array.from({ length: MAP_H }, (_, y) =>
+        Array.from({ length: MAP_W }, (_, x) => Math.floor(hash2D(x, y) * 4))
+    );
+    state.resourceAmount = Array.from({ length: MAP_H }, () => Array(MAP_W).fill(0));
+    state.fog = Array.from({ length: MAP_H }, () => Array(MAP_W).fill(0));
+
+    for (let y = 0; y < MAP_H; y++) {
+        const riverCenter = Math.floor(24 + Math.sin(y * 0.22) * 5);
+        const isFord = (y >= 13 && y <= 16) || (y >= 32 && y <= 35);
+        for (let dx = -1; dx <= 1; dx++) {
+            const rx = riverCenter + dx;
+            if (rx >= 0 && rx < MAP_W) {
+                state.terrain[y][rx] = isFord ? TERRAIN.SLAB : TERRAIN.WATER;
+            }
+        }
+    }
+
+    const rockClusters = [
+        { x: 14, y: 6, r: 2 }, { x: 15, y: 22, r: 2 }, { x: 12, y: 38, r: 2 },
+        { x: 34, y: 10, r: 2 }, { x: 33, y: 26, r: 2 }, { x: 35, y: 41, r: 2 }
+    ];
+    rockClusters.forEach(rc => {
+        for (let dy = -rc.r; dy <= rc.r; dy++) {
+            for (let dx = -rc.r; dx <= rc.r; dx++) {
+                const nx = rc.x + dx, ny = rc.y + dy;
+                if (nx >= 2 && nx < MAP_W - 2 && ny >= 2 && ny < MAP_H - 2) {
+                    if (state.terrain[ny][nx] === TERRAIN.GRASS && Math.hypot(dx, dy) <= rc.r) {
+                        state.terrain[ny][nx] = TERRAIN.ROCK;
+                    }
+                }
+            }
+        }
+    });
+
+    const addResourcePatch = (cx, cy, radius) => {
+        for (let dy = -radius; dy <= radius; dy++) {
+            for (let dx = -radius; dx <= radius; dx++) {
+                const nx = cx + dx, ny = cy + dy;
+                if (nx >= 1 && nx < MAP_W - 1 && ny >= 1 && ny < MAP_H - 1) {
+                    if (state.terrain[ny][nx] === TERRAIN.GRASS && Math.hypot(dx, dy) <= radius + 0.3) {
+                        state.terrain[ny][nx] = TERRAIN.RESOURCE;
+                        state.resourceAmount[ny][nx] = 380;
+                    }
+                }
+            }
+        }
+    };
+
+    addResourcePatch(9, 16, 2);
+    addResourcePatch(13, 30, 3);
+    addResourcePatch(6, 40, 2);
+    addResourcePatch(38, 14, 2);
+    addResourcePatch(36, 33, 3);
+    addResourcePatch(41, 41, 2);
+
+    for (let i = 0; i < 65; i++) {
+        const tx = Math.floor(hash2D(i * 13, missionIdx + 1) * (MAP_W - 4)) + 2;
+        const ty = Math.floor(hash2D(missionIdx + 2, i * 19) * (MAP_H - 4)) + 2;
+        const distPlayer = Math.hypot(tx - 7, ty - 9);
+        const distEnemy = Math.hypot(tx - 39, ty - 37);
+        if (state.terrain[ty][tx] === TERRAIN.GRASS && distPlayer > 6 && distEnemy > 6) {
+            state.decorations.push({ x: tx + 0.5, y: ty + 0.5, type: 'cypress' });
+        }
+    }
+
+    laySlabs(5, 7, 4, 4);
+    spawnBuilding('praetorium', 'player', 6, 8);
+    spawnUnit('legionary', 'player', 6.5, 11.5);
+    spawnUnit('legionary', 'player', 8.0, 11.5);
+    spawnUnit('archer', 'player', 7.2, 12.5);
+
+    const ex = 39, ey = 37;
+    laySlabs(ex - 2, ey - 2, 6, 6);
+    spawnBuilding('praetorium', 'enemy', ex, ey);
+    spawnBuilding('refinery', 'enemy', ex - 3, ey);
+    spawnBuilding('barracks', 'enemy', ex, ey - 3);
+    if (missionIdx >= 1) {
+        spawnBuilding('tower', 'enemy', ex - 4, ey - 3);
+        spawnBuilding('factory', 'enemy', ex - 3, ey - 3);
+    }
+    if (missionIdx >= 2) {
+        spawnBuilding('tower', 'enemy', ex - 4, ey + 2);
+    }
+
+    spawnUnit('legionary', 'enemy', ex - 2, ey - 4);
+    spawnUnit('legionary', 'enemy', ex - 1, ey - 4);
+    spawnUnit('archer', 'enemy', ex - 3, ey - 4);
+
+    const canvas = document.getElementById('game-canvas');
+    state.camX = Math.max(0, 7 * TILE_SIZE - canvas.width / 2);
+    state.camY = Math.max(0, 9 * TILE_SIZE - canvas.height / 2);
+
+    document.getElementById('campaign-modal').style.display = 'none';
+    document.getElementById('result-modal').style.display = 'none';
+
+    updateFogOfWar();
+    rebuildBuildGrid();
+    updateInspector();
+    updateGroupBar();
+    setAdvisorMessage(`${m.code} — ${m.title}. Edifica una Cava di Pietra per inviare i carri ai giacimenti!`);
+}
+
+function laySlabs(x, y, w, h) {
+    for (let dy = 0; dy < h; dy++) {
+        for (let dx = 0; dx < w; dx++) {
+            const tx = x + dx, ty = y + dy;
+            if (tx >= 0 && tx < MAP_W && ty >= 0 && ty < MAP_H) {
+                if (state.terrain[ty][tx] === TERRAIN.GRASS) {
+                    state.terrain[ty][tx] = TERRAIN.SLAB;
+                }
+            }
+        }
+    }
+}
+
+function spawnBuilding(type, owner, tx, ty) {
+    const def = type === 'praetorium'
+        ? { id: 'praetorium', name: 'Praetorium (Comando)', size: 2, hp: 1250, supply: 6 }
+        : BUILDING_DEFS[type];
+
+    let slabTiles = 0;
+    const totalTiles = def.size * def.size;
+    for (let dy = 0; dy < def.size; dy++) {
+        for (let dx = 0; dx < def.size; dx++) {
+            if (state.terrain[ty + dy] && state.terrain[ty + dy][tx + dx] === TERRAIN.SLAB) slabTiles++;
+        }
+    }
+    const foundationRatio = slabTiles / totalTiles;
+    const initialHp = Math.max(Math.floor(def.hp * 0.55), Math.floor(def.hp * foundationRatio));
+
+    const b = {
+        id: state.nextEntityId++,
+        entityType: 'building',
+        type: def.id,
+        name: def.name,
+        owner,
+        tx,
+        ty,
+        size: def.size,
+        hp: initialHp,
+        maxHp: def.hp,
+        supply: def.supply || 0,
+        cooldownTimer: 0
+    };
+    state.buildings.push(b);
+
+    if (type === 'refinery') {
+        const spot = findFreeTileNear(tx, ty, def.size);
+        spawnUnit('harvester', owner, spot.x + 0.5, spot.y + 0.5);
+    }
+
+    if (owner === 'player') {
+        state.buildingsBuilt++;
+        if (foundationRatio < 1.0 && type !== 'praetorium') {
+            setAdvisorMessage('Attenzione: edificio costruito senza Lastricato completo! Resistenza ridotta.', true);
+        }
+    }
+    return b;
+}
+
+function spawnUnit(type, owner, wx, wy) {
+    const def = UNIT_DEFS[type];
+    const u = {
+        id: state.nextEntityId++,
+        entityType: 'unit',
+        type: def.id,
+        name: def.name,
+        owner,
+        x: wx,
+        y: wy,
+        facing: owner === 'player' ? 0 : Math.PI,
+        animPhase: Math.random() * 6.28,
+        attackAnim: 0,
+        hp: def.hp,
+        maxHp: def.hp,
+        speed: def.speed,
+        range: def.range,
+        damage: def.damage,
+        cooldown: def.cooldown,
+        cooldownTimer: 0,
+        targetX: null,
+        targetY: null,
+        targetEntityId: null,
+        targetRefineryId: null,
+        state: 'idle',
+        cargo: 0,
+        maxCargo: 260,
+        harvestTimer: 0,
+        stuckTimer: 0
+    };
+    state.units.push(u);
+    return u;
+}
+
+function findFreeTileNear(tx, ty, size) {
+    for (let r = 1; r <= 5; r++) {
+        for (let dy = -r; dy <= size + r - 1; dy++) {
+            for (let dx = -r; dx <= size + r - 1; dx++) {
+                const nx = tx + dx, ny = ty + dy;
+                if (isTileWalkable(nx, ny)) return { x: nx, y: ny };
+            }
+        }
+    }
+    return { x: tx, y: Math.min(MAP_H - 1, ty + size) };
+}
+
+function isTileWalkable(tx, ty) {
+    if (tx < 0 || tx >= MAP_W || ty < 0 || ty >= MAP_H) return false;
+    const t = state.terrain[ty][tx];
+    if (t === TERRAIN.WATER || t === TERRAIN.ROCK) return false;
+    for (const b of state.buildings) {
+        if (tx >= b.tx && tx < b.tx + b.size && ty >= b.ty && ty < b.ty + b.size) return false;
+    }
+    return true;
+}
+
+// ============================================================================
+// 6. CONSTRUCTION, TECH TREE & FOG OF WAR
+// ============================================================================
+function hasPlayerBuilding(type) {
+    return state.buildings.some(b => b.owner === 'player' && b.type === type);
+}
+
+function getSupplyStats(owner) {
+    let cap = 0, used = 0;
+    for (const b of state.buildings) if (b.owner === owner) cap += (b.supply || 0);
+    for (const u of state.units) if (u.owner === owner) used += (UNIT_DEFS[u.type].supplyCost || 1);
+    return { used, cap };
+}
+
+function startBuildingProduction(type) {
+    const def = BUILDING_DEFS[type];
+    if (!def) return;
+    if (def.req && !hasPlayerBuilding(def.req)) {
+        setAdvisorMessage(`Richiede prima: ${BUILDING_DEFS[def.req].name}!`, true);
+        return;
+    }
+    if (state.buildingProd) {
+        if (state.buildingProd.ready && state.buildingProd.type === type) {
+            state.placingBuildingType = type;
+            setAdvisorMessage(`Seleziona sulla mappa dove edificare: ${def.name}`);
+            return;
+        }
+        setAdvisorMessage('Un cantiere è già attivo!', true);
+        return;
+    }
+    if (state.credits < def.cost) {
+        setAdvisorMessage('Denarii insufficienti nel tesoro!', true);
+        return;
+    }
+
+    state.credits -= def.cost;
+    state.buildingProd = { type, progress: 0, total: def.buildTime, ready: false };
+    audio.sfxClick();
+    setAdvisorMessage(`Cantiere avviato: ${def.name}...`);
+}
+
+function startUnitProduction(type) {
+    const def = UNIT_DEFS[type];
+    if (!def) return;
+    if (def.req && !hasPlayerBuilding(def.req)) {
+        setAdvisorMessage(`Richiede prima: ${BUILDING_DEFS[def.req].name}!`, true);
+        return;
+    }
+    if (state.unitProd) {
+        setAdvisorMessage('Addestramento / costruzione unità già in corso!', true);
+        return;
+    }
+    const sup = getSupplyStats('player');
+    if (sup.used + def.supplyCost > sup.cap) {
+        setAdvisorMessage('Viveri insufficienti! Costruisci altre Castra o Cave.', true);
+        return;
+    }
+    if (state.credits < def.cost) {
+        setAdvisorMessage('Denarii insufficienti!', true);
+        return;
+    }
+
+    state.credits -= def.cost;
+    state.unitProd = { type, progress: 0, total: def.buildTime };
+    audio.sfxClick();
+    setAdvisorMessage(`Produzione avviata: ${def.name}...`);
+}
+
+function canPlaceBuildingAt(type, tx, ty) {
+    const def = BUILDING_DEFS[type];
+    const size = def.size;
+    if (tx < 0 || ty < 0 || tx + size > MAP_W || ty + size > MAP_H) return false;
+
+    let nearBase = false;
+    for (let dy = -2; dy <= size + 1; dy++) {
+        for (let dx = -2; dx <= size + 1; dx++) {
+            const cx = tx + dx, cy = ty + dy;
+            if (cx >= 0 && cx < MAP_W && cy >= 0 && cy < MAP_H) {
+                if (state.terrain[cy][cx] === TERRAIN.SLAB) nearBase = true;
+                for (const b of state.buildings) {
+                    if (b.owner === 'player' && cx >= b.tx && cx < b.tx + b.size && cy >= b.ty && cy < b.ty + b.size) {
+                        nearBase = true;
+                    }
+                }
+            }
+        }
+    }
+    if (!nearBase) return false;
+
+    for (let dy = 0; dy < size; dy++) {
+        for (let dx = 0; dx < size; dx++) {
+            const gx = tx + dx, gy = ty + dy;
+            const t = state.terrain[gy][gx];
+            if (def.isTile) {
+                if (t !== TERRAIN.GRASS) return false;
+            } else {
+                if (t !== TERRAIN.GRASS && t !== TERRAIN.SLAB) return false;
+            }
+            for (const b of state.buildings) {
+                if (gx >= b.tx && gx < b.tx + b.size && gy >= b.ty && gy < b.ty + b.size) return false;
+            }
+            for (const u of state.units) {
+                if (Math.floor(u.x) === gx && Math.floor(u.y) === gy) return false;
+            }
+        }
+    }
+    return true;
+}
+
+function placeCompletedBuilding(tx, ty) {
+    if (!state.buildingProd || !state.buildingProd.ready) return;
+    const type = state.buildingProd.type;
+    if (!canPlaceBuildingAt(type, tx, ty)) {
+        setAdvisorMessage('Terreno non idoneo o troppo distante dalla base!', true);
+        return;
+    }
+
+    const def = BUILDING_DEFS[type];
+    state.decorations = state.decorations.filter(d => {
+        const dx = Math.floor(d.x), dy = Math.floor(d.y);
+        return !(dx >= tx && dx < tx + def.size && dy >= ty && dy < ty + def.size);
+    });
+
+    if (def.isTile) {
+        state.terrain[ty][tx] = TERRAIN.SLAB;
+    } else {
+        spawnBuilding(type, 'player', tx, ty);
+    }
+
+    audio.sfxBuild();
+    spawnParticles(tx + def.size * 0.5, ty + def.size * 0.5, '#e6dfd3', 18, 'dust');
+    state.buildingProd = null;
+    state.placingBuildingType = null;
+    updateFogOfWar();
+    rebuildBuildGrid();
+    setAdvisorMessage(`${def.name} edificato con successo!`);
+}
+
+function updateFogOfWar() {
+    for (let y = 0; y < MAP_H; y++) {
+        for (let x = 0; x < MAP_W; x++) {
+            if (state.fog[y][x] === 2) state.fog[y][x] = 1;
+        }
+    }
+
+    const reveal = (cx, cy, radius) => {
+        const r2 = radius * radius;
+        const minX = Math.max(0, Math.floor(cx - radius));
+        const maxX = Math.min(MAP_W - 1, Math.ceil(cx + radius));
+        const minY = Math.max(0, Math.floor(cy - radius));
+        const maxY = Math.min(MAP_H - 1, Math.ceil(cy + radius));
+        for (let y = minY; y <= maxY; y++) {
+            for (let x = minX; x <= maxX; x++) {
+                if ((x - cx) ** 2 + (y - cy) ** 2 <= r2) state.fog[y][x] = 2;
+            }
+        }
+    };
+
+    for (const b of state.buildings) {
+        if (b.owner === 'player') {
+            reveal(b.tx + b.size * 0.5, b.ty + b.size * 0.5, b.type === 'tower' ? 9.5 : 6.5);
+        }
+    }
+    for (const u of state.units) {
+        if (u.owner === 'player') reveal(u.x, u.y, 5.8);
+    }
+}
+
+// ============================================================================
+// 7. SIMULATION & COMBAT ENGINE (FULL HARVESTER CONTROL + OBSTACLE STEERING)
+// ============================================================================
+function updateSimulation(rawDt) {
+    if (state.screen !== 'playing') return;
+    const dt = rawDt * state.gameSpeed;
+    state.timeElapsed += dt;
+
+    if (state.advisorTimer > 0) {
+        state.advisorTimer -= rawDt;
+        if (state.advisorTimer <= 0) {
+            const el = document.getElementById('advisor-text');
+            el.textContent = 'SENATUS POPULUSQUE ROMANUS — La gloria di Roma è eterna.';
+            el.style.color = '#f7e6b5';
+        }
+    }
+
+    // Update Move Waypoint Markers
+    for (let i = state.moveMarkers.length - 1; i >= 0; i--) {
+        state.moveMarkers[i].life -= rawDt;
+        if (state.moveMarkers[i].life <= 0) state.moveMarkers.splice(i, 1);
+    }
+
+    state.smokeSpawnTimer -= dt;
+    if (state.smokeSpawnTimer <= 0) {
+        state.smokeSpawnTimer = 0.25;
+        for (const b of state.buildings) {
+            const c = getEntityCenter(b);
+            if (b.type === 'factory') {
+                spawnParticles(b.tx + 1.55, b.ty + 0.15, 'rgba(180,180,180,0.6)', 1, 'smoke');
+            }
+            if (b.hp < b.maxHp * 0.5) {
+                spawnParticles(c.tx + (Math.random() - 0.5) * 0.8, c.ty + (Math.random() - 0.5) * 0.8, 'rgba(40,40,40,0.75)', 1, 'smoke');
+                if (b.hp < b.maxHp * 0.3) {
+                    spawnParticles(c.tx + (Math.random() - 0.5) * 0.6, c.ty, '#f97316', 1, 'fire');
+                }
+            }
+        }
+    }
+
+    if (state.buildingProd && !state.buildingProd.ready) {
+        state.buildingProd.progress += dt;
+        if (state.buildingProd.progress >= state.buildingProd.total) {
+            state.buildingProd.progress = state.buildingProd.total;
+            state.buildingProd.ready = true;
+            state.placingBuildingType = state.buildingProd.type;
+            audio.sfxComplete();
+            setAdvisorMessage(`Costruzione pronta: ${BUILDING_DEFS[state.buildingProd.type].name}! Posizionala sulla mappa.`);
+            rebuildBuildGrid();
+        }
+    }
+
+    if (state.unitProd) {
+        state.unitProd.progress += dt;
+        if (state.unitProd.progress >= state.unitProd.total) {
+            const def = UNIT_DEFS[state.unitProd.type];
+            const spawner = state.buildings.find(b => b.owner === 'player' && b.type === def.req)
+                         || state.buildings.find(b => b.owner === 'player');
+            if (spawner) {
+                const spot = findFreeTileNear(spawner.tx, spawner.ty, spawner.size);
+                spawnUnit(def.id, 'player', spot.x + 0.5, spot.y + 0.5);
+                audio.sfxComplete();
+                setAdvisorMessage(`Unità schierata: ${def.name} pronta al comando!`);
+            }
+            state.unitProd = null;
+            rebuildBuildGrid();
+        }
+    }
+
+    for (const b of state.buildings) {
+        if (b.type === 'tower') {
+            b.cooldownTimer -= dt;
+            if (b.cooldownTimer <= 0) {
+                const bx = b.tx + 0.5, by = b.ty + 0.5;
+                const target = findNearestEnemy(bx, by, b.owner, BUILDING_DEFS.tower.range);
+                if (target) {
+                    b.cooldownTimer = BUILDING_DEFS.tower.cooldown;
+                    fireProjectile(bx, by - 0.3, target, BUILDING_DEFS.tower.damage, 'arrow', b.owner);
+                }
+            }
+        }
+    }
+
+    for (const u of state.units) {
+        u.cooldownTimer = Math.max(0, u.cooldownTimer - dt);
+        u.attackAnim = Math.max(0, u.attackAnim - dt * 3.5);
+        if (u.type === 'harvester') updateHarvester(u, dt);
+        else updateCombatUnit(u, dt);
+    }
+
+    for (let i = state.projectiles.length - 1; i >= 0; i--) {
+        const p = state.projectiles[i];
+        p.progress += (p.speed / p.totalDist) * dt;
+        if (p.kind === 'boulder' && Math.random() < 0.6) {
+            const cx = p.sx + (p.tx - p.sx) * p.progress;
+            const cy = p.sy + (p.ty - p.sy) * p.progress - Math.sin(p.progress * Math.PI) * 1.4;
+            spawnParticles(cx, cy, '#f97316', 1, 'fire');
+        }
+        if (p.progress >= 1.0) {
+            applyProjectileDamage(p);
+            state.projectiles.splice(i, 1);
+        }
+    }
+
+    for (let i = state.particles.length - 1; i >= 0; i--) {
+        const pt = state.particles[i];
+        pt.x += pt.vx * dt;
+        pt.y += pt.vy * dt;
+        pt.life -= dt;
+        if (pt.life <= 0) state.particles.splice(i, 1);
+    }
+
+    updateEnemyAI(dt);
+    updateFogOfWar();
+    checkVictoryDefeat();
+}
+
+function getDropoffSpotForBuilding(b) {
+    // Find nearest walkable perimeter tile around the refinery/praetorium
+    const candidates = [
+        { x: b.tx + 0.5, y: b.ty + b.size + 0.5 },
+        { x: b.tx + 1.5, y: b.ty + b.size + 0.5 },
+        { x: b.tx - 0.5, y: b.ty + 0.5 },
+        { x: b.tx + b.size + 0.5, y: b.ty + 0.5 },
+        { x: b.tx + 0.5, y: b.ty - 0.5 }
+    ];
+    for (const c of candidates) {
+        if (isTileWalkable(Math.floor(c.x), Math.floor(c.y))) return c;
+    }
+    const fallback = findFreeTileNear(b.tx, b.ty, b.size);
+    return { x: fallback.x + 0.5, y: fallback.y + 0.5 };
+}
+
+function updateHarvester(u, dt) {
+    if (u.state === 'idle') {
+        if (u.cargo >= u.maxCargo) {
+            u.state = 'returning';
+        } else {
+            const res = findNearestResource(u.x, u.y);
+            if (res) {
+                u.targetX = res.x + 0.5;
+                u.targetY = res.y + 0.5;
+                u.state = 'moving_to_res';
+            }
+        }
+    } else if (u.state === 'moving_to_res') {
+        const dist = moveUnitToward(u, u.targetX, u.targetY, dt);
+        const tx = Math.floor(u.x), ty = Math.floor(u.y);
+        if (dist < 0.55 || (state.terrain[ty] && state.terrain[ty][tx] === TERRAIN.RESOURCE && dist < 0.9)) {
+            u.state = 'harvesting';
+        }
+    } else if (u.state === 'harvesting') {
+        const tx = Math.floor(u.x), ty = Math.floor(u.y);
+        if (state.terrain[ty] && state.terrain[ty][tx] === TERRAIN.RESOURCE && state.resourceAmount[ty][tx] > 0) {
+            u.harvestTimer += dt;
+            if (u.harvestTimer >= 0.4) {
+                u.harvestTimer = 0;
+                const mined = Math.min(26, state.resourceAmount[ty][tx], u.maxCargo - u.cargo);
+                state.resourceAmount[ty][tx] -= mined;
+                u.cargo += mined;
+                spawnParticles(u.x, u.y, '#fbbf24', 4, 'spark');
+                if (state.resourceAmount[ty][tx] <= 0) state.terrain[ty][tx] = TERRAIN.GRASS;
+            }
+            if (u.cargo >= u.maxCargo) u.state = 'returning';
+        } else {
+            // Find adjacent resource tile before resetting
+            const res = findNearestResource(u.x, u.y);
+            if (res && u.cargo < u.maxCargo) {
+                u.targetX = res.x + 0.5;
+                u.targetY = res.y + 0.5;
+                u.state = 'moving_to_res';
+            } else if (u.cargo > 0) {
+                u.state = 'returning';
+            } else {
+                u.state = 'idle';
+            }
+        }
+    } else if (u.state === 'returning') {
+        let ref = u.targetRefineryId ? findEntityById(u.targetRefineryId) : null;
+        if (!ref || ref.hp <= 0) {
+            ref = state.buildings.find(b => b.owner === u.owner && b.type === 'refinery')
+               || state.buildings.find(b => b.owner === u.owner && b.type === 'praetorium');
+        }
+        if (!ref) { u.state = 'idle'; return; }
+
+        const drop = getDropoffSpotForBuilding(ref);
+        const dist = moveUnitToward(u, drop.x, drop.y, dt);
+        const c = getEntityCenter(ref);
+        const distToBuilding = Math.hypot(c.tx - u.x, c.ty - u.y);
+
+        if (dist < 0.65 || distToBuilding < 1.85) {
+            if (u.cargo > 0) {
+                if (u.owner === 'player') {
+                    state.credits += u.cargo;
+                    audio.sfxClick();
+                    spawnParticles(u.x, u.y, '#fde047', 8, 'spark');
+                } else {
+                    state.enemyCredits += u.cargo;
+                }
+                u.cargo = 0;
+            }
+            u.targetRefineryId = null;
+            u.state = 'idle';
+        }
+    } else if (u.state === 'moving') {
+        // Player explicitly ordered the harvester to move to a coordinate
+        const dist = moveUnitToward(u, u.targetX, u.targetY, dt);
+        if (dist < 0.45) {
+            const tx = Math.floor(u.x), ty = Math.floor(u.y);
+            if (state.terrain[ty] && state.terrain[ty][tx] === TERRAIN.RESOURCE) {
+                u.state = 'harvesting';
+            } else {
+                // Stay at commanded position briefly or resume if desired; we set to 'manual_hold' so player sees it arrived!
+                u.state = 'manual_hold';
+                u.targetX = null;
+                u.targetY = null;
+            }
+        }
+    } else if (u.state === 'manual_hold') {
+        // Harvester waits where the player parked it until given another order or sent back to work
+    }
+}
+
+function updateCombatUnit(u, dt) {
+    let target = null;
+    if (u.targetEntityId) {
+        target = findEntityById(u.targetEntityId);
+        if (!target || target.hp <= 0) { u.targetEntityId = null; target = null; }
+    }
+
+    if (!target && u.state === 'idle') {
+        target = findNearestEnemy(u.x, u.y, u.owner, u.range + 2.6);
+        if (target) u.targetEntityId = target.id;
+    }
+
+    if (target) {
+        const { tx, ty } = getEntityCenter(target);
+        u.facing = Math.atan2(ty - u.y, tx - u.x);
+        const dist = Math.hypot(tx - u.x, ty - u.y) - (target.entityType === 'building' ? 0.85 : 0);
+        if (dist <= u.range) {
+            if (u.cooldownTimer <= 0) {
+                u.cooldownTimer = u.cooldown;
+                u.attackAnim = 1.0;
+                const projType = u.type === 'onager' ? 'boulder' : (u.type === 'archer' ? 'arrow' : 'melee');
+                fireProjectile(u.x, u.y, target, u.damage, projType, u.owner, UNIT_DEFS[u.type].splash || 0);
+            }
+        } else {
+            moveUnitToward(u, tx, ty, dt);
+        }
+    } else if (u.state === 'moving' && u.targetX !== null) {
+        if (moveUnitToward(u, u.targetX, u.targetY, dt) < 0.35) {
+            u.state = 'idle';
+            u.targetX = null;
+            u.targetY = null;
+        }
+    }
+}
+
+function moveUnitToward(u, gx, gy, dt) {
+    const dx = gx - u.x;
+    const dy = gy - u.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist < 0.05) return 0;
+
+    u.facing = Math.atan2(dy, dx);
+    u.animPhase += dt * u.speed * 4.5;
+
+    let vx = (dx / dist) * u.speed;
+    let vy = (dy / dist) * u.speed;
+
+    // Soft separation from nearby units
+    for (const other of state.units) {
+        if (other.id !== u.id) {
+            const sdx = u.x - other.x;
+            const sdy = u.y - other.y;
+            const sdist = Math.hypot(sdx, sdy);
+            if (sdist > 0 && sdist < 0.65) {
+                vx += (sdx / sdist) * 1.4;
+                vy += (sdy / sdist) * 1.4;
+            }
+        }
+    }
+
+    const oldX = u.x, oldY = u.y;
+    const nextX = u.x + vx * dt;
+    const nextY = u.y + vy * dt;
+
+    const canX = isTileWalkable(Math.floor(nextX), Math.floor(u.y));
+    const canY = isTileWalkable(Math.floor(u.x), Math.floor(nextY));
+
+    if (canX) {
+        u.x = Math.max(0.5, Math.min(MAP_W - 0.5, nextX));
+    } else {
+        // Slide along vertical edge if blocked horizontally
+        const slideY = u.y + (dy >= 0 ? 1 : -1) * u.speed * 0.7 * dt;
+        if (isTileWalkable(Math.floor(u.x), Math.floor(slideY))) u.y = slideY;
+    }
+
+    if (canY) {
+        u.y = Math.max(0.5, Math.min(MAP_H - 0.5, nextY));
+    } else {
+        // Slide along horizontal edge if blocked vertically
+        const slideX = u.x + (dx >= 0 ? 1 : -1) * u.speed * 0.7 * dt;
+        if (isTileWalkable(Math.floor(slideX), Math.floor(u.y))) u.x = slideX;
+    }
+
+    // Track if stuck against a corner and apply perpendicular nudge
+    if (Math.hypot(u.x - oldX, u.y - oldY) < u.speed * dt * 0.15) {
+        u.stuckTimer += dt;
+        if (u.stuckTimer > 0.35) {
+            const perpAngle = u.facing + Math.PI * 0.5;
+            const nudgeX = u.x + Math.cos(perpAngle) * u.speed * dt;
+            const nudgeY = u.y + Math.sin(perpAngle) * u.speed * dt;
+            if (isTileWalkable(Math.floor(nudgeX), Math.floor(nudgeY))) {
+                u.x = nudgeX;
+                u.y = nudgeY;
+            }
+        }
+    } else {
+        u.stuckTimer = 0;
+    }
+
+    return dist;
+}
+
+function fireProjectile(sx, sy, target, damage, kind, owner, splash = 0) {
+    const { tx, ty } = getEntityCenter(target);
+    if (kind === 'melee') {
+        audio.sfxSword();
+        damageEntity(target, damage, owner);
+        spawnParticles(tx, ty, '#ef4444', 5, 'spark');
+        return;
+    }
+    if (kind === 'arrow') audio.sfxArrow();
+    if (kind === 'boulder') audio.sfxCatapult();
+
+    const totalDist = Math.max(0.5, Math.hypot(tx - sx, ty - sy));
+    state.projectiles.push({
+        sx, sy, tx, ty,
+        progress: 0,
+        totalDist,
+        targetId: target.id,
+        damage,
+        kind,
+        owner,
+        splash,
+        speed: kind === 'boulder' ? 7.8 : 14.0
+    });
+}
+
+function applyProjectileDamage(p) {
+    if (p.splash > 0) {
+        audio.sfxExplosion();
+        spawnParticles(p.tx, p.ty, '#f97316', 18, 'fire');
+        spawnParticles(p.tx, p.ty, '#333333', 10, 'smoke');
+        for (const u of [...state.units]) {
+            if (u.owner !== p.owner && Math.hypot(u.x - p.tx, u.y - p.ty) <= p.splash) {
+                damageEntity(u, p.damage, p.owner);
+            }
+        }
+        for (const b of [...state.buildings]) {
+            const c = getEntityCenter(b);
+            if (b.owner !== p.owner && Math.hypot(c.tx - p.tx, c.ty - p.ty) <= p.splash + 0.65) {
+                damageEntity(b, p.damage, p.owner);
+            }
+        }
+    } else {
+        const target = findEntityById(p.targetId);
+        if (target) {
+            damageEntity(target, p.damage, p.owner);
+            spawnParticles(p.tx, p.ty, '#fde047', 6, 'spark');
+        }
+    }
+}
+
+function damageEntity(ent, amount, attackerOwner) {
+    ent.hp -= amount;
+    if (ent.owner === 'player' && state.advisorTimer <= 0) {
+        setAdvisorMessage('Allarme! Le nostre forze sono sotto attacco!', true);
+    }
+
+    if (ent.hp <= 0) {
+        const c = getEntityCenter(ent);
+        if (ent.entityType === 'building') {
+            audio.sfxExplosion();
+            spawnParticles(c.tx, c.ty, '#f97316', 24, 'fire');
+            spawnParticles(c.tx, c.ty, '#262626', 16, 'smoke');
+            state.buildings = state.buildings.filter(b => b.id !== ent.id);
+            if (attackerOwner === 'player') state.kills++;
+            rebuildBuildGrid();
+        } else {
+            audio.sfxSword();
+            spawnParticles(c.tx, c.ty, '#dc2626', 12, 'spark');
+            state.units = state.units.filter(u => u.id !== ent.id);
+            if (attackerOwner === 'player') state.kills++;
+        }
+        state.selectedIds = state.selectedIds.filter(id => id !== ent.id);
+        updateInspector();
+    }
+}
+
+function spawnParticles(wx, wy, color, count, style = 'spark') {
+    for (let i = 0; i < count; i++) {
+        const ang = Math.random() * Math.PI * 2;
+        const spd = style === 'smoke' ? (0.2 + Math.random() * 0.4) : (0.9 + Math.random() * 2.6);
+        state.particles.push({
+            x: wx,
+            y: wy,
+            vx: style === 'smoke' ? (Math.random() - 0.5) * 0.3 : Math.cos(ang) * spd,
+            vy: style === 'smoke' ? (-0.6 - Math.random() * 0.5) : Math.sin(ang) * spd,
+            color,
+            style,
+            size: style === 'smoke' ? (4 + Math.random() * 5) : (2 + Math.random() * 2.5),
+            life: style === 'smoke' ? (0.9 + Math.random() * 0.7) : (0.3 + Math.random() * 0.35),
+            maxLife: 1.4
+        });
+    }
+}
+
+function updateEnemyAI(dt) {
+    const m = MISSIONS[state.currentMissionIdx];
+    state.aiBuildTimer -= dt;
+    state.aiAttackTimer -= dt;
+
+    if (state.aiBuildTimer <= 0) {
+        state.aiBuildTimer = 11;
+        const enemyUnits = state.units.filter(u => u.owner === 'enemy');
+        const enemyBarracks = state.buildings.find(b => b.owner === 'enemy' && b.type === 'barracks');
+        if (enemyBarracks && enemyUnits.length < 15 && state.enemyCredits >= 150) {
+            const pool = ['legionary', 'archer'];
+            if (state.currentMissionIdx >= 1) pool.push('cavalry');
+            if (state.currentMissionIdx >= 2) pool.push('onager');
+            const pick = pool[Math.floor(Math.random() * pool.length)];
+            state.enemyCredits -= UNIT_DEFS[pick].cost;
+            const spot = findFreeTileNear(enemyBarracks.tx, enemyBarracks.ty, 2);
+            spawnUnit(pick, 'enemy', spot.x + 0.5, spot.y + 0.5);
+        }
+    }
+
+    if (state.aiAttackTimer <= 0) {
+        state.aiAttackTimer = m.aiInterval;
+        const combatUnits = state.units.filter(u => u.owner === 'enemy' && u.type !== 'harvester');
+        const playerBuildings = state.buildings.filter(b => b.owner === 'player');
+        if (combatUnits.length > 0 && playerBuildings.length > 0) {
+            const targetB = playerBuildings[Math.floor(Math.random() * playerBuildings.length)];
+            const center = getEntityCenter(targetB);
+            combatUnits.forEach((u, idx) => {
+                if (idx < m.aiWaveSize) {
+                    u.targetEntityId = targetB.id;
+                    u.targetX = center.tx;
+                    u.targetY = center.ty;
+                    u.state = 'moving';
+                }
+            });
+        }
+    }
+}
+
+function checkVictoryDefeat() {
+    const playerBuildings = state.buildings.filter(b => b.owner === 'player');
+    const enemyBuildings = state.buildings.filter(b => b.owner === 'enemy');
+
+    if (enemyBuildings.length === 0) {
+        state.screen = 'result';
+        audio.sfxComplete();
+        const mIdx = state.currentMissionIdx;
+        state.completedMissions[mIdx] = true;
+        if (mIdx + 1 < MISSIONS.length) {
+            state.unlockedMissions = Math.max(state.unlockedMissions, mIdx + 2);
+        }
+        const isFinal = mIdx === MISSIONS.length - 1;
+        document.getElementById('result-title').textContent = isFinal ? 'AVE CAESAR! IMPERO CONQUISTATO!' : 'VITTORIA ROMANA!';
+        document.getElementById('result-desc').textContent = isFinal
+            ? 'Da un piccolo insediamento sul Tevere hai forgiato il più grande Impero del mondo antico!'
+            : `Hai sottomesso ${MISSIONS[mIdx].enemyName}. Una nuova provincia si unisce a Roma!`;
+        document.getElementById('result-stats').innerHTML = `
+            Tempo Impiegato: <b>${Math.floor(state.timeElapsed)}s</b> &nbsp;|&nbsp;
+            Nemici Sconfitti: <b>${state.kills}</b> &nbsp;|&nbsp;
+            Edifici Eretti: <b>${state.buildingsBuilt}</b>
+        `;
+        document.getElementById('result-modal').style.display = 'flex';
+    } else if (playerBuildings.length === 0) {
+        state.screen = 'result';
+        audio.sfxAlert();
+        document.getElementById('result-title').textContent = 'SCONFITTA...';
+        document.getElementById('result-desc').textContent = 'Il tuo Praetorium è stato distrutto. Riorganizza le legioni e riprova!';
+        document.getElementById('result-stats').innerHTML = `Nemici Sconfitti: <b>${state.kills}</b>`;
+        document.getElementById('result-modal').style.display = 'flex';
+    }
+}
+
+function findEntityById(id) {
+    return state.units.find(u => u.id === id) || state.buildings.find(b => b.id === id) || null;
+}
+
+function getEntityCenter(ent) {
+    if (ent.entityType === 'building') return { tx: ent.tx + ent.size * 0.5, ty: ent.ty + ent.size * 0.5 };
+    return { tx: ent.x, ty: ent.y };
+}
+
+function findNearestEnemy(wx, wy, myOwner, maxRange) {
+    let best = null, bestDist = maxRange;
+    for (const u of state.units) {
+        if (u.owner !== myOwner) {
+            const d = Math.hypot(u.x - wx, u.y - wy);
+            if (d <= bestDist) { bestDist = d; best = u; }
+        }
+    }
+    if (!best) {
+        for (const b of state.buildings) {
+            if (b.owner !== myOwner) {
+                const c = getEntityCenter(b);
+                const d = Math.hypot(c.tx - wx, c.ty - wy) - 0.75;
+                if (d <= bestDist) { bestDist = d; best = b; }
+            }
+        }
+    }
+    return best;
+}
+
+function findNearestResource(wx, wy) {
+    let best = null, bestDist = Infinity;
+    for (let y = 0; y < MAP_H; y++) {
+        for (let x = 0; x < MAP_W; x++) {
+            if (state.terrain[y][x] === TERRAIN.RESOURCE && state.resourceAmount[y][x] > 0) {
+                const d = Math.hypot(x + 0.5 - wx, y + 0.5 - wy);
+                if (d < bestDist) { bestDist = d; best = { x, y }; }
+            }
+        }
+    }
+    return best;
+}
+
+// ============================================================================
+// 8. SVGA HIGH-COLOR RENDERING ENGINE
+// ============================================================================
+const mainCanvas = document.getElementById('game-canvas');
+const mainCtx = mainCanvas.getContext('2d');
+const miniCanvas = document.getElementById('minimap-canvas');
+const miniCtx = miniCanvas.getContext('2d');
+
+function resizeCanvas() {
+    const wrap = document.getElementById('viewport-wrapper');
+    mainCanvas.width = wrap.clientWidth;
+    mainCanvas.height = wrap.clientHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+
+function renderMainViewport() {
+    const w = mainCanvas.width;
+    const h = mainCanvas.height;
+    mainCtx.fillStyle = '#090807';
+    mainCtx.fillRect(0, 0, w, h);
+
+    if (state.screen !== 'playing') return;
+
+    const biome = MISSIONS[state.currentMissionIdx].biome;
+    const startCol = Math.max(0, Math.floor(state.camX / TILE_SIZE));
+    const endCol = Math.min(MAP_W - 1, Math.ceil((state.camX + w) / TILE_SIZE));
+    const startRow = Math.max(0, Math.floor(state.camY / TILE_SIZE));
+    const endRow = Math.min(MAP_H - 1, Math.ceil((state.camY + h) / TILE_SIZE));
+
+    for (let r = startRow; r <= endRow; r++) {
+        for (let c = startCol; c <= endCol; c++) {
+            const fogState = state.fog[r][c];
+            if (fogState === 0) continue;
+
+            const sx = Math.floor(c * TILE_SIZE - state.camX);
+            const sy = Math.floor(r * TILE_SIZE - state.camY);
+            const t = state.terrain[r][c];
+
+            let sprite;
+            if (t === TERRAIN.WATER) sprite = SpriteBank.tile_water;
+            else if (t === TERRAIN.RESOURCE) sprite = SpriteBank.tile_resource;
+            else if (t === TERRAIN.SLAB) sprite = SpriteBank.tile_slab;
+            else if (t === TERRAIN.ROCK) sprite = SpriteBank.tile_rock;
+            else sprite = SpriteBank[`tile_grass_${biome}_${state.terrainVariant[r][c]}`];
+
+            mainCtx.drawImage(sprite, sx, sy, TILE_SIZE, TILE_SIZE);
+
+            if (t === TERRAIN.WATER && ((r + c + Math.floor(state.timeElapsed * 2)) % 4 === 0)) {
+                mainCtx.fillStyle = 'rgba(200, 240, 255, 0.14)';
+                mainCtx.fillRect(sx + 8, sy + 14, 18, 2);
+            }
+        }
+    }
+
+    // Waypoint Move Rings
+    for (const mk of state.moveMarkers) {
+        const mx = mk.x * TILE_SIZE - state.camX;
+        const my = mk.y * TILE_SIZE - state.camY;
+        const rad = (1.0 - mk.life / mk.maxLife) * 18 + 4;
+        mainCtx.strokeStyle = mk.color;
+        mainCtx.globalAlpha = Math.max(0, mk.life / mk.maxLife);
+        mainCtx.lineWidth = 2;
+        mainCtx.beginPath();
+        mainCtx.ellipse(mx, my, rad, rad * 0.55, 0, 0, Math.PI * 2);
+        mainCtx.stroke();
+        mainCtx.globalAlpha = 1.0;
+    }
+
+    for (const b of state.buildings) {
+        if (state.fog[b.ty][b.tx] === 0) continue;
+        const sx = Math.floor(b.tx * TILE_SIZE - state.camX);
+        const sy = Math.floor(b.ty * TILE_SIZE - state.camY);
+        const pxSize = b.size * TILE_SIZE;
+
+        const spr = SpriteBank[`b_${b.type}_${b.owner}`] || SpriteBank[`b_${b.type}_player`];
+        if (spr) mainCtx.drawImage(spr, sx, sy, pxSize, pxSize);
+
+        if (b.type === 'praetorium' || b.type === 'barracks') {
+            const wave = Math.sin(state.timeElapsed * 5 + b.id) * 2.5;
+            mainCtx.fillStyle = b.owner === 'player' ? '#dc2626' : '#2563eb';
+            mainCtx.fillRect(sx + 10, sy + 4, 3, 22);
+            mainCtx.beginPath();
+            mainCtx.moveTo(sx + 13, sy + 5);
+            mainCtx.lineTo(sx + 25, sy + 8 + wave);
+            mainCtx.lineTo(sx + 13, sy + 14);
+            mainCtx.fill();
+        }
+
+        const isSelected = state.selectedIds.includes(b.id);
+        if (isSelected || b.hp < b.maxHp) {
+            drawSelectionAndHP(mainCtx, sx, sy, pxSize, pxSize, b.hp, b.maxHp, isSelected, b.owner === 'player', true);
+        }
+    }
+
+    const sortedUnits = [...state.units].sort((a, b) => a.y - b.y);
+    for (const u of sortedUnits) {
+        const tx = Math.floor(u.x), ty = Math.floor(u.y);
+        if (!state.fog[ty] || state.fog[ty][tx] !== 2) continue;
+
+        const cx = u.x * TILE_SIZE - state.camX;
+        const cy = u.y * TILE_SIZE - state.camY;
+
+        const isSelected = state.selectedIds.includes(u.id);
+        if (isSelected) {
+            mainCtx.strokeStyle = u.owner === 'player' ? '#4ade80' : '#f87171';
+            mainCtx.lineWidth = 2;
+            mainCtx.beginPath();
+            mainCtx.ellipse(cx, cy + 12, 16, 8, 0, 0, Math.PI * 2);
+            mainCtx.stroke();
+        }
+
+        drawAnimatedUnit(mainCtx, u, cx, cy);
+
+        if (u.type === 'harvester' && u.cargo > 0) {
+            mainCtx.fillStyle = 'rgba(0,0,0,0.75)';
+            mainCtx.fillRect(cx - 16, cy + 16, 32, 4);
+            mainCtx.fillStyle = '#fbbf24';
+            mainCtx.fillRect(cx - 15, cy + 17, 30 * (u.cargo / u.maxCargo), 2);
+        }
+
+        if (isSelected || u.hp < u.maxHp) {
+            drawSelectionAndHP(mainCtx, cx - 20, cy - 24, 40, 44, u.hp, u.maxHp, false, u.owner === 'player', false);
+        }
+    }
+
+    for (const d of state.decorations) {
+        const tx = Math.floor(d.x), ty = Math.floor(d.y);
+        if (!state.fog[ty] || state.fog[ty][tx] === 0) continue;
+        const sx = d.x * TILE_SIZE - state.camX - 24;
+        const sy = d.y * TILE_SIZE - state.camY - 52;
+        mainCtx.drawImage(SpriteBank.cypress, sx, sy);
+    }
+
+    for (const p of state.projectiles) {
+        const px = (p.sx + (p.tx - p.sx) * p.progress) * TILE_SIZE - state.camX;
+        const py = (p.sy + (p.ty - p.sy) * p.progress) * TILE_SIZE - state.camY;
+        const arcHeight = Math.sin(p.progress * Math.PI) * (p.kind === 'boulder' ? 56 : 18);
+
+        if (p.kind === 'boulder') {
+            mainCtx.fillStyle = 'rgba(0,0,0,0.35)';
+            mainCtx.beginPath(); mainCtx.ellipse(px, py + 4, 6, 3, 0, 0, Math.PI * 2); mainCtx.fill();
+
+            const g = mainCtx.createRadialGradient(px, py - arcHeight, 1, px, py - arcHeight, 7);
+            g.addColorStop(0, '#fef08a');
+            g.addColorStop(0.5, '#f97316');
+            g.addColorStop(1, '#991b1b');
+            mainCtx.fillStyle = g;
+            mainCtx.beginPath(); mainCtx.arc(px, py - arcHeight, 7, 0, Math.PI * 2); mainCtx.fill();
+        } else {
+            const ang = Math.atan2(p.ty - p.sy, p.tx - p.sx);
+            mainCtx.save();
+            mainCtx.translate(px, py - arcHeight);
+            mainCtx.rotate(ang);
+            mainCtx.strokeStyle = '#fef3c7';
+            mainCtx.lineWidth = 2;
+            mainCtx.beginPath(); mainCtx.moveTo(-7, 0); mainCtx.lineTo(7, 0); mainCtx.stroke();
+            mainCtx.restore();
+        }
+    }
+
+    for (const pt of state.particles) {
+        const sx = pt.x * TILE_SIZE - state.camX;
+        const sy = pt.y * TILE_SIZE - state.camY;
+        mainCtx.save();
+        mainCtx.globalAlpha = Math.max(0, Math.min(1, pt.life));
+        mainCtx.fillStyle = pt.color;
+        mainCtx.beginPath();
+        mainCtx.arc(sx, sy, pt.size, 0, Math.PI * 2);
+        mainCtx.fill();
+        mainCtx.restore();
+    }
+
+    for (let r = startRow; r <= endRow; r++) {
+        for (let c = startCol; c <= endCol; c++) {
+            const f = state.fog[r][c];
+            if (f === 2) continue;
+            const sx = Math.floor(c * TILE_SIZE - state.camX);
+            const sy = Math.floor(r * TILE_SIZE - state.camY);
+            if (f === 1) {
+                mainCtx.fillStyle = 'rgba(10, 8, 6, 0.48)';
+                mainCtx.fillRect(sx, sy, TILE_SIZE, TILE_SIZE);
+            }
+        }
+    }
+
+    if (state.placingBuildingType) {
+        const def = BUILDING_DEFS[state.placingBuildingType];
+        const hoverTx = Math.floor((state.mouseX + state.camX) / TILE_SIZE);
+        const hoverTy = Math.floor((state.mouseY + state.camY) / TILE_SIZE);
+        const valid = canPlaceBuildingAt(state.placingBuildingType, hoverTx, hoverTy);
+        const gx = hoverTx * TILE_SIZE - state.camX;
+        const gy = hoverTy * TILE_SIZE - state.camY;
+        const gs = def.size * TILE_SIZE;
+
+        mainCtx.fillStyle = valid ? 'rgba(74, 222, 128, 0.32)' : 'rgba(248, 113, 113, 0.42)';
+        mainCtx.fillRect(gx, gy, gs, gs);
+        mainCtx.strokeStyle = valid ? '#4ade80' : '#f87171';
+        mainCtx.lineWidth = 2;
+        mainCtx.strokeRect(gx, gy, gs, gs);
+    }
+
+    if (state.isDraggingBox) {
+        const rx = Math.min(state.dragStartX, state.mouseX);
+        const ry = Math.min(state.dragStartY, state.mouseY);
+        const rw = Math.abs(state.mouseX - state.dragStartX);
+        const rh = Math.abs(state.mouseY - state.dragStartY);
+        mainCtx.strokeStyle = '#4ade80';
+        mainCtx.lineWidth = 1.5;
+        mainCtx.strokeRect(rx, ry, rw, rh);
+        mainCtx.fillStyle = 'rgba(74, 222, 128, 0.14)';
+        mainCtx.fillRect(rx, ry, rw, rh);
+    }
+}
+
+function drawAnimatedUnit(ctx, u, cx, cy) {
+    const cMain = u.owner === 'player' ? '#b91c1c' : '#1d4ed8';
+    const cTrim = u.owner === 'player' ? '#fbbf24' : '#93c5fd';
+    const bob = Math.sin(u.animPhase) * 2;
+    const dirX = Math.cos(u.facing) >= 0 ? 1 : -1;
+
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.42)';
+    ctx.beginPath();
+    ctx.ellipse(cx + 3, cy + 12, u.type === 'cavalry' || u.type === 'onager' ? 16 : 10, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.save();
+    ctx.translate(cx, cy);
+
+    if (u.type === 'harvester') {
+        ctx.fillStyle = '#6b4423';
+        ctx.fillRect(-16, -8 + bob * 0.4, 32, 16);
+        ctx.fillStyle = cMain;
+        ctx.fillRect(-14, -6 + bob * 0.4, 28, 4);
+        if (u.cargo > 0) {
+            const fillH = Math.ceil((u.cargo / u.maxCargo) * 8);
+            ctx.fillStyle = '#f59e0b';
+            ctx.fillRect(-11, 2 - fillH + bob * 0.4, 22, fillH);
+        }
+        ctx.fillStyle = '#1c1917';
+        ctx.beginPath(); ctx.arc(-9, 10, 5, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(9, 10, 5, 0, Math.PI * 2); ctx.fill();
+    } else if (u.type === 'legionary') {
+        const thrust = u.attackAnim * 7 * dirX;
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(-5, 4, 3.5, 8 + bob);
+        ctx.fillRect(2, 4, 3.5, 8 - bob);
+        ctx.fillStyle = cMain;
+        ctx.fillRect(-6, -8 + bob * 0.5, 12, 13);
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillRect(-5, -6 + bob * 0.5, 10, 7);
+        ctx.fillStyle = '#cbd5e1';
+        ctx.beginPath(); ctx.arc(0, -11 + bob * 0.5, 5, Math.PI, 0); ctx.fill();
+        ctx.fillStyle = cMain;
+        ctx.fillRect(-2, -18 + bob * 0.5, 4, 4);
+        ctx.fillStyle = cMain;
+        ctx.fillRect(-10 * dirX - 4, -7 + bob * 0.5, 8, 14);
+        ctx.strokeStyle = cTrim; ctx.lineWidth = 1.2;
+        ctx.strokeRect(-10 * dirX - 4, -7 + bob * 0.5, 8, 14);
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillRect(6 * dirX + thrust, -4 + bob * 0.5, 9 * dirX, 2.5);
+    } else if (u.type === 'archer') {
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(-4, 4, 3, 8 + bob);
+        ctx.fillRect(2, 4, 3, 8 - bob);
+        ctx.fillStyle = cMain;
+        ctx.fillRect(-5, -8 + bob * 0.5, 10, 13);
+        ctx.fillStyle = '#5c3a21';
+        ctx.beginPath(); ctx.arc(0, -11 + bob * 0.5, 4.5, Math.PI, 0); ctx.fill();
+        ctx.strokeStyle = '#d97706';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(4 * dirX, -2 + bob * 0.5, 9, dirX > 0 ? -1.3 : Math.PI - 1.3, dirX > 0 ? 1.3 : Math.PI + 1.3);
+        ctx.stroke();
+    } else if (u.type === 'cavalry') {
+        const gallop = Math.sin(u.animPhase * 1.4) * 3;
+        ctx.fillStyle = '#5c3317';
+        ctx.fillRect(-13, -3 + gallop * 0.5, 26, 10);
+        ctx.fillRect(9 * dirX - 3, -10 + gallop * 0.5, 7, 9);
+        ctx.fillRect(-11, 7, 3, 7 - gallop);
+        ctx.fillRect(8, 7, 3, 7 + gallop);
+        ctx.fillStyle = cMain;
+        ctx.fillRect(-4, -12 + gallop * 0.5, 9, 10);
+        ctx.fillStyle = '#cbd5e1';
+        ctx.beginPath(); ctx.arc(0, -15 + gallop * 0.5, 4.5, Math.PI, 0); ctx.fill();
+        ctx.strokeStyle = '#f8fafc';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(-6 * dirX, -8);
+        ctx.lineTo((18 + u.attackAnim * 8) * dirX, -12);
+        ctx.stroke();
+    } else if (u.type === 'onager') {
+        ctx.fillStyle = '#5c3317';
+        ctx.fillRect(-16, 0, 32, 9);
+        ctx.fillStyle = cMain;
+        ctx.fillRect(-12, -4, 24, 4);
+        const armAngle = -0.4 + u.attackAnim * 1.2;
+        ctx.save();
+        ctx.translate(0, -2);
+        ctx.rotate(armAngle * dirX);
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(-2, -16, 4, 16);
+        if (u.attackAnim < 0.2) {
+            ctx.fillStyle = '#f97316';
+            ctx.beginPath(); ctx.arc(0, -16, 4.5, 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.restore();
+        ctx.fillStyle = '#1c1917';
+        ctx.beginPath(); ctx.arc(-10, 10, 5, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(10, 10, 5, 0, Math.PI * 2); ctx.fill();
+    }
+
+    ctx.restore();
+}
+
+function drawSelectionAndHP(ctx, x, y, w, h, hp, maxHp, isSelected, isPlayer, showBrackets) {
+    if (isSelected && showBrackets) {
+        ctx.strokeStyle = isPlayer ? '#4ade80' : '#f87171';
+        ctx.lineWidth = 2;
+        const b = 10;
+        ctx.beginPath();
+        ctx.moveTo(x, y + b); ctx.lineTo(x, y); ctx.lineTo(x + b, y);
+        ctx.moveTo(x + w - b, y); ctx.lineTo(x + w, y); ctx.lineTo(x + w, y + b);
+        ctx.moveTo(x, y + h - b); ctx.lineTo(x, y + h); ctx.lineTo(x + b, y + h);
+        ctx.moveTo(x + w - b, y + h); ctx.lineTo(x + w, y + h); ctx.lineTo(x + w, y + h - b);
+        ctx.stroke();
+    }
+    const ratio = Math.max(0, hp / maxHp);
+    ctx.fillStyle = 'rgba(0,0,0,0.8)';
+    ctx.fillRect(x + 4, y - 7, w - 8, 5);
+    ctx.fillStyle = ratio > 0.5 ? '#22c55e' : (ratio > 0.25 ? '#f59e0b' : '#ef4444');
+    ctx.fillRect(x + 5, y - 6, Math.floor((w - 10) * ratio), 3);
+}
+
+function renderMinimap() {
+    const radarActive = hasPlayerBuilding('tower');
+    document.getElementById('radar-offline').style.display = radarActive ? 'none' : 'flex';
+    if (!radarActive || state.screen !== 'playing') return;
+
+    const scaleX = miniCanvas.width / MAP_W;
+    const scaleY = miniCanvas.height / MAP_H;
+    const biome = MISSIONS[state.currentMissionIdx].biome;
+
+    miniCtx.fillStyle = '#090807';
+    miniCtx.fillRect(0, 0, miniCanvas.width, miniCanvas.height);
+
+    for (let y = 0; y < MAP_H; y++) {
+        for (let x = 0; x < MAP_W; x++) {
+            const f = state.fog[y][x];
+            if (f === 0) continue;
+            const t = state.terrain[y][x];
+            if (t === TERRAIN.WATER) miniCtx.fillStyle = '#2563eb';
+            else if (t === TERRAIN.RESOURCE) miniCtx.fillStyle = '#fbbf24';
+            else if (t === TERRAIN.ROCK) miniCtx.fillStyle = '#6b6254';
+            else if (t === TERRAIN.SLAB) miniCtx.fillStyle = '#9ca3af';
+            else miniCtx.fillStyle = biome === 2 ? '#a3824c' : '#4a6b32';
+
+            miniCtx.fillRect(x * scaleX, y * scaleY, Math.ceil(scaleX), Math.ceil(scaleY));
+            if (f === 1) {
+                miniCtx.fillStyle = 'rgba(0,0,0,0.45)';
+                miniCtx.fillRect(x * scaleX, y * scaleY, Math.ceil(scaleX), Math.ceil(scaleY));
+            }
+        }
+    }
+
+    for (const b of state.buildings) {
+        if (state.fog[b.ty][b.tx] === 0) continue;
+        miniCtx.fillStyle = b.owner === 'player' ? '#ef4444' : '#3b82f6';
+        miniCtx.fillRect(b.tx * scaleX, b.ty * scaleY, b.size * scaleX, b.size * scaleY);
+    }
+
+    for (const u of state.units) {
+        const tx = Math.floor(u.x), ty = Math.floor(u.y);
+        if (!state.fog[ty] || state.fog[ty][tx] !== 2) continue;
+        miniCtx.fillStyle = u.owner === 'player' ? '#ffffff' : '#60a5fa';
+        miniCtx.fillRect(u.x * scaleX - 1.5, u.y * scaleY - 1.5, 3, 3);
+    }
+
+    miniCtx.strokeStyle = '#fde047';
+    miniCtx.lineWidth = 1.5;
+    miniCtx.strokeRect(
+        (state.camX / TILE_SIZE) * scaleX,
+        (state.camY / TILE_SIZE) * scaleY,
+        (mainCanvas.width / TILE_SIZE) * scaleX,
+        (mainCanvas.height / TILE_SIZE) * scaleY
+    );
+}
+
+// ============================================================================
+// 9. UI UPDATES, CONTROL GROUPS & CAMPAIGN SCREEN
+// ============================================================================
+function updateHUD() {
+    document.getElementById('stat-credits').textContent = Math.floor(state.credits);
+    const sup = getSupplyStats('player');
+    const supEl = document.getElementById('stat-supply');
+    supEl.textContent = `${sup.used}/${sup.cap}`;
+    supEl.className = sup.used >= sup.cap ? 'res-val danger' : 'res-val';
+
+    if (state.buildingProd) {
+        const bar = document.getElementById(`prog-b-${state.buildingProd.type}`);
+        if (bar) bar.style.width = `${(state.buildingProd.progress / state.buildingProd.total) * 100}%`;
+    }
+    if (state.unitProd) {
+        const bar = document.getElementById(`prog-u-${state.unitProd.type}`);
+        if (bar) bar.style.width = `${(state.unitProd.progress / state.unitProd.total) * 100}%`;
+    }
+
+    if (state.selectedIds.length === 1) {
+        const ent = findEntityById(state.selectedIds[0]);
+        if (ent) {
+            document.getElementById('inspector-hp-bar').style.width = `${Math.max(0, (ent.hp / ent.maxHp) * 100)}%`;
+            if (ent.type === 'harvester') {
+                document.getElementById('inspector-cargo-bar').style.width = `${Math.max(0, (ent.cargo / ent.maxCargo) * 100)}%`;
+            }
+        }
+    }
+}
+
+function updateGroupBar() {
+    const bar = document.getElementById('group-bar');
+    bar.innerHTML = '';
+    [1, 2, 3].forEach(num => {
+        state.controlGroups[num] = state.controlGroups[num].filter(id => !!findEntityById(id));
+        if (state.controlGroups[num].length > 0) {
+            const btn = document.createElement('button');
+            btn.className = 'group-badge';
+            btn.textContent = `LEGIO ${num} (${state.controlGroups[num].length})`;
+            btn.onclick = () => {
+                state.selectedIds = [...state.controlGroups[num]];
+                audio.sfxSelect();
+                updateInspector();
+            };
+            bar.appendChild(btn);
+        }
+    });
+}
+
+function rebuildBuildGrid() {
+    const grid = document.getElementById('build-grid');
+    grid.innerHTML = '';
+
+    if (state.activeTab === 'buildings') {
+        Object.values(BUILDING_DEFS).forEach(def => {
+            const locked = def.req && !hasPlayerBuilding(def.req);
+            const isProducing = state.buildingProd && state.buildingProd.type === def.id;
+            const isReady = isProducing && state.buildingProd.ready;
+
+            const card = document.createElement('div');
+            card.className = `build-card ${locked ? 'locked' : ''} ${isReady ? 'ready-to-place' : ''}`;
+            card.title = `${def.name} (${def.cost} Denarii) — ${def.desc}`;
+
+            const icon = document.createElement('canvas');
+            icon.width = 64; icon.height = 64;
+            const ictx = icon.getContext('2d');
+            const spr = def.id === 'slab' ? SpriteBank.tile_slab : SpriteBank[`b_${def.id}_player`];
+            if (spr) ictx.drawImage(spr, 0, 0, 64, 64);
+
+            card.innerHTML = `
+                <div class="build-card-title">${def.name}</div>
+                <div class="build-card-cost">${def.cost} Den.</div>
+                ${isReady ? '<div class="build-ready-badge">POSIZIONA</div>' : ''}
+                <div id="prog-b-${def.id}" class="build-progress-overlay" style="width:${isProducing ? (state.buildingProd.progress / state.buildingProd.total)*100 : 0}%"></div>
+            `;
+            card.prepend(icon);
+
+            if (!locked) card.addEventListener('click', () => startBuildingProduction(def.id));
+            grid.appendChild(card);
+        });
+    } else {
+        Object.values(UNIT_DEFS).forEach(def => {
+            const locked = def.req && !hasPlayerBuilding(def.req);
+            const isProducing = state.unitProd && state.unitProd.type === def.id;
+
+            const card = document.createElement('div');
+            card.className = `build-card ${locked ? 'locked' : ''}`;
+            card.title = `${def.name} (${def.cost} Denarii) — ${def.desc}`;
+
+            const icon = document.createElement('canvas');
+            icon.width = 64; icon.height = 64;
+            const ictx = icon.getContext('2d');
+            const spr = SpriteBank[`u_${def.id}_player`];
+            if (spr) ictx.drawImage(spr, 0, 0, 64, 64);
+
+            card.innerHTML = `
+                <div class="build-card-title">${def.name}</div>
+                <div class="build-card-cost">${def.cost} Den.</div>
+                <div id="prog-u-${def.id}" class="build-progress-overlay" style="width:${isProducing ? (state.unitProd.progress / state.unitProd.total)*100 : 0}%"></div>
+            `;
+            card.prepend(icon);
+
+            if (!locked) card.addEventListener('click', () => startUnitProduction(def.id));
+            grid.appendChild(card);
+        });
+    }
+}
+
+function updateInspector() {
+    const iconCanvas = document.getElementById('inspector-icon');
+    const ictx = iconCanvas.getContext('2d');
+    ictx.clearRect(0, 0, 64, 64);
+
+    const nameEl = document.getElementById('inspector-name');
+    const descEl = document.getElementById('inspector-desc');
+    const hpWrap = document.getElementById('inspector-hp-wrap');
+    const cargoWrap = document.getElementById('inspector-cargo-wrap');
+    const actionsEl = document.getElementById('inspector-actions');
+    actionsEl.innerHTML = '';
+    cargoWrap.style.display = 'none';
+
+    if (state.selectedIds.length === 0) {
+        nameEl.textContent = 'Nessuna Selezione';
+        descEl.textContent = 'Seleziona legioni, carri o edifici sulla mappa';
+        hpWrap.style.display = 'none';
+        return;
+    }
+
+    if (state.selectedIds.length > 1) {
+        nameEl.textContent = `Formazione (${state.selectedIds.length} unità)`;
+        descEl.textContent = 'Click destro per muovere, scavare o attaccare (Ctrl+1..3 per salvare gruppo)';
+        hpWrap.style.display = 'none';
+        ictx.drawImage(SpriteBank.u_legionary_player, 0, 0, 64, 64);
+
+        const stopBtn = document.createElement('button');
+        stopBtn.className = 'svga-btn';
+        stopBtn.textContent = '✋ ALT / DIFENDI';
+        stopBtn.onclick = () => {
+            state.selectedIds.forEach(id => {
+                const u = findEntityById(id);
+                if (u && u.entityType === 'unit') {
+                    u.state = u.type === 'harvester' ? 'manual_hold' : 'idle';
+                    u.targetEntityId = null;
+                }
+            });
+            audio.sfxOrder();
+        };
+        actionsEl.appendChild(stopBtn);
+        return;
+    }
+
+    const ent = findEntityById(state.selectedIds[0]);
+    if (!ent) return;
+
+    nameEl.textContent = `${ent.name} ${ent.owner === 'enemy' ? '(Nemico)' : ''}`;
+    hpWrap.style.display = 'block';
+    document.getElementById('inspector-hp-bar').style.width = `${(ent.hp / ent.maxHp) * 100}%`;
+
+    const sprKey = ent.entityType === 'building'
+        ? `b_${ent.type}_${ent.owner}`
+        : `u_${ent.type}_${ent.owner}`;
+    const spr = SpriteBank[sprKey] || SpriteBank[`b_${ent.type}_player`];
+    if (spr) ictx.drawImage(spr, 0, 0, 64, 64);
+
+    if (ent.entityType === 'building') {
+        const def = BUILDING_DEFS[ent.type];
+        descEl.textContent = def ? def.desc : 'Centro di Comando dell’Impero Romano.';
+        if (ent.owner === 'player' && ent.hp < ent.maxHp) {
+            const repBtn = document.createElement('button');
+            repBtn.className = 'svga-btn';
+            repBtn.textContent = '🔨 RIPARA (50 Den.)';
+            repBtn.onclick = () => {
+                if (state.credits >= 50) {
+                    state.credits -= 50;
+                    ent.hp = Math.min(ent.maxHp, ent.hp + 160);
+                    audio.sfxBuild();
+                    updateInspector();
+                } else {
+                    setAdvisorMessage('Denarii insufficienti per riparare!', true);
+                }
+            };
+            actionsEl.appendChild(repBtn);
+        }
+    } else {
+        const def = UNIT_DEFS[ent.type];
+        descEl.textContent = def.desc;
+        if (ent.type === 'harvester') {
+            cargoWrap.style.display = 'block';
+            document.getElementById('inspector-cargo-bar').style.width = `${(ent.cargo / ent.maxCargo) * 100}%`;
+        }
+        if (ent.owner === 'player') {
+            if (ent.type === 'harvester') {
+                const mineBtn = document.createElement('button');
+                mineBtn.className = 'svga-btn';
+                mineBtn.textContent = '⛏️ RACCOGLI';
+                mineBtn.onclick = () => {
+                    ent.state = 'idle';
+                    audio.sfxOrder();
+                    setAdvisorMessage('Carro inviato al giacimento più vicino.');
+                };
+                actionsEl.appendChild(mineBtn);
+
+                const retBtn = document.createElement('button');
+                retBtn.className = 'svga-btn';
+                retBtn.textContent = '🏛️ SCARICA';
+                retBtn.onclick = () => {
+                    ent.state = 'returning';
+                    audio.sfxOrder();
+                    setAdvisorMessage('Carro in rientro alla Cava per scaricare.');
+                };
+                actionsEl.appendChild(retBtn);
+            } else {
+                const actBtn = document.createElement('button');
+                actBtn.className = 'svga-btn';
+                actBtn.textContent = '✋ ALT / POSIZIONE';
+                actBtn.onclick = () => { ent.state = 'idle'; ent.targetEntityId = null; audio.sfxOrder(); };
+                actionsEl.appendChild(actBtn);
+            }
+        }
+    }
+}
+
+function renderCampaignScreen() {
+    const c = document.getElementById('campaign-canvas');
+    const ctx = c.getContext('2d');
+
+    const seaG = ctx.createRadialGradient(330, 150, 30, 330, 150, 380);
+    seaG.addColorStop(0, '#2563eb');
+    seaG.addColorStop(1, '#1e3a8a');
+    ctx.fillStyle = seaG;
+    ctx.fillRect(0, 0, c.width, c.height);
+
+    ctx.strokeStyle = 'rgba(255, 240, 200, 0.12)';
+    ctx.lineWidth = 1;
+    for (let x = 0; x < c.width; x += 44) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, c.height); ctx.stroke(); }
+    for (let y = 0; y < c.height; y += 44) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(c.width, y); ctx.stroke(); }
+
+    const landG = ctx.createLinearGradient(0, 20, 0, 240);
+    landG.addColorStop(0, '#65a30d');
+    landG.addColorStop(1, '#4d7c0f');
+    ctx.fillStyle = landG;
+    ctx.strokeStyle = '#fef3c7';
+    ctx.lineWidth = 1.5;
+
+    ctx.beginPath();
+    ctx.moveTo(200, 28); ctx.lineTo(375, 28); ctx.lineTo(368, 85);
+    ctx.lineTo(320, 88); ctx.lineTo(375, 165); ctx.lineTo(408, 188);
+    ctx.lineTo(365, 218); ctx.lineTo(345, 198); ctx.lineTo(302, 156);
+    ctx.lineTo(245, 86); ctx.closePath();
+    ctx.fill(); ctx.stroke();
+
+    ctx.fillRect(314, 218, 38, 22); ctx.strokeRect(314, 218, 38, 22);
+    ctx.fillRect(238, 146, 22, 38); ctx.strokeRect(238, 146, 22, 38);
+    ctx.fillRect(242, 114, 15, 24); ctx.strokeRect(242, 114, 15, 24);
+
+    ctx.fillStyle = '#ca8a04';
+    ctx.fillRect(110, 242, 340, 58);
+    ctx.strokeRect(110, 242, 340, 58);
+
+    MISSIONS.forEach((m, idx) => {
+        const isCompleted = state.completedMissions[idx];
+        const isSelected = state.currentMissionIdx === idx;
+        const { x, y } = m.mapCoords;
+
+        if (isCompleted) {
+            const infG = ctx.createRadialGradient(x, y, 4, x, y, 44);
+            infG.addColorStop(0, 'rgba(220, 38, 38, 0.75)');
+            infG.addColorStop(1, 'rgba(220, 38, 38, 0)');
+            ctx.fillStyle = infG;
+            ctx.beginPath(); ctx.arc(x, y, 44, 0, Math.PI * 2); ctx.fill();
+        }
+
+        ctx.fillStyle = isSelected ? '#fde047' : (isCompleted ? '#ef4444' : '#f8fafc');
+        ctx.beginPath(); ctx.arc(x, y, 7, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#0f172a';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.fillStyle = '#fffbeb';
+        ctx.font = 'bold 13px Cinzel, serif';
+        ctx.fillText(m.code, x + 12, y + 4);
+    });
+
+    const list = document.getElementById('mission-list');
+    list.innerHTML = '';
+    MISSIONS.forEach((m, idx) => {
+        const locked = idx >= state.unlockedMissions;
+        const completed = state.completedMissions[idx];
+        const selected = state.currentMissionIdx === idx;
+
+        const card = document.createElement('div');
+        card.className = `mission-card ${selected ? 'selected' : ''} ${completed ? 'completed' : ''} ${locked ? 'locked' : ''}`;
+        card.innerHTML = `
+            <div style="font-family:'Cinzel',serif; color:var(--gold-text); font-size:13px; font-weight:700;">
+                ${m.code} ${completed ? '★ CONQUISTATA' : (locked ? '🔒 BLOCCATA' : '')}
+            </div>
+            <div style="font-family:'Cinzel',serif; font-size:15px; font-weight:700; color:#fff; margin:3px 0;">${m.title}</div>
+            <div style="font-size:13px; color:#d6c7b2;">Avversario: ${m.enemyName}</div>
+        `;
+        if (!locked) {
+            card.onclick = () => {
+                audio.sfxClick();
+                state.currentMissionIdx = idx;
+                renderCampaignScreen();
+            };
+        }
+        list.appendChild(card);
+    });
+}
+
+// ============================================================================
+// 10. INPUT HANDLING (MOUSE, DOUBLE-CLICK, KEYBOARD, TOUCH, MINIMAP)
+// ============================================================================
+const keysDown = {};
+window.addEventListener('keydown', e => {
+    const k = e.key.toLowerCase();
+    keysDown[k] = true;
+
+    if (state.screen === 'playing' && ['1', '2', '3'].includes(k)) {
+        const grp = parseInt(k, 10);
+        if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            const playerUnits = state.selectedIds.filter(id => {
+                const ent = findEntityById(id);
+                return ent && ent.entityType === 'unit' && ent.owner === 'player';
+            });
+            if (playerUnits.length > 0) {
+                state.controlGroups[grp] = playerUnits;
+                updateGroupBar();
+                audio.sfxSelect();
+                setAdvisorMessage(`Legio ${grp} assegnata (${playerUnits.length} unità).`);
+            }
+        } else if (state.controlGroups[grp] && state.controlGroups[grp].length > 0) {
+            state.selectedIds = [...state.controlGroups[grp]];
+            audio.sfxSelect();
+            updateInspector();
+        }
+    }
+});
+window.addEventListener('keyup', e => { keysDown[e.key.toLowerCase()] = false; });
+
+function handleCameraMovement(dt) {
+    if (state.screen !== 'playing') return;
+    const panSpeed = 540 * dt;
+    if (keysDown['arrowleft'] || keysDown['a']) state.camX -= panSpeed;
+    if (keysDown['arrowright'] || keysDown['d']) state.camX += panSpeed;
+    if (keysDown['arrowup'] || keysDown['w']) state.camY -= panSpeed;
+    if (keysDown['arrowdown'] || keysDown['s']) state.camY += panSpeed;
+    clampCamera();
+}
+
+function clampCamera() {
+    const maxX = Math.max(0, MAP_W * TILE_SIZE - mainCanvas.width);
+    const maxY = Math.max(0, MAP_H * TILE_SIZE - mainCanvas.height);
+    state.camX = Math.max(0, Math.min(maxX, state.camX));
+    state.camY = Math.max(0, Math.min(maxY, state.camY));
+}
+
+mainCanvas.addEventListener('contextmenu', e => e.preventDefault());
+
+mainCanvas.addEventListener('mousedown', e => {
+    audio.init();
+    const rect = mainCanvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    state.mouseX = mx;
+    state.mouseY = my;
+
+    if (e.button === 0) {
+        if (state.placingBuildingType) {
+            const tx = Math.floor((mx + state.camX) / TILE_SIZE);
+            const ty = Math.floor((my + state.camY) / TILE_SIZE);
+            placeCompletedBuilding(tx, ty);
+            return;
+        }
+        if (state.touchCommandMode && state.selectedIds.length > 0) {
+            issueCommandAt(mx + state.camX, my + state.camY);
+            return;
+        }
+        state.isDraggingBox = true;
+        state.dragStartX = mx;
+        state.dragStartY = my;
+    } else if (e.button === 2) {
+        if (state.placingBuildingType) {
+            state.placingBuildingType = null;
+            setAdvisorMessage('Posizionamento annullato.');
+            return;
+        }
+        issueCommandAt(mx + state.camX, my + state.camY);
+    } else if (e.button === 1) {
+        state.isPanning = true;
+        state.panStartX = mx + state.camX;
+        state.panStartY = my + state.camY;
+    }
+});
+
+mainCanvas.addEventListener('mousemove', e => {
+    const rect = mainCanvas.getBoundingClientRect();
+    state.mouseX = e.clientX - rect.left;
+    state.mouseY = e.clientY - rect.top;
+    if (state.isPanning) {
+        state.camX = state.panStartX - state.mouseX;
+        state.camY = state.panStartY - state.mouseY;
+        clampCamera();
+    }
+});
+
+window.addEventListener('mouseup', e => {
+    if (state.isPanning) state.isPanning = false;
+    if (state.isDraggingBox && e.button === 0) {
+        state.isDraggingBox = false;
+        const x1 = Math.min(state.dragStartX, state.mouseX) + state.camX;
+        const y1 = Math.min(state.dragStartY, state.mouseY) + state.camY;
+        const x2 = Math.max(state.dragStartX, state.mouseX) + state.camX;
+        const y2 = Math.max(state.dragStartY, state.mouseY) + state.camY;
+
+        if (x2 - x1 < 8 && y2 - y1 < 8) selectSingleAt(x1, y1);
+        else selectBoxInWorld(x1, y1, x2, y2);
+    }
+});
+
+let touchStartPos = null;
+mainCanvas.addEventListener('touchstart', e => {
+    e.preventDefault();
+    audio.init();
+    const rect = mainCanvas.getBoundingClientRect();
+    const t = e.touches[0];
+    const mx = t.clientX - rect.left;
+    const my = t.clientY - rect.top;
+    state.mouseX = mx;
+    state.mouseY = my;
+    touchStartPos = { x: mx, y: my, camX: state.camX, camY: state.camY, moved: false };
+}, { passive: false });
+
+mainCanvas.addEventListener('touchmove', e => {
+    e.preventDefault();
+    if (!touchStartPos) return;
+    const rect = mainCanvas.getBoundingClientRect();
+    const t = e.touches[0];
+    const mx = t.clientX - rect.left;
+    const my = t.clientY - rect.top;
+    state.mouseX = mx;
+    state.mouseY = my;
+    if (Math.hypot(mx - touchStartPos.x, my - touchStartPos.y) > 12) {
+        touchStartPos.moved = true;
+        state.camX = touchStartPos.camX - (mx - touchStartPos.x);
+        state.camY = touchStartPos.camY - (my - touchStartPos.y);
+        clampCamera();
+    }
+}, { passive: false });
+
+mainCanvas.addEventListener('touchend', e => {
+    e.preventDefault();
+    if (!touchStartPos) return;
+    if (!touchStartPos.moved) {
+        if (state.placingBuildingType) {
+            const tx = Math.floor((state.mouseX + state.camX) / TILE_SIZE);
+            const ty = Math.floor((state.mouseY + state.camY) / TILE_SIZE);
+            placeCompletedBuilding(tx, ty);
+        } else if (state.touchCommandMode && state.selectedIds.length > 0) {
+            issueCommandAt(state.mouseX + state.camX, state.mouseY + state.camY);
+        } else {
+            selectSingleAt(state.mouseX + state.camX, state.mouseY + state.camY);
+        }
+    }
+    touchStartPos = null;
+});
+
+function selectSingleAt(wx, wy) {
+    const tx = wx / TILE_SIZE;
+    const ty = wy / TILE_SIZE;
+    const now = performance.now();
+
+    for (const u of state.units) {
+        if (Math.hypot(u.x - tx, u.y - ty) <= 0.7) {
+            // Double-click selects all visible player units of the same type
+            if (u.owner === 'player' && state.lastClickedEntityId === u.id && (now - state.lastClickTime) < 350) {
+                const sameTypeVisible = state.units.filter(other => {
+                    if (other.owner !== 'player' || other.type !== u.type) return false;
+                    const sx = other.x * TILE_SIZE - state.camX;
+                    const sy = other.y * TILE_SIZE - state.camY;
+                    return sx >= 0 && sx <= mainCanvas.width && sy >= 0 && sy <= mainCanvas.height;
+                }).map(other => other.id);
+                state.selectedIds = sameTypeVisible;
+            } else {
+                state.selectedIds = [u.id];
+            }
+            state.lastClickTime = now;
+            state.lastClickedEntityId = u.id;
+            audio.sfxSelect();
+            updateInspector();
+            return;
+        }
+    }
+    for (const b of state.buildings) {
+        if (tx >= b.tx && tx <= b.tx + b.size && ty >= b.ty && ty <= b.ty + b.size) {
+            state.selectedIds = [b.id];
+            state.lastClickTime = now;
+            state.lastClickedEntityId = b.id;
+            audio.sfxSelect();
+            updateInspector();
+            return;
+        }
+    }
+    state.selectedIds = [];
+    updateInspector();
+}
+
+function selectBoxInWorld(x1, y1, x2, y2) {
+    const selected = [];
+    for (const u of state.units) {
+        if (u.owner === 'player') {
+            const ux = u.x * TILE_SIZE;
+            const uy = u.y * TILE_SIZE;
+            if (ux >= x1 && ux <= x2 && uy >= y1 && uy <= y2) selected.push(u.id);
+        }
+    }
+    if (selected.length > 0) {
+        state.selectedIds = selected;
+        audio.sfxSelect();
+        updateInspector();
+    }
+}
+
+function issueCommandAt(wx, wy) {
+    if (state.selectedIds.length === 0) return;
+    const tx = wx / TILE_SIZE;
+    const ty = wy / TILE_SIZE;
+    const gridX = Math.floor(tx);
+    const gridY = Math.floor(ty);
+
+    let targetEnemy = null;
+    for (const u of state.units) {
+        if (u.owner === 'enemy' && Math.hypot(u.x - tx, u.y - ty) <= 0.7) { targetEnemy = u; break; }
+    }
+    if (!targetEnemy) {
+        for (const b of state.buildings) {
+            if (b.owner === 'enemy' && tx >= b.tx && tx <= b.tx + b.size && ty >= b.ty && ty <= b.ty + b.size) {
+                targetEnemy = b; break;
+            }
+        }
+    }
+
+    // Check if player right-clicked on one of their own refineries / praetorium (for harvester dropoff)
+    let targetOwnDropoff = null;
+    for (const b of state.buildings) {
+        if (b.owner === 'player' && (b.type === 'refinery' || b.type === 'praetorium')) {
+            if (tx >= b.tx && tx <= b.tx + b.size && ty >= b.ty && ty <= b.ty + b.size) {
+                targetOwnDropoff = b;
+                break;
+            }
+        }
+    }
+
+    const clickedResource = state.terrain[gridY] && state.terrain[gridY][gridX] === TERRAIN.RESOURCE;
+
+    let ordered = false;
+    let markerColor = '#4ade80';
+
+    state.selectedIds.forEach((id, idx) => {
+        const u = findEntityById(id);
+        if (!u || u.entityType !== 'unit' || u.owner !== 'player') return;
+        ordered = true;
+
+        if (u.type === 'harvester') {
+            if (targetOwnDropoff) {
+                u.targetRefineryId = targetOwnDropoff.id;
+                u.state = 'returning';
+                markerColor = '#fbbf24';
+            } else if (clickedResource) {
+                u.targetX = gridX + 0.5;
+                u.targetY = gridY + 0.5;
+                u.state = 'moving_to_res';
+                markerColor = '#fbbf24';
+            } else {
+                const offsetAngle = idx * 2.4;
+                const offsetDist = idx === 0 ? 0 : 0.65;
+                u.targetX = Math.max(0.5, Math.min(MAP_W - 0.5, tx + Math.cos(offsetAngle) * offsetDist));
+                u.targetY = Math.max(0.5, Math.min(MAP_H - 0.5, ty + Math.sin(offsetAngle) * offsetDist));
+                u.state = 'moving';
+            }
+            return;
+        }
+
+        if (targetEnemy) {
+            u.targetEntityId = targetEnemy.id;
+            u.state = 'moving';
+            markerColor = '#ef4444';
+        } else {
+            const offsetAngle = idx * 2.4;
+            const offsetDist = idx === 0 ? 0 : 0.6;
+            u.targetEntityId = null;
+            u.targetX = Math.max(0.5, Math.min(MAP_W - 0.5, tx + Math.cos(offsetAngle) * offsetDist));
+            u.targetY = Math.max(0.5, Math.min(MAP_H - 0.5, ty + Math.sin(offsetAngle) * offsetDist));
+            u.state = 'moving';
+        }
+    });
+
+    if (ordered) {
+        audio.sfxOrder();
+        state.moveMarkers.push({ x: tx, y: ty, color: markerColor, life: 0.55, maxLife: 0.55 });
+    }
+}
+
+miniCanvas.addEventListener('mousedown', e => {
+    if (!hasPlayerBuilding('tower')) return;
+    const rect = miniCanvas.getBoundingClientRect();
+    const rx = (e.clientX - rect.left) / rect.width;
+    const ry = (e.clientY - rect.top) / rect.height;
+    state.camX = rx * MAP_W * TILE_SIZE - mainCanvas.width / 2;
+    state.camY = ry * MAP_H * TILE_SIZE - mainCanvas.height / 2;
+    clampCamera();
+});
+
+// ============================================================================
+// 11. BUTTON EVENT WIRING & MAIN LOOP
+// ============================================================================
+document.getElementById('tab-buildings').addEventListener('click', () => {
+    state.activeTab = 'buildings';
+    document.getElementById('tab-buildings').classList.add('active-tab');
+    document.getElementById('tab-units').classList.remove('active-tab');
+    audio.sfxClick();
+    rebuildBuildGrid();
+});
+
+document.getElementById('tab-units').addEventListener('click', () => {
+    state.activeTab = 'units';
+    document.getElementById('tab-units').classList.add('active-tab');
+    document.getElementById('tab-buildings').classList.remove('active-tab');
+    audio.sfxClick();
+    rebuildBuildGrid();
+});
+
+document.getElementById('btn-audio').addEventListener('click', (e) => {
+    const on = audio.toggle();
+    e.target.textContent = on ? '🔊 AUDIO' : '🔇 MUTO';
+});
+
+document.getElementById('btn-speed').addEventListener('click', (e) => {
+    state.gameSpeed = state.gameSpeed === 1 ? 1.5 : (state.gameSpeed === 1.5 ? 2 : 1);
+    e.target.textContent = `⏩ ${state.gameSpeed}x`;
+    audio.sfxClick();
+});
+
+document.getElementById('btn-help').addEventListener('click', () => {
+    document.getElementById('help-modal').style.display = 'flex';
+    audio.sfxClick();
+});
+document.getElementById('btn-open-help-from-menu').addEventListener('click', () => {
+    document.getElementById('help-modal').style.display = 'flex';
+    audio.sfxClick();
+});
+document.getElementById('btn-close-help').addEventListener('click', () => {
+    document.getElementById('help-modal').style.display = 'none';
+    audio.sfxClick();
+});
+
+document.getElementById('btn-campaign').addEventListener('click', () => {
+    renderCampaignScreen();
+    document.getElementById('campaign-modal').style.display = 'flex';
+    audio.sfxClick();
+});
+
+document.getElementById('btn-start-mission').addEventListener('click', () => {
+    startMission(state.currentMissionIdx);
+});
+
+document.getElementById('btn-result-continue').addEventListener('click', () => {
+    document.getElementById('result-modal').style.display = 'none';
+    renderCampaignScreen();
+    document.getElementById('campaign-modal').style.display = 'flex';
+});
+
+document.getElementById('btn-mode-select').addEventListener('click', () => {
+    state.touchCommandMode = false;
+    document.getElementById('btn-mode-select').classList.add('active-tab');
+    document.getElementById('btn-mode-command').classList.remove('active-tab');
+});
+document.getElementById('btn-mode-command').addEventListener('click', () => {
+    state.touchCommandMode = true;
+    document.getElementById('btn-mode-command').classList.add('active-tab');
+    document.getElementById('btn-mode-select').classList.remove('active-tab');
+});
+
+let lastTime = 0;
+function gameLoop(timestamp) {
+    const rawDt = Math.min(0.05, (timestamp - lastTime) / 1000 || 0.016);
+    lastTime = timestamp;
+
+    handleCameraMovement(rawDt);
+    updateSimulation(rawDt);
+    renderMainViewport();
+    renderMinimap();
+    if (state.screen === 'playing') {
+        updateHUD();
+        updateGroupBar();
+    }
+
+    requestAnimationFrame(gameLoop);
+}
+
+window.onload = () => {
+    initSVGAArt();
+    const advCtx = document.getElementById('advisor-portrait').getContext('2d');
+    advCtx.drawImage(SpriteBank.advisor, 0, 0, 64, 64);
+
+    resizeCanvas();
+    renderCampaignScreen();
+    requestAnimationFrame(gameLoop);
+};
+</script>
+</body>
+</html>
