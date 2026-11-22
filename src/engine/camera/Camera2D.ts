@@ -3,12 +3,12 @@ import { Vector2 } from '../../data/types.ts';
 export class Camera2D {
   public x: number = 0;
   public y: number = 0;
-  public viewportWidth: number = 640;
-  public viewportHeight: number = 360;
-  public worldWidth: number = 1152; // 48 * 24
-  public worldHeight: number = 1152;
+  public viewportWidth: number = 800;
+  public viewportHeight: number = 600;
+  public worldWidth: number = 2304; // 48 * 48
+  public worldHeight: number = 2304;
   public zoom: number = 1.0;
-  public panSpeed: number = 420; // pixels per second in virtual space
+  public panSpeed: number = 650; // pixels per second
 
   constructor(vw: number, vh: number, ww: number, wh: number) {
     this.viewportWidth = vw;

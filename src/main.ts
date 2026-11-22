@@ -19,9 +19,6 @@ import { EventBus } from './core/EventBus.ts';
 import { SVGAProceduralBank } from './engine/rendering/SVGAProceduralBank.ts';
 import { AssetLoader } from './engine/rendering/AssetLoader.ts';
 
-const VIRTUAL_WIDTH = 640;
-const VIRTUAL_HEIGHT = 360;
-
 class GameApp {
   private canvas!: HTMLCanvasElement;
   private ctx!: CanvasRenderingContext2D;
@@ -38,6 +35,7 @@ class GameApp {
 
   private units: UnitEntity[] = [];
   private buildings: BuildingEntity[] = [];
+  private decorations: Array<{ x: number; y: number; type: string }> = [];
 
   private selectedUnits: UnitEntity[] = [];
   private selectedBuilding: BuildingEntity | null = null;
@@ -62,7 +60,7 @@ class GameApp {
     SVGAProceduralBank.init();
     await AssetLoader.init();
 
-    // Carica lo Scenario 1
+    // Load Scenario 1
     const scenario = await ScenarioLoader.loadScenario('scenario_01_horned_sails');
 
     const mapW = scenario.map.width;
@@ -83,17 +81,17 @@ class GameApp {
       mapH * TILE_SIZE
     );
 
-    // Configura la mappa in base al bioma (costa levantina con mare a sinistra, sabbia, nodi di rame e stagno)
+    // Setup map terrain for Levantine biome (western sea for Sea Peoples, sandy shore, copper and tin veins)
     this.setupLevantineMap(mapW, mapH);
 
-    // Posiziona il Megaron iniziale e la Caserma
+    // Position starting Acropolis, Foundry, and foundation slabs
     const pStart = scenario.player.startPosition;
     this.spawnBuilding('cyclopean_slab', 'player', pStart.tx - 1, pStart.ty - 1);
     this.spawnBuilding('cyclopean_slab', 'player', pStart.tx + 1, pStart.ty - 1);
     this.spawnBuilding('acropolis', 'player', pStart.tx, pStart.ty);
     this.spawnBuilding('bronze_foundry', 'player', pStart.tx + 5, pStart.ty);
 
-    // Spawna le unità iniziali
+    // Spawn starting units
     this.spawnUnit('donkey_caravan', 'player', (pStart.tx + 2) * TILE_SIZE, (pStart.ty + 5) * TILE_SIZE);
     this.spawnUnit('spear_militia', 'player', (pStart.tx - 2) * TILE_SIZE, (pStart.ty + 3) * TILE_SIZE);
     this.spawnUnit('spear_militia', 'player', (pStart.tx - 2) * TILE_SIZE, (pStart.ty + 5) * TILE_SIZE);
@@ -111,30 +109,32 @@ class GameApp {
 
     this.setupInputHandlers();
 
-    // Invia messaggio iniziale di Burna-Khabir
+    // Send initial narrative advisor briefing
     EventBus.get().emit('advisor:message', {
       speaker: 'burna_khabir',
       text: scenario.narrative.dialogues[0].message,
       isAlert: false
     });
 
-    // Avvia loop
+    // Start game loop
     requestAnimationFrame((t) => this.gameLoop(t));
   }
 
   private resizeCanvas(): void {
-    this.canvas.width = VIRTUAL_WIDTH;
-    this.canvas.height = VIRTUAL_HEIGHT;
-    this.ctx.imageSmoothingEnabled = false;
-    if (this.camera) {
-      this.camera.updateDimensions(VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
+    const parent = this.canvas.parentElement;
+    if (parent) {
+      this.canvas.width = parent.clientWidth;
+      this.canvas.height = parent.clientHeight;
+      if (this.camera) {
+        this.camera.updateDimensions(this.canvas.width, this.canvas.height);
+      }
     }
   }
 
   private setupLevantineMap(w: number, h: number): void {
     for (let y = 0; y < h; y++) {
       for (let x = 0; x < w; x++) {
-        // Fascia marina occidentale (mare dei Popoli del Mare)
+        // Western sea belt (Sea Peoples naval approach vector)
         if (x < 6) {
           this.tileRenderer.setTile(x, y, 'water');
           this.gridGraph.setTileCost(x, y, 0);
@@ -148,7 +148,7 @@ class GameApp {
       }
     }
 
-    // Nodi di Rame a est della base
+    // Copper resource nodes east of the base
     for (let dy = 0; dy < 3; dy++) {
       for (let dx = 0; dx < 3; dx++) {
         this.tileRenderer.setTile(22 + dx, 26 + dy, 'vein_copper');
@@ -156,11 +156,22 @@ class GameApp {
       }
     }
 
-    // Nodi rari di Stagno (Cassiterite) a nord-est
+    // Rare Tin (Cassiterite) nodes northeast of the settlement
     for (let dy = 0; dy < 2; dy++) {
       for (let dx = 0; dx < 2; dx++) {
         this.tileRenderer.setTile(20 + dx, 14 + dy, 'vein_tin');
         this.gridGraph.setTileCost(20 + dx, 14 + dy, 0);
+      }
+    }
+
+    // Scatter Mediterranean Cedar Trees across the landscape
+    this.decorations = [];
+    for (let i = 0; i < 55; i++) {
+      const tx = Math.floor((Math.sin(i * 13.7) * 0.5 + 0.5) * (w - 6)) + 8;
+      const ty = Math.floor((Math.cos(i * 19.3) * 0.5 + 0.5) * (h - 6)) + 3;
+      const distPlayer = Math.hypot(tx - 12, ty - 28);
+      if (this.tileRenderer.getTile(tx, ty) === 'plain' && distPlayer > 6) {
+        this.decorations.push({ x: tx + 0.5, y: ty + 0.5, type: 'cedar' });
       }
     }
   }
@@ -169,6 +180,13 @@ class GameApp {
     const hasFoundation = this.gridGraph.hasFoundation(tx, ty);
     const b = new BuildingEntity(this.nextEntityId++, defId, owner, tx, ty, hasFoundation);
     this.buildings.push(b);
+
+    // Remove any trees in the construction footprint
+    this.decorations = this.decorations.filter(d => {
+      const dx = Math.floor(d.x);
+      const dy = Math.floor(d.y);
+      return !(dx >= tx && dx < tx + b.def.width && dy >= ty && dy < ty + b.def.height);
+    });
 
     if (defId === 'cyclopean_slab') {
       this.gridGraph.setFoundation(tx, ty, b.def.width, b.def.height, true);
@@ -232,16 +250,14 @@ class GameApp {
       this.audio.startBGM();
 
       const rect = this.canvas.getBoundingClientRect();
-      const scaleX = VIRTUAL_WIDTH / rect.width;
-      const scaleY = VIRTUAL_HEIGHT / rect.height;
-      const sx = (e.clientX - rect.left) * scaleX;
-      const sy = (e.clientY - rect.top) * scaleY;
+      const sx = e.clientX - rect.left;
+      const sy = e.clientY - rect.top;
       const worldPos = this.camera.screenToWorld(sx, sy);
 
       if (e.button === 0) {
-        // Tasto sinistro
+        // Left click: place structure or start box selection
         if (this.buildingToPlace) {
-          // Posiziona edificio
+          // Place building structure
           const bDef = BUILDINGS[this.buildingToPlace];
           const tx = Math.floor(worldPos.x / TILE_SIZE);
           const ty = Math.floor(worldPos.y / TILE_SIZE);
@@ -264,7 +280,7 @@ class GameApp {
         this.dragStart = { x: sx, y: sy };
         this.dragCurrent = { x: sx, y: sy };
       } else if (e.button === 2) {
-        // Tasto destro: impartisci ordine contestuale
+        // Right click: issue contextual command
         e.preventDefault();
         this.issueContextCommand(worldPos.x, worldPos.y);
       }
@@ -274,11 +290,9 @@ class GameApp {
 
     this.canvas.addEventListener('mousemove', (e) => {
       const rect = this.canvas.getBoundingClientRect();
-      const scaleX = VIRTUAL_WIDTH / rect.width;
-      const scaleY = VIRTUAL_HEIGHT / rect.height;
       this.dragCurrent = {
-        x: (e.clientX - rect.left) * scaleX,
-        y: (e.clientY - rect.top) * scaleY
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
       };
     });
 
@@ -308,7 +322,7 @@ class GameApp {
     this.selectedBuilding = null;
 
     if (isClick) {
-      // Clic singolo: trova unità o edificio
+      // Single click: select unit or building
       const clickedUnit = this.units.find(u => Math.hypot(u.x - p1.x, u.y - p1.y) < 24);
       if (clickedUnit) {
         clickedUnit.isSelected = true;
@@ -327,7 +341,7 @@ class GameApp {
         }
       }
     } else {
-      // Selezione a rettangolo
+      // Box drag selection
       for (const u of this.units) {
         if (u.owner === 'player' && u.x >= p1.x && u.x <= p2.x && u.y >= p1.y && u.y <= p2.y) {
           u.isSelected = true;
@@ -353,12 +367,12 @@ class GameApp {
     const targetTx = Math.floor(wx / TILE_SIZE);
     const targetTy = Math.floor(wy / TILE_SIZE);
 
-    // Controlla se clicchiamo su un nemico
+    // Check if clicking on an enemy entity
     const targetEnemyUnit = this.units.find(
       u => u.owner !== 'player' && Math.hypot(u.x - wx, u.y - wy) < 24
     );
 
-    // Controlla se clicchiamo su un nodo risorsa
+    // Check if clicking on a resource node vein
     const tileType = this.tileRenderer.getTile(targetTx, targetTy);
     const isResourceNode = tileType === 'vein_copper' || tileType === 'vein_tin' || tileType === 'vein_iron';
 
@@ -367,13 +381,13 @@ class GameApp {
         u.targetEntityId = targetEnemyUnit.id;
         u.state = 'ATTACK_TARGET';
       } else if (isResourceNode && u.def.category === 'worker') {
-        // Carovana inviata a raccogliere
+        // Caravan dispatched to harvest ore
         u.targetPosition = { x: targetTx * TILE_SIZE + 24, y: targetTy * TILE_SIZE + 24 };
         u.currentCargoType = tileType.replace('vein_', '');
         u.path = [{ x: targetTx * TILE_SIZE + 24, y: targetTy * TILE_SIZE + 24 }];
         u.state = 'HARVESTING';
       } else {
-        // Movimento con Pathfinding A*
+        // Navigate using A* pathfinding
         const startTx = Math.floor(u.x / TILE_SIZE);
         const startTy = Math.floor(u.y / TILE_SIZE);
         const pathCoords = AStar.findPath(this.gridGraph, { tx: startTx, ty: startTy }, { tx: targetTx, ty: targetTy });
@@ -393,7 +407,7 @@ class GameApp {
   }
 
   private update(dt: number): void {
-    // Panning della telecamera
+    // Camera viewport panning
     let camDx = 0;
     let camDy = 0;
     if (this.keysDown.has('KeyA') || this.keysDown.has('ArrowLeft')) camDx -= 1;
@@ -409,7 +423,7 @@ class GameApp {
       );
     }
 
-    // Aggiornamento FSM unità
+    // Update Unit Finite State Machines
     for (let i = this.units.length - 1; i >= 0; i--) {
       const u = this.units[i];
       UnitFSM.updateUnit(
@@ -422,13 +436,13 @@ class GameApp {
         this.economy
       );
 
-      // Rimuovi morti
+      // Remove fallen units
       if (u.hp <= 0) {
         this.units.splice(i, 1);
       }
     }
 
-    // Aggiornamento edifici
+    // Update buildings
     for (let i = this.buildings.length - 1; i >= 0; i--) {
       const b = this.buildings[i];
       if (b.hp <= 0) {
@@ -437,7 +451,7 @@ class GameApp {
       }
     }
 
-    // Calcolo approvvigionamento (supply)
+    // Calculate supply headroom
     let totalCap = 10;
     let used = 0;
     for (const b of this.buildings) {
@@ -448,13 +462,13 @@ class GameApp {
     }
     this.economy.updateSupply(totalCap, used);
 
-    // Aggiornamento combattimento & proiettili
+    // Update combat encounters and projectiles
     this.combat.update(dt, this.units, this.buildings);
 
-    // Aggiornamento Tactical Director nemico (Popoli del Mare)
+    // Update Sea Peoples AI Tactical Director
     this.tacticalDirector.update(dt, this.gridGraph, this.units, 12, 28);
 
-    // Aggiornamento Fog of War
+    // Update Fog of War
     this.fogRenderer.resetVisibility();
     for (const u of this.units) {
       if (u.owner === 'player') {
@@ -475,28 +489,38 @@ class GameApp {
     const ctx = this.ctx;
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    // 1. Layer Terreno & Terrapieni ciclopici
+    // 1. Terrain Layer & Cyclopean Foundation Slabs
     this.tileRenderer.render(ctx, this.camera, this.gridGraph);
 
-    // 2. Layer Edifici & Unità con Y-Sorting per profondità 2.5D
-    const renderList: Array<{ type: 'b' | 'u'; y: number; item: any }> = [];
+    // 2. Layer Buildings, Units & Mediterranean Cedars with Y-Sorting for 2.5D depth
+    const renderList: Array<{ type: 'b' | 'u' | 'd'; y: number; item: any }> = [];
     for (const b of this.buildings) {
       renderList.push({ type: 'b', y: (b.ty + b.def.height) * TILE_SIZE, item: b });
     }
     for (const u of this.units) {
       renderList.push({ type: 'u', y: u.y, item: u });
     }
+    for (const d of this.decorations) {
+      renderList.push({ type: 'd', y: d.y * TILE_SIZE, item: d });
+    }
     renderList.sort((a, b) => a.y - b.y);
 
     for (const ent of renderList) {
       if (ent.type === 'b') {
         this.renderBuilding(ctx, ent.item as BuildingEntity);
-      } else {
+      } else if (ent.type === 'u') {
         this.renderUnit(ctx, ent.item as UnitEntity);
+      } else {
+        const d = ent.item as { x: number; y: number; type: string };
+        const tx = Math.floor(d.x);
+        const ty = Math.floor(d.y);
+        if (this.fogRenderer.getFog(tx, ty) === 0) continue;
+        const sp = this.camera.worldToScreen(d.x * TILE_SIZE - 24, d.y * TILE_SIZE - 52);
+        ctx.drawImage(this.tileRenderer.cedarTreeCanvas, Math.floor(sp.x), Math.floor(sp.y));
       }
     }
 
-    // 3. Proiettili in volo
+    // 3. In-flight combat projectiles
     ctx.fillStyle = '#ffdf73';
     for (const p of this.combat.projectiles) {
       const sp = this.camera.worldToScreen(p.x, p.y);
@@ -508,7 +532,7 @@ class GameApp {
     // 4. Fog of War
     this.fogRenderer.render(ctx, this.camera);
 
-    // 5. Anteprima posizionamento edificio in costruzione (Ghost preview)
+    // 5. Structure placement preview (Ghost blueprint)
     if (this.buildingToPlace) {
       const bDef = BUILDINGS[this.buildingToPlace];
       const mouseWorld = this.camera.screenToWorld(this.dragCurrent.x, this.dragCurrent.y);
@@ -539,7 +563,7 @@ class GameApp {
       ctx.restore();
     }
 
-    // 6. Box selection dragging
+    // 6. Box selection dragging rectangle
     if (this.isDraggingBox) {
       ctx.strokeStyle = '#2de0a5';
       ctx.lineWidth = 1;
@@ -550,7 +574,7 @@ class GameApp {
       ctx.strokeRect(x, y, w, h);
     }
 
-    // 6. Minimappa
+    // 7. Tactical Minimap HUD
     this.hud.renderMinimap(
       this.camera,
       this.units,
@@ -567,35 +591,42 @@ class GameApp {
     const drawX = Math.round(sp.x);
     const drawY = Math.round(sp.y);
 
-    // 1. Try real 2D pixel art building sprite first
-    const realBldgImg = AssetLoader.getBuilding(b.defId, b.owner);
-    if (realBldgImg && realBldgImg.complete && realBldgImg.naturalWidth > 0) {
-      ctx.drawImage(realBldgImg, drawX, drawY, bw, bh);
+    const sprite = SVGAProceduralBank.getBuildingSprite(b.defId, b.owner);
+    if (sprite) {
+      ctx.drawImage(sprite, drawX, drawY, bw, bh);
     } else {
-      // Fallback to SVGAProceduralBank
-      const sprite = SVGAProceduralBank.getBuildingSprite(b.defId, b.owner);
-      if (sprite) {
-        ctx.drawImage(sprite, drawX, drawY, bw, bh);
-      } else {
-        ctx.fillStyle = b.owner === 'player' ? '#8a6234' : '#692d2d';
-        ctx.fillRect(drawX, drawY, bw, bh);
-      }
+      ctx.fillStyle = b.owner === 'player' ? '#8a6234' : '#692d2d';
+      ctx.fillRect(drawX, drawY, bw, bh);
     }
 
-    // Selection border (1px crisp pixel outline)
+    // Dynamic waving cloth banner (from original prototype)
+    if (b.defId === 'acropolis' || b.defId === 'barracks') {
+      const wave = Math.sin(Date.now() / 200 + b.id) * 2.5;
+      ctx.fillStyle = b.owner === 'player' ? '#dc2626' : '#2563eb';
+      ctx.fillRect(drawX + 12, drawY + 6, 3, 24);
+      ctx.beginPath();
+      ctx.moveTo(drawX + 15, drawY + 7);
+      ctx.lineTo(drawX + 30, drawY + 10 + wave);
+      ctx.lineTo(drawX + 15, drawY + 17);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // Selection border and HP bar (original prototype style)
     if (b.isSelected) {
-      ctx.strokeStyle = '#ffff55';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(drawX - 0.5, drawY - 0.5, bw + 1, bh + 1);
+      ctx.strokeStyle = b.owner === 'player' ? '#4ade80' : '#f87171';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(drawX, drawY, bw, bh);
     }
 
-    // HP bar if selected or damaged
     if (b.isSelected || b.hp < b.maxHp) {
       const hpPct = Math.max(0, b.hp / b.maxHp);
-      ctx.fillStyle = '#0e0b08';
-      ctx.fillRect(drawX, drawY - 4, bw, 3);
-      ctx.fillStyle = '#22c55e';
-      ctx.fillRect(drawX, drawY - 4, Math.round(bw * hpPct), 3);
+      ctx.fillStyle = '#1c0909';
+      ctx.fillRect(drawX, drawY - 7, bw, 5);
+      ctx.strokeStyle = '#594a3b';
+      ctx.strokeRect(drawX, drawY - 7, bw, 5);
+      ctx.fillStyle = hpPct > 0.5 ? '#2b9348' : (hpPct > 0.25 ? '#eab308' : '#ef4444');
+      ctx.fillRect(drawX + 1, drawY - 6, Math.max(0, (bw - 2) * hpPct), 3);
     }
   }
 
@@ -604,37 +635,27 @@ class GameApp {
     const drawX = Math.round(sp.x);
     const drawY = Math.round(sp.y);
 
-    const isMoving = u.state === 'MOVE_TO' || u.state === 'RETURN_CARGO' || u.state === 'HARVESTING';
-    const animPhase = (Date.now() / 150) * (isMoving ? 1.0 : 0.2);
-    const step = isMoving ? Math.floor(Math.sin(animPhase) * 2) : 0;
-
-    // 1. Try real 2D pixel art unit sprite first
-    const realUnitImg = AssetLoader.getUnit(u.defId);
-    if (realUnitImg && realUnitImg.complete && realUnitImg.naturalWidth > 0) {
-      ctx.save();
-      ctx.translate(drawX, drawY + step);
-      // Center unit sprite (32x32)
-      ctx.drawImage(realUnitImg, -16, -16, 32, 32);
-      ctx.restore();
-    } else {
-      // Fallback to SVGAProceduralBank
-      SVGAProceduralBank.drawAnimatedUnit(ctx, u, drawX, drawY);
-    }
-
-    // Selection ring
+    // Selection ring (original prototype green/red ellipse)
     if (u.isSelected) {
-      ctx.strokeStyle = '#ffff33';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(drawX - 10.5, drawY - 10.5, 21, 21);
+      ctx.strokeStyle = u.owner === 'player' ? '#4ade80' : '#f87171';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.ellipse(drawX, drawY + 12, 16, 8, 0, 0, Math.PI * 2);
+      ctx.stroke();
     }
 
-    // HP bar if selected or wounded
+    // Dynamic animated unit with walking bob, thrusting attack, and cargo level
+    SVGAProceduralBank.drawAnimatedUnit(ctx, u, drawX, drawY);
+
+    // HP bar if wounded or selected
     if (u.isSelected || u.hp < u.maxHp) {
       const hpPct = Math.max(0, u.hp / u.maxHp);
-      ctx.fillStyle = '#0e0b08';
-      ctx.fillRect(drawX - 8, drawY - 14, 16, 2);
-      ctx.fillStyle = '#22c55e';
-      ctx.fillRect(drawX - 8, drawY - 14, Math.round(16 * hpPct), 2);
+      ctx.fillStyle = '#1c0909';
+      ctx.fillRect(drawX - 12, drawY - 16, 24, 4);
+      ctx.strokeStyle = '#594a3b';
+      ctx.strokeRect(drawX - 12, drawY - 16, 24, 4);
+      ctx.fillStyle = hpPct > 0.5 ? '#2b9348' : (hpPct > 0.25 ? '#eab308' : '#ef4444');
+      ctx.fillRect(drawX - 11, drawY - 15, Math.max(0, 22 * hpPct), 2);
     }
   }
 

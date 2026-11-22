@@ -1,11 +1,10 @@
 import { UnitEntity } from '../../entities/UnitEntity.ts';
 
-function makePixelCanvas(w: number, h: number, drawFn: (ctx: CanvasRenderingContext2D) => void): HTMLCanvasElement {
+function makeCanvas(w: number, h: number, drawFn: (ctx: CanvasRenderingContext2D) => void): HTMLCanvasElement {
   const c = document.createElement('canvas');
   c.width = w;
   c.height = h;
   const ctx = c.getContext('2d')!;
-  ctx.imageSmoothingEnabled = false;
   drawFn(ctx);
   return c;
 }
@@ -19,384 +18,355 @@ export class SVGAProceduralBank {
     this.initBuildingSprites();
   }
 
-  // --- Dune II Pixel Art Helpers ---
-
-  // Draws a beveled pixel box with classic 1992 RTS lighting (top-left highlight, bottom-right shadow, black border)
-  private static drawPixelBevelBox(
+  // --- Core Roof Tile Generator from Original Prototype ---
+  private static drawRoofTiles(
     ctx: CanvasRenderingContext2D,
     x: number,
     y: number,
     w: number,
     h: number,
-    fillColor: string,
-    hiColor: string,
-    shadowColor: string,
-    hasBlackOutline = true
+    baseColor: string,
+    hiColor: string
   ): void {
-    // Fill
-    ctx.fillStyle = fillColor;
+    const g = ctx.createLinearGradient(x, y, x, y + h);
+    g.addColorStop(0, hiColor);
+    g.addColorStop(1, baseColor);
+    ctx.fillStyle = g;
     ctx.fillRect(x, y, w, h);
 
-    // Bevel highlights
-    ctx.fillStyle = hiColor;
-    ctx.fillRect(x, y, w, 1);
-    ctx.fillRect(x, y, 1, h);
-
-    // Bevel shadows
-    ctx.fillStyle = shadowColor;
-    ctx.fillRect(x + 1, y + h - 1, w - 1, 1);
-    ctx.fillRect(x + w - 1, y + 1, 1, h - 1);
-
-    // Black outline
-    if (hasBlackOutline) {
-      ctx.strokeStyle = '#0e0b08';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(x - 0.5, y - 0.5, w + 1, h + 1);
+    ctx.strokeStyle = 'rgba(0,0,0,0.28)';
+    ctx.lineWidth = 1;
+    for (let tx = x + 4; tx < x + w; tx += 5) {
+      ctx.beginPath();
+      ctx.moveTo(tx, y);
+      ctx.lineTo(tx, y + h);
+      ctx.stroke();
+    }
+    for (let ty = y + 6; ty < y + h; ty += 6) {
+      ctx.beginPath();
+      ctx.moveTo(x, ty);
+      ctx.lineTo(x + w, ty);
+      ctx.stroke();
     }
   }
 
-  // --- Dune II Mentat Style Advisor Portraits (48x48 Pixel Art) ---
+  private static makeBuildingSprite(size: number, drawFn: (ctx: CanvasRenderingContext2D, size: number) => void): HTMLCanvasElement {
+    return makeCanvas(size, size, (ctx) => {
+      // Soft drop shadow as in original prototype
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.42)';
+      ctx.fillRect(10, 12, size - 12, size - 12);
+      drawFn(ctx, size);
+    });
+  }
+
+  // --- High Scribe / Advisor Portraits from Original Prototype ---
   private static initAdvisorPortraits(): void {
-    // 1. Burna-Khabir (Cuneiform High Scribe)
-    this.advisorPortraits.set('burna_khabir', makePixelCanvas(48, 48, (ctx) => {
-      ctx.fillStyle = '#18120d';
-      ctx.fillRect(0, 0, 48, 48);
+    // 1. Burna-Khabir (Scribe)
+    this.advisorPortraits.set('burna_khabir', makeCanvas(64, 64, (ctx) => {
+      const bgGrad = ctx.createLinearGradient(0, 0, 0, 64);
+      bgGrad.addColorStop(0, '#1e293b');
+      bgGrad.addColorStop(1, '#0f172a');
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, 64, 64);
 
-      // Scribe headdress (purple-red with gold trim)
-      this.drawPixelBevelBox(ctx, 14, 4, 20, 12, '#661a2b', '#992a43', '#330811');
-      ctx.fillStyle = '#ffd166';
-      ctx.fillRect(12, 14, 24, 3);
+      // Classical marble column on left
+      const colGrad = ctx.createLinearGradient(4, 0, 18, 0);
+      colGrad.addColorStop(0, '#94a3b8');
+      colGrad.addColorStop(0.5, '#f1f5f9');
+      colGrad.addColorStop(1, '#64748b');
+      ctx.fillStyle = colGrad;
+      ctx.fillRect(4, 4, 14, 56);
 
-      // Face
-      this.drawPixelBevelBox(ctx, 16, 17, 16, 13, '#d49b6a', '#f5c596', '#946138', false);
+      // Toga & drape
+      const togaGrad = ctx.createLinearGradient(12, 38, 52, 64);
+      togaGrad.addColorStop(0, '#f8fafc');
+      togaGrad.addColorStop(1, '#cbd5e1');
+      ctx.fillStyle = togaGrad;
+      ctx.beginPath();
+      ctx.ellipse(32, 58, 22, 18, 0, Math.PI, 0);
+      ctx.fill();
 
-      // Eyes
-      ctx.fillStyle = '#0f0a07';
-      ctx.fillRect(19, 21, 3, 2);
-      ctx.fillRect(26, 21, 3, 2);
+      // Royal crimson sash
+      ctx.fillStyle = '#991b1b';
+      ctx.beginPath();
+      ctx.moveTo(20, 42); ctx.lineTo(30, 42); ctx.lineTo(40, 64); ctx.lineTo(28, 64);
+      ctx.fill();
 
-      // Long archaic wavy beard
-      this.drawPixelBevelBox(ctx, 14, 28, 20, 16, '#2e2015', '#473221', '#140d08');
-      ctx.fillRect(17, 43, 14, 4);
+      // Face with radial gradient
+      ctx.fillStyle = '#d99b66';
+      ctx.fillRect(27, 34, 10, 10);
+      const faceGrad = ctx.createRadialGradient(30, 22, 3, 32, 24, 14);
+      faceGrad.addColorStop(0, '#f3c193');
+      faceGrad.addColorStop(1, '#c6834e');
+      ctx.fillStyle = faceGrad;
+      ctx.beginPath();
+      ctx.ellipse(32, 24, 10, 13, 0, 0, Math.PI * 2);
+      ctx.fill();
 
-      // Robe shoulders
-      ctx.fillStyle = '#f0e6d6';
-      ctx.fillRect(4, 42, 40, 6);
-      ctx.fillStyle = '#992a43';
-      ctx.fillRect(18, 42, 12, 6);
+      // Noble archaic beard
+      ctx.fillStyle = '#33271e';
+      ctx.fillRect(24, 30, 16, 12);
+      ctx.fillRect(27, 42, 10, 6);
 
-      // Beveled frame
-      ctx.strokeStyle = '#ffd166';
-      ctx.strokeRect(0.5, 0.5, 47, 47);
+      ctx.strokeStyle = '#c9933b';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(1, 1, 62, 62);
     }));
 
     // 2. Tarkhunta (Master Smelter)
-    this.advisorPortraits.set('tarkhunta', makePixelCanvas(48, 48, (ctx) => {
-      ctx.fillStyle = '#1f100a';
-      ctx.fillRect(0, 0, 48, 48);
+    this.advisorPortraits.set('tarkhunta', makeCanvas(64, 64, (ctx) => {
+      const bgGrad = ctx.createLinearGradient(0, 0, 0, 64);
+      bgGrad.addColorStop(0, '#381c15');
+      bgGrad.addColorStop(1, '#140805');
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, 64, 64);
 
-      // Leather headband
-      this.drawPixelBevelBox(ctx, 13, 6, 22, 9, '#1a120c', '#38281b', '#0a0704');
-      ctx.fillStyle = '#b85d18';
-      ctx.fillRect(12, 13, 24, 3);
+      // Face
+      ctx.fillStyle = '#c78255';
+      ctx.fillRect(24, 21, 16, 18);
+      ctx.fillStyle = 'rgba(20, 15, 10, 0.55)';
+      ctx.fillRect(26, 27, 7, 5); // Soot
 
-      // Face with soot smudges
-      this.drawPixelBevelBox(ctx, 16, 16, 16, 14, '#c78255', '#f0a775', '#7a421b', false);
-      ctx.fillStyle = '#1c130d';
-      ctx.fillRect(18, 21, 5, 4); // Soot on cheek
+      ctx.fillStyle = '#1f1610';
+      ctx.fillRect(22, 35, 20, 18); // Dark beard
 
-      // Eyes
-      ctx.fillStyle = '#0f0a07';
-      ctx.fillRect(19, 19, 3, 2);
-      ctx.fillRect(26, 19, 3, 2);
-
-      // Black beard
-      this.drawPixelBevelBox(ctx, 14, 28, 20, 16, '#1a130e', '#33241a', '#080503');
-
-      // Leather apron & hammer
       ctx.fillStyle = '#5c351c';
-      ctx.fillRect(6, 42, 36, 6);
-      ctx.fillStyle = '#8f8881';
-      ctx.fillRect(8, 34, 6, 10);
+      ctx.beginPath();
+      ctx.ellipse(32, 68, 26, 18, 0, Math.PI, 0);
+      ctx.fill();
 
       ctx.strokeStyle = '#ffd166';
-      ctx.strokeRect(0.5, 0.5, 47, 47);
+      ctx.lineWidth = 2;
+      ctx.strokeRect(1, 1, 62, 62);
     }));
 
     // 3. Zalpa (Scout Captain)
-    this.advisorPortraits.set('zalpa', makePixelCanvas(48, 48, (ctx) => {
-      ctx.fillStyle = '#0e1c18';
-      ctx.fillRect(0, 0, 48, 48);
+    this.advisorPortraits.set('zalpa', makeCanvas(64, 64, (ctx) => {
+      const bgGrad = ctx.createLinearGradient(0, 0, 0, 64);
+      bgGrad.addColorStop(0, '#1c2826');
+      bgGrad.addColorStop(1, '#0c1412');
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, 64, 64);
 
-      // Bronze tiara
-      this.drawPixelBevelBox(ctx, 14, 6, 20, 8, '#14100c', '#292018', '#0a0806');
+      ctx.fillStyle = '#dca275';
+      ctx.fillRect(24, 21, 16, 18);
       ctx.fillStyle = '#ffd166';
-      ctx.fillRect(12, 12, 24, 4);
+      ctx.fillRect(18, 18, 28, 5); // Tiara
 
-      // Face
-      this.drawPixelBevelBox(ctx, 16, 16, 16, 14, '#dca275', '#f7c299', '#8f5c35', false);
-      ctx.fillStyle = '#0f0a07';
-      ctx.fillRect(19, 20, 3, 2);
-      ctx.fillRect(26, 20, 3, 2);
-
-      // Green cape and linen wrap
-      ctx.fillStyle = '#1c5e50';
-      ctx.fillRect(6, 38, 36, 10);
-      ctx.fillStyle = '#2de0a5';
-      ctx.fillRect(18, 38, 12, 10);
+      ctx.fillStyle = '#225e52';
+      ctx.beginPath();
+      ctx.ellipse(32, 68, 26, 18, 0, Math.PI, 0);
+      ctx.fill();
 
       ctx.strokeStyle = '#2de0a5';
-      ctx.strokeRect(0.5, 0.5, 47, 47);
+      ctx.lineWidth = 2;
+      ctx.strokeRect(1, 1, 62, 62);
     }));
   }
 
-  // --- Dune II Pixel Art Buildings ---
+  // --- Buildings from Original Prototype (Adapted for 48px Tile Grid) ---
   private static initBuildingSprites(): void {
     const owners: ('player' | 'sea_peoples')[] = ['player', 'sea_peoples'];
 
     for (const owner of owners) {
       const isPlayer = owner === 'player';
-      const cPrimary = isPlayer ? '#d4cbbd' : '#8c2626'; // Bright limestone vs Dark invader red
-      const cLight = isPlayer ? '#f2ede4' : '#bd3e3e';
-      const cDark = isPlayer ? '#8a7d6d' : '#4a1212';
-      const cTrim = isPlayer ? '#2de0a5' : '#ff4d4d'; // Faction banner accent
-      const cGold = '#ffd166';
+      const cMain = isPlayer ? '#9e1b1b' : '#1d4e89';
+      const cHi = isPlayer ? '#d62828' : '#2b6cb0';
+      const cTrim = isPlayer ? '#fbbf24' : '#bae6fd';
 
-      // 0. The Iconic "Concrete Slabs" -> Cyclopean Foundation Slabs (2x2 tiles = 48x48 px)
-      this.buildingSprites.set(`cyclopean_slab_${owner}`, makePixelCanvas(48, 48, (ctx) => {
-        // Base dark mortar
-        ctx.fillStyle = '#1c1611';
+      // 0. Slabs (48x48)
+      this.buildingSprites.set(`cyclopean_slab_${owner}`, makeCanvas(48, 48, (ctx) => {
+        ctx.fillStyle = '#857d75';
         ctx.fillRect(0, 0, 48, 48);
 
-        // 4 Quad Slabs with deep beveled borders and corner studs (Westwood Concrete Slabs style)
-        const quads = [
+        const blocks = [
           [1, 1, 22, 22], [25, 1, 22, 22],
           [1, 25, 22, 22], [25, 25, 22, 22]
         ];
+        blocks.forEach(([x, y, w, h]) => {
+          const g = ctx.createLinearGradient(x, y, x + w, y + h);
+          g.addColorStop(0, '#a89f96');
+          g.addColorStop(1, '#6e665f');
+          ctx.fillStyle = g;
+          ctx.fillRect(x, y, w, h);
 
-        for (const [qx, qy, qw, qh] of quads) {
-          this.drawPixelBevelBox(ctx, qx, qy, qw, qh, '#8a7e70', '#b8ac9c', '#4a4237', false);
+          ctx.strokeStyle = '#c4bbb1';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(x, y + h); ctx.lineTo(x, y); ctx.lineTo(x + w, y);
+          ctx.stroke();
 
-          // Diagonal chisel grooves
-          ctx.fillStyle = '#383025';
-          ctx.fillRect(qx + 5, qy + 5, 2, 2);
-          ctx.fillRect(qx + 14, qy + 13, 3, 2);
-
-          // Corner metal bolts
-          ctx.fillStyle = '#ffd166';
-          ctx.fillRect(qx + 2, qy + 2, 2, 2);
-          ctx.fillRect(qx + qw - 4, qy + 2, 2, 2);
-          ctx.fillRect(qx + 2, qy + qh - 4, 2, 2);
-          ctx.fillRect(qx + qw - 4, qy + qh - 4, 2, 2);
-        }
-
-        // Center bronze anchoring junction
-        ctx.fillStyle = '#ffd166';
-        ctx.fillRect(22, 22, 4, 4);
-        ctx.fillStyle = '#1c1611';
-        ctx.strokeRect(21.5, 21.5, 5, 5);
+          ctx.strokeStyle = '#3d3833';
+          ctx.beginPath();
+          ctx.moveTo(x + w, y); ctx.lineTo(x + w, y + h); ctx.lineTo(x, y + h);
+          ctx.stroke();
+        });
       }));
 
-      // 1. Acropolis / Construction Yard (4x4 tiles = 96x96 px)
-      this.buildingSprites.set(`acropolis_${owner}`, makePixelCanvas(96, 96, (ctx) => {
-        // Black drop shadow
-        ctx.fillStyle = '#0a0806';
-        ctx.fillRect(6, 8, 86, 84);
+      // 1. Acropolis / Praetorium (4x4 tiles = 192x192, scalable or 96x96 scaled)
+      this.buildingSprites.set(`acropolis_${owner}`, this.makeBuildingSprite(192, (ctx) => {
+        ctx.fillStyle = '#d6cfc5';
+        ctx.fillRect(12, 24, 168, 152);
+        ctx.strokeStyle = '#5c5349';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(12, 24, 168, 152);
 
-        // Heavy fortified fortress base
-        this.drawPixelBevelBox(ctx, 4, 6, 88, 86, cDark, cPrimary, '#261f18');
+        this.drawRoofTiles(ctx, 16, 20, 160, 60, cMain, cHi);
 
-        // Central Megaron tier
-        this.drawPixelBevelBox(ctx, 14, 16, 68, 64, cPrimary, cLight, cDark);
+        // Triangular Pediment
+        ctx.fillStyle = '#e6dfd3';
+        ctx.beginPath();
+        ctx.moveTo(28, 80); ctx.lineTo(96, 44); ctx.lineTo(164, 80);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#786e63';
+        ctx.stroke();
 
-        // Terracotta tile roof eaves
-        this.drawPixelBevelBox(ctx, 16, 12, 64, 14, '#a83e28', '#d95a3f', '#541c10');
-
-        // Command dome with scan lights
-        this.drawPixelBevelBox(ctx, 36, 32, 24, 22, '#382b1e', '#5c4632', '#1a130b');
+        // Gold center medallion
         ctx.fillStyle = cTrim;
-        ctx.fillRect(40, 36, 16, 4); // Glowing visor
-        ctx.fillStyle = '#ffea00';
-        ctx.fillRect(44, 44, 8, 6);
+        ctx.beginPath(); ctx.arc(96, 66, 12, 0, Math.PI * 2); ctx.fill();
 
-        // Heavy blast door with hazard teeth
-        this.drawPixelBevelBox(ctx, 34, 58, 28, 22, '#211811', '#403022', '#0f0a07');
-        ctx.fillStyle = cGold;
-        for (let bx = 38; bx <= 58; bx += 6) {
-          ctx.fillRect(bx, 62, 3, 3);
-          ctx.fillRect(bx, 72, 3, 3);
+        // Classical fluted colonnade
+        for (let cx = 24; cx <= 156; cx += 26) {
+          const colG = ctx.createLinearGradient(cx, 0, cx + 12, 0);
+          colG.addColorStop(0, '#948b80');
+          colG.addColorStop(0.4, '#f5f0e6');
+          colG.addColorStop(1, '#6b635a');
+          ctx.fillStyle = colG;
+          ctx.fillRect(cx, 82, 12, 88);
         }
 
-        // Left and right defense pillboxes
-        this.drawPixelBevelBox(ctx, 16, 48, 14, 26, cPrimary, cLight, cDark);
-        this.drawPixelBevelBox(ctx, 66, 48, 14, 26, cPrimary, cLight, cDark);
-        ctx.fillStyle = '#0f0a07';
-        ctx.fillRect(20, 54, 6, 4); // Arrow slit
-        ctx.fillRect(70, 54, 6, 4);
-
-        // Radar mast / Faction flag pole
-        ctx.fillStyle = '#0f0a07';
-        ctx.fillRect(80, 8, 2, 24);
-        ctx.fillStyle = cTrim;
-        ctx.fillRect(82, 10, 10, 7);
+        // Entrance portal
+        ctx.fillStyle = '#1c1815';
+        ctx.fillRect(72, 108, 48, 64);
+        ctx.strokeStyle = cTrim;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(72, 108, 48, 64);
       }));
 
-      // 2. Bronze Foundry / Spice Refinery (3x3 tiles = 72x72 px)
-      this.buildingSprites.set(`bronze_foundry_${owner}`, makePixelCanvas(72, 72, (ctx) => {
-        // Drop shadow
-        ctx.fillStyle = '#0a0806';
-        ctx.fillRect(4, 6, 66, 64);
+      // 2. Bronze Foundry / Refinery (3x3 tiles = 144x144)
+      this.buildingSprites.set(`bronze_foundry_${owner}`, this.makeBuildingSprite(144, (ctx) => {
+        ctx.fillStyle = '#b8afa4';
+        ctx.fillRect(9, 21, 126, 114);
 
-        // Main refinery hull
-        this.drawPixelBevelBox(ctx, 2, 4, 68, 64, cDark, cPrimary, '#1c150e');
+        this.drawRoofTiles(ctx, 12, 18, 64, 54, cMain, cHi);
+        ctx.fillStyle = '#7a7066';
+        ctx.fillRect(15, 72, 58, 58);
 
-        // THE ICONIC DUNE II VEHICLE UNLOAD RAMP
-        // Angled ramp on the left where the harvester/donkey pulls up
-        this.drawPixelBevelBox(ctx, 6, 12, 26, 48, '#4a3f35', '#6b5c4f', '#261f18');
-        // Yellow hazard caution stripes on ramp
-        for (let ry = 16; ry < 56; ry += 8) {
+        // Ore hopper & golden ore ramp
+        ctx.fillStyle = '#26211c';
+        ctx.fillRect(78, 45, 50, 82);
+        const oreG = ctx.createLinearGradient(81, 51, 123, 75);
+        oreG.addColorStop(0, '#fde047');
+        oreG.addColorStop(1, '#b45309');
+        ctx.fillStyle = oreG;
+        ctx.fillRect(82, 52, 40, 22);
+
+        // Crane hoist with pulley wheel
+        ctx.fillStyle = '#5c3a21';
+        ctx.fillRect(68, 12, 9, 82);
+        ctx.fillRect(68, 12, 50, 9);
+        ctx.strokeStyle = '#d4a373';
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(72, 42, 15, 0, Math.PI * 2); ctx.stroke();
+      }));
+
+      // 3. Granary (2x2 tiles = 96x96)
+      this.buildingSprites.set(`granary_${owner}`, this.makeBuildingSprite(96, (ctx) => {
+        ctx.fillStyle = '#b8afa4';
+        ctx.fillRect(6, 14, 82, 74);
+
+        this.drawRoofTiles(ctx, 8, 12, 80, 36, cMain, cHi);
+        ctx.fillStyle = '#7a7066';
+        ctx.fillRect(10, 48, 76, 38);
+
+        // Sacks of grain
+        for (let sx = 20; sx <= 66; sx += 14) {
           ctx.fillStyle = '#ffd166';
-          ctx.fillRect(8, ry, 22, 3);
-          ctx.fillStyle = '#1c150e';
-          ctx.fillRect(8, ry + 3, 22, 3);
-        }
-
-        // Ore hopper & glowing molten metal vat on the right
-        this.drawPixelBevelBox(ctx, 36, 16, 30, 44, '#2e251c', '#473a2c', '#140f09');
-        // Glowing orange/yellow molten bronze
-        ctx.fillStyle = '#ff6200';
-        ctx.fillRect(40, 22, 22, 18);
-        ctx.fillStyle = '#ffea00';
-        ctx.fillRect(44, 25, 14, 10);
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(48, 28, 6, 4);
-
-        // Twin industrial smoke vents
-        this.drawPixelBevelBox(ctx, 38, 4, 8, 12, '#382f26', '#594a3d', '#14100c');
-        this.drawPixelBevelBox(ctx, 52, 4, 8, 12, '#382f26', '#594a3d', '#14100c');
-
-        // Stack of finished oxhide bronze ingots at the loading bay
-        for (let i = 0; i < 3; i++) {
-          ctx.fillStyle = '#ffd166';
-          ctx.fillRect(40 + i * 6, 48 + i * 3, 10, 5);
-          ctx.strokeStyle = '#0e0b08';
-          ctx.strokeRect(39.5 + i * 6, 47.5 + i * 3, 11, 6);
+          ctx.beginPath(); ctx.arc(sx, 74, 6, 0, Math.PI * 2); ctx.fill();
         }
       }));
 
-      // 3. Granary / Windtrap & Silo (2x2 tiles = 48x48 px)
-      this.buildingSprites.set(`granary_${owner}`, makePixelCanvas(48, 48, (ctx) => {
-        ctx.fillStyle = '#0a0806';
-        ctx.fillRect(3, 4, 44, 42);
+      // 4. Barracks (3x3 tiles = 144x144)
+      this.buildingSprites.set(`barracks_${owner}`, this.makeBuildingSprite(144, (ctx) => {
+        ctx.fillStyle = '#c4bbb0';
+        ctx.fillRect(9, 18, 126, 116);
 
-        // Armored circular silo base
-        this.drawPixelBevelBox(ctx, 2, 4, 44, 42, cDark, cPrimary, '#1c150e');
-
-        // Domed top (Windtrap louvers / Clay dome)
-        this.drawPixelBevelBox(ctx, 8, 8, 32, 20, '#a87332', '#d49b55', '#573711');
-        ctx.fillStyle = '#1c150e';
-        for (let lx = 12; lx <= 32; lx += 4) {
-          ctx.fillRect(lx, 12, 2, 12); // Intake vents
-        }
-
-        // Heavy door & grain sacks
-        this.drawPixelBevelBox(ctx, 18, 30, 12, 14, '#241a12', '#453223', '#0d0906');
-        ctx.fillStyle = '#ffd166';
-        ctx.fillRect(8, 36, 6, 6); // Grain sack
-        ctx.fillRect(34, 36, 6, 6);
-      }));
-
-      // 4. Barracks / Infantry Depot (3x3 tiles = 72x72 px)
-      this.buildingSprites.set(`barracks_${owner}`, makePixelCanvas(72, 72, (ctx) => {
-        ctx.fillStyle = '#0a0806';
-        ctx.fillRect(4, 6, 66, 64);
-
-        // Fortified compound
-        this.drawPixelBevelBox(ctx, 2, 4, 68, 64, cDark, cPrimary, '#1c150e');
-
-        // Slanted red tile roof
-        this.drawPixelBevelBox(ctx, 6, 8, 60, 16, '#a83e28', '#d95a3f', '#541c10');
-
-        // Training courtyard (packed dirt)
-        this.drawPixelBevelBox(ctx, 10, 28, 52, 34, '#8a6e45', '#b08f5d', '#45351e', false);
-
-        // Sliding hangar deployment gate
-        this.drawPixelBevelBox(ctx, 24, 42, 24, 22, '#211a14', '#3d3025', '#0f0b08');
+        this.drawRoofTiles(ctx, 9, 15, 126, 34, cMain, cHi);
         ctx.fillStyle = cTrim;
-        ctx.fillRect(28, 46, 16, 3); // Faction stripe
+        ctx.fillRect(18, 42, 108, 5);
 
-        // Weapon racks & tower shields
-        ctx.fillStyle = '#ffd166';
-        ctx.fillRect(14, 34, 6, 12);
-        ctx.fillRect(52, 34, 6, 12);
+        ctx.fillStyle = '#8c7355';
+        ctx.fillRect(21, 54, 102, 70);
+        ctx.strokeStyle = '#4a3d2f';
+        ctx.strokeRect(21, 54, 102, 70);
+
+        for (let sx = 30; sx <= 104; sx += 32) {
+          ctx.fillStyle = cMain;
+          ctx.fillRect(sx, 68, 16, 24);
+          ctx.strokeStyle = cTrim;
+          ctx.strokeRect(sx, 68, 16, 24);
+        }
       }));
 
-      // 5. Watchtower / Turret (2x2 tiles = 48x48 px)
-      this.buildingSprites.set(`watchtower_${owner}`, makePixelCanvas(48, 48, (ctx) => {
-        ctx.fillStyle = '#0a0806';
-        ctx.fillRect(3, 4, 44, 42);
+      // 5. Watchtower (2x2 tiles = 96x96, footprint 48x48)
+      this.buildingSprites.set(`watchtower_${owner}`, this.makeBuildingSprite(96, (ctx) => {
+        const towerG = ctx.createLinearGradient(22, 0, 74, 0);
+        towerG.addColorStop(0, '#948b80');
+        towerG.addColorStop(0.4, '#e6dfd3');
+        towerG.addColorStop(1, '#5c5349');
+        ctx.fillStyle = towerG;
+        ctx.fillRect(22, 20, 52, 68);
 
-        // Tall square fortified turret
-        this.drawPixelBevelBox(ctx, 8, 6, 32, 40, cPrimary, cLight, cDark);
+        this.drawRoofTiles(ctx, 14, 8, 68, 20, cMain, cHi);
+        ctx.fillStyle = cTrim;
+        ctx.fillRect(38, 12, 16, 10);
 
-        // Parapet top with battlements
-        this.drawPixelBevelBox(ctx, 6, 4, 36, 10, cDark, cLight, '#1c150e');
-        ctx.fillStyle = '#0a0806';
-        ctx.fillRect(16, 4, 4, 4);
-        ctx.fillRect(28, 4, 4, 4);
-
-        // Arrow slits
-        ctx.fillStyle = '#0a0806';
-        ctx.fillRect(18, 20, 3, 10);
-        ctx.fillRect(27, 20, 3, 10);
-
-        // Warning beacon / fire pot
-        ctx.fillStyle = '#ff6200';
-        ctx.fillRect(22, 8, 4, 4);
+        ctx.fillStyle = '#1c1815';
+        ctx.fillRect(40, 40, 12, 32);
       }));
 
-      // 6. Chariot Stable / Heavy Vehicle Factory (3x3 tiles = 72x72 px)
-      this.buildingSprites.set(`chariot_stable_${owner}`, makePixelCanvas(72, 72, (ctx) => {
-        ctx.fillStyle = '#0a0806';
-        ctx.fillRect(4, 6, 66, 64);
+      // 6. Chariot Stable / Factory (3x3 tiles = 144x144)
+      this.buildingSprites.set(`chariot_stable_${owner}`, this.makeBuildingSprite(144, (ctx) => {
+        ctx.fillStyle = '#968c82';
+        ctx.fillRect(9, 21, 126, 114);
 
-        this.drawPixelBevelBox(ctx, 2, 4, 68, 64, cDark, cPrimary, '#1c150e');
-        this.drawPixelBevelBox(ctx, 6, 8, 60, 14, '#382b1e', '#594430', '#17110a');
+        this.drawRoofTiles(ctx, 9, 15, 126, 36, cMain, cHi);
 
-        // Dual vehicle maintenance bays
-        this.drawPixelBevelBox(ctx, 10, 26, 24, 36, '#211811', '#3b2b1e', '#0d0906');
-        this.drawPixelBevelBox(ctx, 38, 26, 24, 36, '#211811', '#3b2b1e', '#0d0906');
+        ctx.fillStyle = '#1f1b18';
+        ctx.fillRect(21, 57, 102, 74);
 
-        // Bronze spoked wheels on display
-        ctx.fillStyle = '#ffd166';
-        ctx.fillRect(16, 34, 12, 12);
-        ctx.fillRect(44, 34, 12, 12);
-        ctx.fillStyle = '#211811';
-        ctx.fillRect(19, 37, 6, 6);
-        ctx.fillRect(47, 37, 6, 6);
+        // Radiant glowing forge fire
+        const fireG = ctx.createRadialGradient(42, 84, 3, 42, 84, 21);
+        fireG.addColorStop(0, '#fef08a');
+        fireG.addColorStop(0.5, '#f97316');
+        fireG.addColorStop(1, 'rgba(185, 28, 28, 0)');
+        ctx.fillStyle = fireG;
+        ctx.fillRect(24, 66, 36, 36);
+
+        // Industrial smokestack
+        ctx.fillStyle = '#575049';
+        ctx.fillRect(102, 6, 21, 42);
+        ctx.fillStyle = '#292524';
+        ctx.fillRect(105, 6, 15, 6);
       }));
 
-      // 7. Iron Smelter / Heavy Blast Bloomery (3x3 tiles = 72x72 px)
-      this.buildingSprites.set(`iron_smelter_${owner}`, makePixelCanvas(72, 72, (ctx) => {
-        ctx.fillStyle = '#0a0806';
-        ctx.fillRect(4, 6, 66, 64);
+      // 7. Iron Smelter
+      this.buildingSprites.set(`iron_smelter_${owner}`, this.makeBuildingSprite(144, (ctx) => {
+        ctx.fillStyle = '#4a4238';
+        ctx.fillRect(9, 21, 126, 114);
+        this.drawRoofTiles(ctx, 9, 15, 126, 36, '#292524', '#575049');
 
-        // Dark basalt masonry
-        this.drawPixelBevelBox(ctx, 2, 4, 68, 64, '#302b28', '#4f4844', '#141211');
+        ctx.fillStyle = '#1c1714';
+        ctx.fillRect(21, 57, 102, 74);
 
-        // Conical blast bloomery
-        this.drawPixelBevelBox(ctx, 20, 12, 32, 48, '#24201e', '#3d3733', '#0d0c0b');
-
-        // Glowing red furnace throat
-        ctx.fillStyle = '#ff2b00';
-        ctx.fillRect(28, 42, 16, 12);
-        ctx.fillStyle = '#ffea00';
-        ctx.fillRect(32, 45, 8, 6);
-
-        // Black raw iron ore heaps
-        ctx.fillStyle = '#141110';
-        ctx.fillRect(8, 46, 10, 10);
-        ctx.fillRect(54, 46, 10, 10);
+        const fireG = ctx.createRadialGradient(72, 84, 3, 72, 84, 24);
+        fireG.addColorStop(0, '#ffffff');
+        fireG.addColorStop(0.3, '#ffaa00');
+        fireG.addColorStop(0.7, '#ff3300');
+        fireG.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = fireG;
+        ctx.fillRect(48, 60, 48, 48);
       }));
     }
   }
@@ -406,7 +376,7 @@ export class SVGAProceduralBank {
     return this.buildingSprites.get(key) || this.buildingSprites.get(`${defId}_player`) || null;
   }
 
-  // --- Dune II Pixel Art Units (16x16 to 24x24 Pixel Sprites) ---
+  // --- Dynamic Animated Units from Original Prototype ---
   public static drawAnimatedUnit(
     ctx: CanvasRenderingContext2D,
     u: UnitEntity,
@@ -414,168 +384,88 @@ export class SVGAProceduralBank {
     cy: number
   ): void {
     const isPlayer = u.owner === 'player';
-    const cTeam = isPlayer ? '#2de0a5' : '#e63946'; // Atreides green vs Harkonnen red
-    const cSkin = '#d49b6a';
-    const cGold = '#ffd166';
+    const cMain = isPlayer ? '#b91c1c' : '#1d4ed8';
+    const cTrim = isPlayer ? '#fbbf24' : '#93c5fd';
 
     const isMoving = u.state === 'MOVE_TO' || u.state === 'RETURN_CARGO' || u.state === 'HARVESTING';
     const animPhase = (Date.now() / 150) * (isMoving ? 1.0 : 0.2);
-    const step = isMoving ? Math.floor(Math.sin(animPhase) * 2) : 0;
+    const bob = isMoving ? Math.sin(animPhase) * 2.5 : 0;
+
+    // Ground cast shadow ellipse
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.42)';
+    ctx.beginPath();
+    ctx.ellipse(cx + 3, cy + 12, u.def.category === 'chariot' ? 18 : 10, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
 
     ctx.save();
-    // Snap unit coordinates to exact integer pixels for crisp retro render!
-    ctx.translate(Math.round(cx), Math.round(cy + step));
+    ctx.translate(cx, cy);
 
-    // Ground shadow (chunky pixel ellipse)
-    ctx.fillStyle = '#0e0b08';
-    ctx.fillRect(-8, 7, 16, 3);
+    if (u.def.category === 'worker') {
+      // Harvester / Donkey Caravan Wagon
+      ctx.fillStyle = '#6b4423';
+      ctx.fillRect(-16, -8 + bob * 0.4, 32, 16);
+      ctx.fillStyle = cMain;
+      ctx.fillRect(-14, -6 + bob * 0.4, 28, 4);
 
-    if (u.defId === 'donkey_caravan') {
-      // 1. CARAVAN / HARVESTER
-      // Donkey body (brown chassis with black outline)
-      ctx.fillStyle = '#0e0b08';
-      ctx.fillRect(-9, -7, 18, 14); // Black outline
-      ctx.fillStyle = '#5c4632';
-      ctx.fillRect(-8, -6, 16, 12); // Brown hide
-
-      // Ears & head
-      ctx.fillStyle = '#382a1d';
-      ctx.fillRect(6, -11, 4, 7);
-      ctx.fillStyle = '#d49b6a';
-      ctx.fillRect(8, -8, 2, 2); // Muzzle
-
-      // Ore pannier baskets
-      ctx.fillStyle = '#8f6838';
-      ctx.fillRect(-6, -4, 12, 8);
-
-      // Glowing ore cargo indicator (Green Malachite / Silver Tin / Dark Iron)
+      // LIVE ORE FILL LEVEL BAR
       if (u.currentCargoAmount > 0) {
-        let cargoColor = '#2de0a5';
-        if (u.currentCargoType === 'tin') cargoColor = '#f0f4f8';
-        if (u.currentCargoType === 'iron') cargoColor = '#1a1412';
-        ctx.fillStyle = cargoColor;
-        ctx.fillRect(-4, -6, 8, 3);
+        const maxCargo = u.def.cargoCapacity || 100;
+        const fillH = Math.ceil((u.currentCargoAmount / maxCargo) * 8);
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillRect(-11, 2 - fillH + bob * 0.4, 22, fillH);
       }
-    } else if (u.defId === 'spear_militia') {
-      // 2. TOWER-SHIELD SPEARMAN
-      // Black outline
-      ctx.fillStyle = '#0e0b08';
-      ctx.fillRect(-6, -11, 12, 19);
-
-      // Linen tunic & skin
-      ctx.fillStyle = '#f0e8dc';
-      ctx.fillRect(-4, -5, 8, 8);
-      ctx.fillStyle = cSkin;
-      ctx.fillRect(-3, -10, 6, 5);
-
-      // Massive Mycenaean Tower-Shield (covering left flank)
-      ctx.fillStyle = cTeam;
-      ctx.fillRect(-7, -8, 6, 14);
-      ctx.fillStyle = cGold;
-      ctx.fillRect(-5, -4, 2, 6); // Boss
-
-      // Bronze spear with shining point
-      ctx.fillStyle = '#382b1d';
-      ctx.fillRect(3, -6, 2, 16);
-      ctx.fillStyle = cGold;
-      ctx.fillRect(2, -14, 4, 8);
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(3, -15, 2, 2);
-    } else if (u.defId === 'skirmisher') {
-      // 3. LEVANTINE SLINGER
-      ctx.fillStyle = '#0e0b08';
-      ctx.fillRect(-5, -10, 10, 17);
-
-      ctx.fillStyle = '#bfa77a';
-      ctx.fillRect(-3, -4, 6, 7);
-      ctx.fillStyle = cSkin;
-      ctx.fillRect(-3, -9, 6, 5);
-
-      // Slinger sling cord
-      ctx.fillStyle = '#ffd166';
-      ctx.fillRect(4, -6, 4, 2);
-      ctx.fillRect(6, -10, 2, 4);
-    } else if (u.defId === 'bronze_swordsman') {
-      // 4. KHOPESH BRONZE WARRIOR
-      ctx.fillStyle = '#0e0b08';
-      ctx.fillRect(-6, -11, 12, 19);
-
-      // Bronze plate armor
-      ctx.fillStyle = cGold;
-      ctx.fillRect(-4, -6, 8, 9);
-      ctx.fillStyle = cTeam;
-      ctx.fillRect(-2, -4, 4, 5);
-
-      // Crested helmet
-      ctx.fillStyle = '#b81414';
-      ctx.fillRect(-2, -14, 4, 4);
-
-      // Curved sickle khopesh sword
-      ctx.fillStyle = cGold;
-      ctx.fillRect(4, -5, 2, 7);
-      ctx.fillRect(6, -9, 4, 4); // Curve
-    } else if (u.defId === 'war_chariot') {
-      // 5. WAR CHARIOT (Treaded combat unit style)
-      ctx.fillStyle = '#0e0b08';
-      ctx.fillRect(-12, -8, 24, 16);
-
-      // Horses & chassis
-      ctx.fillStyle = '#5c3a1e';
-      ctx.fillRect(-10, -6, 20, 12);
 
       // Spoked wheels
-      ctx.fillStyle = cGold;
-      ctx.fillRect(-6, -8, 12, 2);
-      ctx.fillRect(-6, 6, 12, 2);
-
-      // Archer with drawn composite bow
-      ctx.fillStyle = cTeam;
-      ctx.fillRect(-8, -3, 6, 6);
-      ctx.fillStyle = '#ffd166';
-      ctx.fillRect(-2, -2, 4, 4);
-    } else if (u.defId === 'iron_infantry') {
-      // 6. HEAVY IRON INFANTRY
-      ctx.fillStyle = '#0e0b08';
-      ctx.fillRect(-6, -11, 12, 19);
-
-      // Black iron studded armor
-      ctx.fillStyle = '#2b2624';
-      ctx.fillRect(-4, -6, 8, 9);
-      ctx.fillStyle = '#8f8883';
-      ctx.fillRect(-2, -4, 4, 5);
-
-      // Iron round shield
-      ctx.fillStyle = '#171413';
-      ctx.fillRect(-7, -4, 6, 8);
-      ctx.fillStyle = '#cbd5e1';
-      ctx.fillRect(-5, -2, 2, 4);
-
-      // Steel pike
-      ctx.fillStyle = '#4a3d31';
-      ctx.fillRect(3, -8, 2, 18);
-      ctx.fillStyle = '#f1f5f9';
-      ctx.fillRect(2, -16, 4, 8);
+      ctx.fillStyle = '#1c1917';
+      ctx.beginPath(); ctx.arc(-9, 10, 5, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(9, 10, 5, 0, Math.PI * 2); ctx.fill();
+    } else if (u.def.category === 'chariot') {
+      // 2-Horse Chariot
+      ctx.fillStyle = '#5c3a21';
+      ctx.fillRect(-14, -6 + bob * 0.5, 28, 12);
+      ctx.fillStyle = cMain;
+      ctx.fillRect(-12, -4 + bob * 0.5, 24, 4);
+      // Wheels
+      ctx.fillStyle = '#1c1917';
+      ctx.beginPath(); ctx.arc(-8, 8, 6, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(8, 8, 6, 0, Math.PI * 2); ctx.fill();
     } else {
-      // 7. SEA PEOPLES RAIDER (Horned Shardana)
-      ctx.fillStyle = '#0e0b08';
-      ctx.fillRect(-6, -11, 12, 19);
+      // Infantry / Spearman / Raider
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(-5, 4, 3.5, 8 + bob);
+      ctx.fillRect(2, 4, 3.5, 8 - bob);
 
-      // Red war kilt
-      ctx.fillStyle = '#8c1919';
-      ctx.fillRect(-4, -5, 8, 8);
-      ctx.fillStyle = cSkin;
-      ctx.fillRect(-3, -10, 6, 5);
+      // Torso & Tunic
+      ctx.fillStyle = cMain;
+      ctx.fillRect(-6, -8 + bob * 0.5, 12, 13);
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillRect(-5, -6 + bob * 0.5, 10, 7); // Breastplate
 
-      // Horned helmet (Iconic Shardana horns)
-      ctx.fillStyle = '#ffd166';
-      ctx.fillRect(-6, -13, 2, 4);
-      ctx.fillRect(4, -13, 2, 4);
+      // Helmet & Crest
+      ctx.fillStyle = '#cbd5e1';
+      ctx.beginPath();
+      ctx.arc(0, -10 + bob * 0.5, 5.5, Math.PI, 0);
+      ctx.fill();
+      ctx.fillStyle = cTrim;
+      ctx.fillRect(-2, -18 + bob * 0.5, 4, 6);
 
-      // Round shield & bronze broadsword
-      ctx.fillStyle = '#381616';
-      ctx.fillRect(-6, -3, 5, 7);
-      ctx.fillStyle = '#ffd166';
-      ctx.fillRect(3, -5, 3, 8);
+      // Tower Shield
+      ctx.fillStyle = cMain;
+      ctx.fillRect(-9, -7 + bob * 0.5, 5, 15);
+      ctx.strokeStyle = cTrim;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(-9, -7 + bob * 0.5, 5, 15);
+
+      // Spear
+      ctx.strokeStyle = '#473d31';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(4, 8); ctx.lineTo(6, -20);
+      ctx.stroke();
+      ctx.fillStyle = cTrim;
+      ctx.beginPath();
+      ctx.moveTo(6, -24); ctx.lineTo(3, -19); ctx.lineTo(9, -19);
+      ctx.fill();
     }
 
     ctx.restore();
