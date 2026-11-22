@@ -17,7 +17,8 @@ export class UnitFSM {
     buildings: BuildingEntity[],
     combat: CombatSystem,
     economy: EconomySystem,
-    tileRenderer?: TileRenderer
+    tileRenderer?: TileRenderer,
+    decorations?: Array<{ x: number; y: number; type: string; current?: number; max?: number }>
   ): void {
     if (u.attackCooldown > 0) {
       u.attackCooldown -= dt;
@@ -40,7 +41,7 @@ export class UnitFSM {
       case 'HARVESTING':
       case 'RETURN_CARGO':
       case 'UNLOADING':
-        this.handleHarvestCycle(u, dt, graph, buildings, economy, tileRenderer);
+        this.handleHarvestCycle(u, dt, graph, buildings, economy, tileRenderer, decorations);
         break;
     }
   }
@@ -207,13 +208,34 @@ export class UnitFSM {
     return bestCoord;
   }
 
+  public static findNearestTree(
+    decorations: Array<{ x: number; y: number; type: string; current?: number; max?: number }>,
+    fromTx: number,
+    fromTy: number,
+    maxRadius: number = 25
+  ): { x: number; y: number; type: string; current?: number; max?: number } | null {
+    let bestTree: { x: number; y: number; type: string; current?: number; max?: number } | null = null;
+    let bestDist = Infinity;
+    for (const d of decorations) {
+      if (d.type === 'cedar' && (d.current === undefined || d.current > 0)) {
+        const dist = Math.hypot(d.x - fromTx, d.y - fromTy);
+        if (dist <= maxRadius && dist < bestDist) {
+          bestDist = dist;
+          bestTree = d;
+        }
+      }
+    }
+    return bestTree;
+  }
+
   private static handleHarvestCycle(
     u: UnitEntity,
     dt: number,
     graph: GridGraph,
     buildings: BuildingEntity[],
     economy: EconomySystem,
-    tileRenderer?: TileRenderer
+    tileRenderer?: TileRenderer,
+    decorations?: Array<{ x: number; y: number; type: string; current?: number; max?: number }>
   ): void {
     if (u.def.category !== 'worker') {
       u.state = 'IDLE';
@@ -221,16 +243,34 @@ export class UnitFSM {
     }
 
     const maxCargo = u.def.cargoCapacity || 120;
+    const isTimber = u.currentCargoType === 'timber';
 
-    // 1. HARVEST_SEEK: Navigates to the assigned ore vein
+    // 1. HARVEST_SEEK: Navigates to the assigned ore vein or cedar tree
     if (u.state === 'HARVEST_SEEK') {
       if (!u.targetMineCoord) {
         u.state = 'IDLE';
         return;
       }
 
-      // Check if target mine was depleted before arrival
-      if (tileRenderer) {
+      // Check if target was depleted or felled before arrival
+      if (isTimber && decorations) {
+        const tree = decorations.find(
+          d => d.type === 'cedar' && (d.current === undefined || d.current > 0) &&
+          Math.hypot(d.x - (u.targetMineCoord!.tx + 0.5), d.y - (u.targetMineCoord!.ty + 0.5)) < 1.2
+        );
+        if (!tree) {
+          const nextTree = UnitFSM.findNearestTree(decorations, u.targetMineCoord.tx, u.targetMineCoord.ty);
+          if (nextTree) {
+            u.targetMineCoord = { tx: Math.floor(nextTree.x), ty: Math.floor(nextTree.y) };
+            u.path = [];
+          } else {
+            u.targetMineCoord = null;
+            if (u.currentCargoAmount > 0) u.state = 'RETURN_CARGO';
+            else u.state = 'IDLE';
+            return;
+          }
+        }
+      } else if (!isTimber && tileRenderer) {
         const curTile = tileRenderer.getTile(u.targetMineCoord.tx, u.targetMineCoord.ty);
         if (!curTile.startsWith('vein_')) {
           const nextVein = UnitFSM.findNearestVein(tileRenderer, u.targetMineCoord.tx, u.targetMineCoord.ty, u.currentCargoType || 'copper');
@@ -239,11 +279,8 @@ export class UnitFSM {
             u.path = [];
           } else {
             u.targetMineCoord = null;
-            if (u.currentCargoAmount > 0) {
-              u.state = 'RETURN_CARGO';
-            } else {
-              u.state = 'IDLE';
-            }
+            if (u.currentCargoAmount > 0) u.state = 'RETURN_CARGO';
+            else u.state = 'IDLE';
             return;
           }
         }
@@ -269,7 +306,6 @@ export class UnitFSM {
         if (pathCoords.length > 0) {
           u.path = pathCoords.map(c => ({ x: c.tx * TILE_SIZE + 24, y: c.ty * TILE_SIZE + 24 }));
         } else {
-          // Unreachable
           u.state = 'IDLE';
           return;
         }
@@ -279,7 +315,7 @@ export class UnitFSM {
       return;
     }
 
-    // 2. HARVESTING: Chipping ore into pack baskets
+    // 2. HARVESTING: Chipping ore into pack baskets or felling cedar timber
     if (u.state === 'HARVESTING') {
       u.harvestAnimationTimer = (u.harvestAnimationTimer || 0) + dt;
       u.harvestCooldown += dt * (u.def.harvestSpeed || 18);
@@ -292,12 +328,36 @@ export class UnitFSM {
         let extracted = want;
         let isDepleted = false;
 
-        if (tileRenderer && u.targetMineCoord) {
+        if (isTimber && decorations && u.targetMineCoord) {
+          const tree = decorations.find(
+            d => d.type === 'cedar' && Math.hypot(d.x - (u.targetMineCoord!.tx + 0.5), d.y - (u.targetMineCoord!.ty + 0.5)) < 1.2
+          );
+          if (tree) {
+            if (tree.current === undefined) { tree.current = 240; tree.max = 240; }
+            extracted = Math.min(want, tree.current);
+            tree.current -= extracted;
+            if (tree.current <= 0) {
+              tree.current = 0;
+              tree.type = 'stump';
+              isDepleted = true;
+              EventBus.get().emit('fx:floating_text', {
+                text: `CEDAR TREE FELLED!`,
+                color: '#f59e0b',
+                x: tree.x * TILE_SIZE,
+                y: tree.y * TILE_SIZE - 20
+              });
+              EventBus.get().emit('audio:build');
+              const nextTree = UnitFSM.findNearestTree(decorations, Math.floor(tree.x), Math.floor(tree.y));
+              u.targetMineCoord = nextTree ? { tx: Math.floor(nextTree.x), ty: Math.floor(nextTree.y) } : null;
+            }
+          } else {
+            isDepleted = true;
+          }
+        } else if (!isTimber && tileRenderer && u.targetMineCoord) {
           const harvestResult = tileRenderer.harvestVein(u.targetMineCoord.tx, u.targetMineCoord.ty, want);
           extracted = harvestResult.harvested;
           isDepleted = harvestResult.depleted;
           if (isDepleted) {
-            // Free pathfinding on depleted tile
             graph.setTileCost(u.targetMineCoord.tx, u.targetMineCoord.ty, 10);
             const oreLabel = (u.currentCargoType || 'ore').toUpperCase();
             EventBus.get().emit('fx:floating_text', {
@@ -318,18 +378,20 @@ export class UnitFSM {
         u.currentCargoAmount = Math.min(maxCargo, u.currentCargoAmount + extracted);
         EventBus.get().emit('audio:harvest');
 
-        // Check if cargo full OR vein depleted
+        // Check if cargo full OR deposit depleted
         if (u.currentCargoAmount >= maxCargo || isDepleted) {
-          if (isDepleted && tileRenderer && u.targetMineCoord) {
-            // Check for adjacent/nearby vein of the same mineral
+          if (isDepleted && !isTimber && tileRenderer && u.targetMineCoord) {
             const nextVein = UnitFSM.findNearestVein(tileRenderer, u.targetMineCoord.tx, u.targetMineCoord.ty, u.currentCargoType || 'copper');
             u.targetMineCoord = nextVein;
           }
 
           if (u.currentCargoAmount >= maxCargo || (isDepleted && (!u.targetMineCoord || u.currentCargoAmount > 0))) {
-            // Cargo full: locate nearest active dropoff depot (Foundry or Acropolis)
+            // Locate nearest valid dropoff depot: Acropolis for all goods; Foundry also accepts metal ores
             const dropoffs = buildings.filter(
-              b => b.owner === u.owner && b.buildProgress >= 1.0 && (b.defId === 'bronze_foundry' || b.defId === 'acropolis')
+              b => b.owner === u.owner && b.buildProgress >= 1.0 && (
+                b.defId === 'acropolis' ||
+                (b.defId === 'bronze_foundry' && (u.currentCargoType === 'copper' || u.currentCargoType === 'tin' || u.currentCargoType === 'iron'))
+              )
             );
             if (dropoffs.length > 0) {
               dropoffs.sort((a, b) => Math.hypot(a.centerX - u.x, a.centerY - u.y) - Math.hypot(b.centerX - u.x, b.centerY - u.y));
@@ -350,7 +412,6 @@ export class UnitFSM {
               u.state = 'IDLE';
             }
           } else if (isDepleted && u.targetMineCoord) {
-            // Still have cargo room and adjacent vein available! Head straight to next vein
             u.path = [];
             u.state = 'HARVEST_SEEK';
           }
@@ -359,10 +420,13 @@ export class UnitFSM {
       return;
     }
 
-    // 3. RETURN_CARGO: Hauling ore to the smelter / acropolis
+    // 3. RETURN_CARGO: Hauling ore, timber, or stone to the depot
     if (u.state === 'RETURN_CARGO') {
       const dropoffs = buildings.filter(
-        b => b.owner === u.owner && b.buildProgress >= 1.0 && (b.defId === 'bronze_foundry' || b.defId === 'acropolis')
+        b => b.owner === u.owner && b.buildProgress >= 1.0 && (
+          b.defId === 'acropolis' ||
+          (b.defId === 'bronze_foundry' && (u.currentCargoType === 'copper' || u.currentCargoType === 'tin' || u.currentCargoType === 'iron'))
+        )
       );
       if (dropoffs.length === 0) {
         u.state = 'IDLE';
@@ -374,7 +438,7 @@ export class UnitFSM {
       const reachDist = (Math.max(nearest.def.width, nearest.def.height) + 1) * TILE_SIZE * 0.7;
 
       if (distToDropoff <= reachDist || u.path.length === 0) {
-        // Depot reached: Unload ore cargo
+        // Depot reached: Unload cargo
         if (u.currentCargoType && u.currentCargoAmount > 0) {
           const type = u.currentCargoType;
           const amount = u.currentCargoAmount;
@@ -386,8 +450,8 @@ export class UnitFSM {
             copper: '#fbbf24',
             iron: '#cbd5e1',
             grain: '#fde047',
-            stone: '#d6d3d1',
-            timber: '#a16207'
+            stone: '#e2e8f0',
+            timber: '#f59e0b'
           };
 
           EventBus.get().emit('fx:floating_text', {
@@ -399,9 +463,18 @@ export class UnitFSM {
         }
         u.currentCargoAmount = 0;
 
-        // AUTOMATIC LOOP: Return to target mine if assigned
+        // AUTOMATIC LOOP: Return to target mine or cedar grove if assigned
         if (u.targetMineCoord) {
-          if (tileRenderer) {
+          if (isTimber && decorations) {
+            const tree = decorations.find(
+              d => d.type === 'cedar' && (d.current === undefined || d.current > 0) &&
+              Math.hypot(d.x - (u.targetMineCoord!.tx + 0.5), d.y - (u.targetMineCoord!.ty + 0.5)) < 1.2
+            );
+            if (!tree) {
+              const nextTree = UnitFSM.findNearestTree(decorations, u.targetMineCoord.tx, u.targetMineCoord.ty);
+              u.targetMineCoord = nextTree ? { tx: Math.floor(nextTree.x), ty: Math.floor(nextTree.y) } : null;
+            }
+          } else if (!isTimber && tileRenderer) {
             const curTile = tileRenderer.getTile(u.targetMineCoord.tx, u.targetMineCoord.ty);
             if (!curTile.startsWith('vein_')) {
               u.targetMineCoord = UnitFSM.findNearestVein(tileRenderer, u.targetMineCoord.tx, u.targetMineCoord.ty, u.currentCargoType || 'copper');

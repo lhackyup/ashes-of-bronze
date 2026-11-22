@@ -21,6 +21,7 @@ export type TerrainType =
   | 'marsh'
   | 'vein_copper'
   | 'vein_tin'
+  | 'vein_stone'
   | 'vein_iron'
   | 'fertile_soil';
 

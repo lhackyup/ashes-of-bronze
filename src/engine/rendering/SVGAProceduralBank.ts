@@ -1705,11 +1705,13 @@ export class SVGAProceduralBank {
         const fillRatio = Math.min(1.0, u.currentCargoAmount / maxCargo);
         const heapH = Math.ceil(fillRatio * 7);
 
-        // Mineral ore color scheme
+        // Mineral & timber cargo color scheme
         const isTin = u.currentCargoType === 'tin';
         const isIron = u.currentCargoType === 'iron';
-        const oreMain = isTin ? '#93c5fd' : (isIron ? '#475569' : '#f59e0b');
-        const oreLight = isTin ? '#e0f2fe' : (isIron ? '#94a3b8' : '#fde68a');
+        const isStone = u.currentCargoType === 'stone';
+        const isTimber = u.currentCargoType === 'timber';
+        const oreMain = isTin ? '#93c5fd' : (isIron ? '#475569' : (isStone ? '#e2e8f0' : (isTimber ? '#b45309' : '#10b981')));
+        const oreLight = isTin ? '#e0f2fe' : (isIron ? '#94a3b8' : (isStone ? '#ffffff' : (isTimber ? '#f59e0b' : '#34d399')));
 
         ctx.fillStyle = oreMain;
         ctx.fillRect(-9, -6 - heapH + bob * 0.4, 16, heapH);

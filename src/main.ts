@@ -57,7 +57,7 @@ class GameApp {
 
   private units: UnitEntity[] = [];
   private buildings: BuildingEntity[] = [];
-  private decorations: Array<{ x: number; y: number; type: string }> = [];
+  private decorations: Array<{ x: number; y: number; type: string; current: number; max: number }> = [];
   private floatingTexts: Array<{
     id: number;
     text: string;
@@ -366,14 +366,22 @@ class GameApp {
       }
     }
 
-    // Scatter Mediterranean Cedar Trees across the landscape
+    // Cyclopean Limestone / Stone Quarry nodes north of the settlement (3x2 tiles, 800 stone each)
+    for (let dy = 0; dy < 2; dy++) {
+      for (let dx = 0; dx < 3; dx++) {
+        this.tileRenderer.setTile(25 + dx, 10 + dy, 'vein_stone', 800);
+        this.gridGraph.setTileCost(25 + dx, 10 + dy, 0);
+      }
+    }
+
+    // Scatter Mediterranean Cedar Trees across the landscape (each tree has 240 Timber)
     this.decorations = [];
     for (let i = 0; i < 55; i++) {
       const tx = Math.floor((Math.sin(i * 13.7) * 0.5 + 0.5) * (w - 6)) + 8;
       const ty = Math.floor((Math.cos(i * 19.3) * 0.5 + 0.5) * (h - 6)) + 3;
       const distPlayer = Math.hypot(tx - 12, ty - 28);
       if (this.tileRenderer.getTile(tx, ty) === 'plain' && distPlayer > 6) {
-        this.decorations.push({ x: tx + 0.5, y: ty + 0.5, type: 'cedar' });
+        this.decorations.push({ x: tx + 0.5, y: ty + 0.5, type: 'cedar', current: 240, max: 240 });
       }
     }
   }
@@ -664,17 +672,35 @@ class GameApp {
           this.selectedBuilding = clickedB;
           EventBus.get().emit('audio:select');
         } else {
-          // Check if clicking on an ore vein deposit
+          // Check if clicking on an ore vein or stone quarry
           const tileType = this.tileRenderer.getTile(tx, ty);
           if (tileType.startsWith('vein_')) {
             const res = this.tileRenderer.getVeinReserve(tx, ty);
             if (res) {
-              const oreName = res.type === 'copper' ? 'Malachite / Copper Deposit' : (res.type === 'tin' ? 'Cassiterite / Tin Deposit' : 'Hematite / Iron Deposit');
+              const oreName = res.type === 'copper' ? 'Malachite / Copper Deposit' :
+                              (res.type === 'tin' ? 'Cassiterite / Tin Deposit' :
+                              (res.type === 'stone' ? 'Limestone / Stone Quarry' : 'Hematite / Iron Deposit'));
               this.selectedVein = {
                 name: oreName,
                 type: res.type,
                 current: res.current,
                 max: res.max,
+                tx,
+                ty
+              };
+              EventBus.get().emit('audio:select');
+            }
+          } else {
+            // Check if clicking on a cedar tree
+            const clickedTree = this.decorations.find(
+              d => Math.hypot(d.x - (tx + 0.5), d.y - (ty + 0.5)) < 1.0
+            );
+            if (clickedTree) {
+              this.selectedVein = {
+                name: clickedTree.type === 'cedar' ? 'Mediterranean Cedar Tree' : 'Felled Cedar Stump',
+                type: 'timber',
+                current: clickedTree.current,
+                max: clickedTree.max,
                 tx,
                 ty
               };
@@ -716,9 +742,14 @@ class GameApp {
       u => u.owner !== 'player' && Math.hypot(u.x - wx, u.y - wy) < 24
     );
 
-    // Check if clicking on a resource node vein
+    // Check if clicking on a resource node vein or stone quarry
     const tileType = this.tileRenderer.getTile(targetTx, targetTy);
-    const isResourceNode = tileType === 'vein_copper' || tileType === 'vein_tin' || tileType === 'vein_iron';
+    const isResourceNode = tileType.startsWith('vein_');
+
+    // Check if clicking on a cedar tree for timber
+    const targetTree = this.decorations.find(
+      d => d.type === 'cedar' && d.current > 0 && Math.hypot(d.x - (targetTx + 0.5), d.y - (targetTy + 0.5)) < 1.2
+    );
 
     for (const u of this.selectedUnits) {
       if (targetEnemyUnit) {
@@ -726,7 +757,7 @@ class GameApp {
         u.targetEntityId = targetEnemyUnit.id;
         u.state = 'ATTACK_TARGET';
       } else if (isResourceNode && u.def.category === 'worker') {
-        // Caravan dispatched to harvest ore with automated lifecycle
+        // Caravan dispatched to harvest ore or quarry stone
         u.targetMineCoord = { tx: targetTx, ty: targetTy };
         u.targetPosition = { x: targetTx * TILE_SIZE + 24, y: targetTy * TILE_SIZE + 24 };
         u.currentCargoType = tileType.replace('vein_', '');
@@ -741,6 +772,26 @@ class GameApp {
           }));
         } else {
           u.path = [{ x: targetTx * TILE_SIZE + 24, y: targetTy * TILE_SIZE + 24 }];
+        }
+        u.state = 'HARVEST_SEEK';
+      } else if (targetTree && u.def.category === 'worker') {
+        // Caravan dispatched to fell and harvest cedar timber
+        const treeTx = Math.floor(targetTree.x);
+        const treeTy = Math.floor(targetTree.y);
+        u.targetMineCoord = { tx: treeTx, ty: treeTy };
+        u.targetPosition = { x: targetTree.x * TILE_SIZE, y: targetTree.y * TILE_SIZE };
+        u.currentCargoType = 'timber';
+
+        const startTx = Math.floor(u.x / TILE_SIZE);
+        const startTy = Math.floor(u.y / TILE_SIZE);
+        const pathCoords = AStar.findPath(this.gridGraph, { tx: startTx, ty: startTy }, { tx: treeTx, ty: treeTy });
+        if (pathCoords.length > 0) {
+          u.path = pathCoords.map(c => ({
+            x: c.tx * TILE_SIZE + 24,
+            y: c.ty * TILE_SIZE + 24
+          }));
+        } else {
+          u.path = [{ x: treeTx * TILE_SIZE + 24, y: treeTy * TILE_SIZE + 24 }];
         }
         u.state = 'HARVEST_SEEK';
       } else {
@@ -795,7 +846,8 @@ class GameApp {
         this.buildings,
         this.combat,
         this.economy,
-        this.tileRenderer
+        this.tileRenderer,
+        this.decorations
       );
 
       // Remove fallen units and record casualties
@@ -809,15 +861,28 @@ class GameApp {
       }
     }
 
-    // Real-time update for inspected ore vein
+    // Real-time update for inspected ore vein or cedar tree
     if (this.selectedVein) {
-      const res = this.tileRenderer.getVeinReserve(this.selectedVein.tx, this.selectedVein.ty);
-      if (res && res.current > 0) {
-        this.selectedVein.current = res.current;
-        this.hud.updateInspector(null, null, this.selectedVein);
+      if (this.selectedVein.type === 'timber') {
+        const tree = this.decorations.find(
+          d => Math.hypot(d.x - (this.selectedVein!.tx + 0.5), d.y - (this.selectedVein!.ty + 0.5)) < 1.0
+        );
+        if (tree && tree.current > 0) {
+          this.selectedVein.current = tree.current;
+          this.hud.updateInspector(null, null, this.selectedVein);
+        } else {
+          this.selectedVein = null;
+          this.hud.updateInspector(null, null, null);
+        }
       } else {
-        this.selectedVein = null;
-        this.hud.updateInspector(null, null, null);
+        const res = this.tileRenderer.getVeinReserve(this.selectedVein.tx, this.selectedVein.ty);
+        if (res && res.current > 0) {
+          this.selectedVein.current = res.current;
+          this.hud.updateInspector(null, null, this.selectedVein);
+        } else {
+          this.selectedVein = null;
+          this.hud.updateInspector(null, null, null);
+        }
       }
     }
 
@@ -977,13 +1042,29 @@ class GameApp {
       } else if (ent.type === 'u') {
         this.renderUnit(ctx, ent.item as UnitEntity);
       } else {
-        const d = ent.item as { x: number; y: number; type: string };
+        const d = ent.item as { x: number; y: number; type: string; current: number; max: number };
         const tx = Math.floor(d.x);
         const ty = Math.floor(d.y);
         if (this.fogRenderer.getFog(tx, ty) === 0) continue;
         const wx = Math.round(d.x * TILE_SIZE - 24);
         const wy = Math.round(d.y * TILE_SIZE - 52);
-        ctx.drawImage(this.tileRenderer.cedarTreeCanvas, wx, wy);
+        if (d.type === 'cedar') {
+          ctx.drawImage(this.tileRenderer.cedarTreeCanvas, wx, wy);
+          if (d.current < d.max && d.current > 0) {
+            // Mini timber reserve bar
+            const barW = 26;
+            const barH = 3;
+            const bx = wx + 11;
+            const by = wy + 52;
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+            ctx.fillRect(bx - 1, by - 1, barW + 2, barH + 2);
+            const fillW = Math.max(1, Math.floor((d.current / d.max) * barW));
+            ctx.fillStyle = '#f59e0b';
+            ctx.fillRect(bx, by, fillW, barH);
+          }
+        } else if (d.type === 'stump') {
+          ctx.drawImage(this.tileRenderer.cedarStumpCanvas, wx, wy + 20);
+        }
       }
     }
 
@@ -1330,7 +1411,10 @@ class GameApp {
       ctx.lineWidth = 1;
       ctx.strokeRect(drawX - 14, barY, 28, 4);
 
-      const oreColor = u.currentCargoType === 'tin' ? '#7dd3fc' : (u.currentCargoType === 'copper' ? '#fbbf24' : '#cbd5e1');
+      const oreColor = u.currentCargoType === 'tin' ? '#7dd3fc' :
+                       (u.currentCargoType === 'copper' ? '#2de0a5' :
+                       (u.currentCargoType === 'stone' ? '#e2e8f0' :
+                       (u.currentCargoType === 'timber' ? '#f59e0b' : '#cbd5e1')));
       ctx.fillStyle = oreColor;
       ctx.fillRect(drawX - 13, barY + 1, Math.max(0, 26 * cargoPct), 2);
 

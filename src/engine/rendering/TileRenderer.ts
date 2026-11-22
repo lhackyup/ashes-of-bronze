@@ -6,7 +6,7 @@ import { GridGraph } from '../pathfinding/GridGraph.ts';
 export interface VeinReserve {
   current: number;
   max: number;
-  type: 'copper' | 'tin' | 'iron';
+  type: 'copper' | 'tin' | 'stone' | 'iron';
 }
 
 function hash2D(x: number, y: number): number {
@@ -30,6 +30,7 @@ export class TileRenderer {
   private tileCache: Map<string, HTMLCanvasElement> = new Map();
   private veinReserves: Map<string, VeinReserve> = new Map();
   public cedarTreeCanvas!: HTMLCanvasElement;
+  public cedarStumpCanvas!: HTMLCanvasElement;
 
   constructor(width: number, height: number, initialTerrain: TerrainType = 'plain') {
     this.width = width;
@@ -43,8 +44,8 @@ export class TileRenderer {
       this.mapTiles[ty * this.width + tx] = type;
       const key = `${tx},${ty}`;
       if (type.startsWith('vein_')) {
-        const oreType = type.replace('vein_', '') as 'copper' | 'tin' | 'iron';
-        const defaultTotal = oreType === 'copper' ? 600 : (oreType === 'tin' ? 300 : 800);
+        const oreType = type.replace('vein_', '') as 'copper' | 'tin' | 'stone' | 'iron';
+        const defaultTotal = oreType === 'copper' ? 600 : (oreType === 'tin' ? 300 : (oreType === 'stone' ? 800 : 800));
         const max = reserveAmount ?? (TERRAINS[type]?.resourceYield?.totalAmount ?? defaultTotal);
         this.veinReserves.set(key, { current: max, max, type: oreType });
       } else {
@@ -200,10 +201,11 @@ export class TileRenderer {
       ctx.fill();
     }));
 
-    // 5. Shimmering Ore Veins: Copper (Malachite), Tin (Cassiterite), Iron (Hematite)
+    // 5. Shimmering Ore Veins: Copper (Malachite), Tin (Cassiterite), Stone (Limestone), Iron (Hematite)
     const oreTypes = [
       { id: 'vein_copper', cCenter: '#a7f3d0', cMid: '#10b981', cDark: '#064e3b' },
       { id: 'vein_tin',    cCenter: '#ffffff', cMid: '#94a3b8', cDark: '#334155' },
+      { id: 'vein_stone',  cCenter: '#f5f5f4', cMid: '#d6d3d1', cDark: '#57534e' },
       { id: 'vein_iron',   cCenter: '#9ca3af', cMid: '#4b5563', cDark: '#111827' }
     ];
 
@@ -300,6 +302,30 @@ export class TileRenderer {
       ctx.bezierCurveTo(12, 44, 13, 22, 23.5, 6);
       ctx.fill();
     });
+
+    // 7. Felled Cedar Tree Stump Sprite (48x48 px)
+    this.cedarStumpCanvas = makeCanvas(48, 48, (ctx) => {
+      // Ground shadow
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+      ctx.beginPath();
+      ctx.ellipse(24, 30, 12, 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // Cut stump base
+      ctx.fillStyle = '#4a3219';
+      ctx.fillRect(18, 22, 12, 10);
+      // Annual growth rings
+      ctx.fillStyle = '#b4916c';
+      ctx.beginPath();
+      ctx.ellipse(24, 22, 6, 3, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#7c5a35';
+      ctx.stroke();
+      // Woodchips scattered around
+      ctx.fillStyle = '#d4b483';
+      ctx.fillRect(13, 28, 3, 2);
+      ctx.fillRect(29, 29, 3, 2);
+      ctx.fillRect(20, 32, 2, 2);
+    });
   }
 
   public render(
@@ -350,7 +376,7 @@ export class TileRenderer {
           ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
           ctx.fillRect(bx - 1, by - 1, barW + 2, barH + 2);
           const fillW = Math.max(1, Math.floor((veinRes.current / veinRes.max) * barW));
-          ctx.fillStyle = veinRes.type === 'copper' ? '#2de0a5' : (veinRes.type === 'tin' ? '#c0c6cc' : '#e07a5f');
+          ctx.fillStyle = veinRes.type === 'copper' ? '#2de0a5' : (veinRes.type === 'tin' ? '#c0c6cc' : (veinRes.type === 'stone' ? '#e2e8f0' : '#e07a5f'));
           ctx.fillRect(bx, by, fillW, barH);
         }
 

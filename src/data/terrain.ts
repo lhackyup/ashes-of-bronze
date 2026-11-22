@@ -78,6 +78,19 @@ export const TERRAINS: Record<TerrainType, TerrainDef> = {
     },
     color: '#94a3b8'
   },
+  vein_stone: {
+    id: 'vein_stone',
+    name: 'Limestone / Stone Quarry',
+    walkable: false,
+    speedMultiplier: 0.0,
+    isResource: true,
+    resourceYield: {
+      type: 'stone',
+      amountPerHarvest: 10,
+      totalAmount: 800
+    },
+    color: '#a8a29e'
+  },
   vein_iron: {
     id: 'vein_iron',
     name: 'Hematite / Dark Iron Vein',
