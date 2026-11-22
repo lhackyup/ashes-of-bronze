@@ -2179,4 +2179,166 @@ export class SVGAProceduralBank {
 
     ctx.restore();
   }
+
+  // --- Sea Peoples Bronze Age War Galley / Landing Skiff ---
+  public static drawSeaPeoplesShip(
+    ctx: CanvasRenderingContext2D,
+    wx: number,
+    wy: number,
+    animPhase: number
+  ): void {
+    const bob = Math.sin(animPhase) * 1.5;
+    ctx.save();
+    ctx.translate(wx, wy);
+
+    // 1. Foaming Water Ripples around Keel
+    ctx.fillStyle = 'rgba(224, 242, 254, 0.4)';
+    ctx.beginPath();
+    ctx.ellipse(0, 10 + bob * 0.3, 36, 12, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(56, 189, 248, 0.6)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.ellipse(-2, 11 + bob * 0.3, 39, 13, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // 2. Clinker-Built Wooden Hull (Cedar / Pine planks)
+    ctx.fillStyle = '#451a03'; // Keel / bottom
+    ctx.beginPath();
+    ctx.moveTo(-32, -4 + bob);
+    ctx.quadraticCurveTo(-36, 6 + bob, -20, 12 + bob);
+    ctx.lineTo(24, 12 + bob);
+    ctx.quadraticCurveTo(34, 4 + bob, 32, -8 + bob);
+    ctx.lineTo(28, -6 + bob);
+    ctx.quadraticCurveTo(20, 8 + bob, -16, 8 + bob);
+    ctx.lineTo(-28, -4 + bob);
+    ctx.closePath();
+    ctx.fill();
+
+    // Hull planking & color
+    ctx.fillStyle = '#78350f';
+    ctx.beginPath();
+    ctx.moveTo(-30, -2 + bob);
+    ctx.quadraticCurveTo(-26, 8 + bob, -16, 9 + bob);
+    ctx.lineTo(22, 9 + bob);
+    ctx.quadraticCurveTo(30, 2 + bob, 30, -5 + bob);
+    ctx.lineTo(26, -4 + bob);
+    ctx.quadraticCurveTo(18, 6 + bob, -14, 6 + bob);
+    ctx.closePath();
+    ctx.fill();
+
+    // Gunwale trim
+    ctx.strokeStyle = '#92400e';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-32, -3 + bob);
+    ctx.quadraticCurveTo(0, 4 + bob, 30, -6 + bob);
+    ctx.stroke();
+
+    // 3. High Curved Bird / Horned Prow Figurehead (Eastern Mediterranean style)
+    ctx.fillStyle = '#b45309';
+    ctx.beginPath();
+    ctx.moveTo(28, -6 + bob);
+    ctx.quadraticCurveTo(36, -16 + bob, 34, -26 + bob);
+    ctx.lineTo(31, -25 + bob);
+    ctx.quadraticCurveTo(32, -14 + bob, 25, -5 + bob);
+    ctx.closePath();
+    ctx.fill();
+    // Horned crest tip
+    ctx.fillStyle = '#fbbf24';
+    ctx.fillRect(32, -28 + bob, 4, 3);
+
+    // 4. Curved High Sternpost & Steering Oar
+    ctx.fillStyle = '#b45309';
+    ctx.beginPath();
+    ctx.moveTo(-30, -3 + bob);
+    ctx.quadraticCurveTo(-38, -12 + bob, -36, -22 + bob);
+    ctx.lineTo(-33, -21 + bob);
+    ctx.quadraticCurveTo(-34, -10 + bob, -27, -2 + bob);
+    ctx.closePath();
+    ctx.fill();
+    // Steering Oar trailing in the surf
+    ctx.strokeStyle = '#583c1d';
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.moveTo(-30, 2 + bob);
+    ctx.lineTo(-40, 16 + bob);
+    ctx.stroke();
+    ctx.fillStyle = '#78350f';
+    ctx.fillRect(-42, 14 + bob, 4, 6);
+
+    // 5. Center Mast, Crow's Nest & Furled Square Sail
+    ctx.fillStyle = '#583c1d'; // Mast
+    ctx.fillRect(-2, -38 + bob, 3, 40);
+    // Crow's nest look-out basket
+    ctx.fillStyle = '#92400e';
+    ctx.fillRect(-5, -42 + bob, 9, 5);
+    ctx.strokeStyle = '#451a03';
+    ctx.strokeRect(-5, -42 + bob, 9, 5);
+
+    // Yardarm cross-beam
+    ctx.strokeStyle = '#78350f';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-20, -32 + bob);
+    ctx.lineTo(16, -32 + bob);
+    ctx.stroke();
+
+    // Furled linen square sail bundled along yardarm
+    ctx.fillStyle = '#f8fafc';
+    ctx.beginPath();
+    ctx.roundRect(-19, -34 + bob, 34, 5, 2);
+    ctx.fill();
+    // Red cloth lashing ties
+    ctx.fillStyle = '#dc2626';
+    for (let lx = -16; lx < 14; lx += 6) {
+      ctx.fillRect(lx, -35 + bob, 1.5, 7);
+    }
+
+    // Rigging shrouds & stays
+    ctx.strokeStyle = '#451a03';
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.moveTo(-1, -38 + bob); ctx.lineTo(-28, -2 + bob);
+    ctx.moveTo(1, -38 + bob); ctx.lineTo(26, -4 + bob);
+    ctx.stroke();
+
+    // 6. Gunwale Round Shields (Alternating red and blue striped Shardana bucklers)
+    for (let sx = -20; sx <= 16; sx += 9) {
+      const isRed = (sx + 20) % 18 === 0;
+      ctx.fillStyle = isRed ? '#dc2626' : '#2563eb';
+      ctx.beginPath();
+      ctx.arc(sx, 1 + bob, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#fbbf24'; // Bronze boss rim
+      ctx.lineWidth = 0.8;
+      ctx.stroke();
+      ctx.fillStyle = '#fbbf24'; // Center boss
+      ctx.beginPath(); ctx.arc(sx, 1 + bob, 1.2, 0, Math.PI * 2); ctx.fill();
+    }
+
+    // 7. Heavy Wooden Gangplank / Landing Ramp onto the Dunes
+    // Extends forward and rightwards from the bow (x=24) onto the sandy beach (x=52)
+    ctx.fillStyle = '#583c1d';
+    ctx.beginPath();
+    ctx.moveTo(22, 2 + bob);
+    ctx.lineTo(48, 14);
+    ctx.lineTo(46, 20);
+    ctx.lineTo(20, 8 + bob);
+    ctx.closePath();
+    ctx.fill();
+    // Plank cross-slats
+    ctx.strokeStyle = '#92400e';
+    ctx.lineWidth = 1;
+    for (let p = 0; p <= 1; p += 0.2) {
+      const px1 = 22 + (48 - 22) * p;
+      const py1 = (2 + bob) + (14 - (2 + bob)) * p;
+      ctx.beginPath();
+      ctx.moveTo(px1, py1);
+      ctx.lineTo(px1 - 2, py1 + 6);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+  }
 }

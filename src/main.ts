@@ -68,6 +68,27 @@ class GameApp {
     maxLife: number;
   }> = [];
 
+  private combatParticles: Array<{
+    x: number;
+    y: number;
+    vx: number;
+    vy: number;
+    color: string;
+    life: number;
+    maxLife: number;
+    size: number;
+  }> = [];
+
+  private fallenWarriors: Array<{
+    x: number;
+    y: number;
+    owner: string;
+    defId: string;
+    angle: number;
+    life: number;
+    maxLife: number;
+  }> = [];
+
   private selectedUnits: UnitEntity[] = [];
   private selectedBuilding: BuildingEntity | null = null;
   private selectedVein: { name: string; type: string; current: number; max: number; tx: number; ty: number } | null = null;
@@ -292,6 +313,37 @@ class GameApp {
         y: data.y,
         life: 1.3,
         maxLife: 1.3
+      });
+    });
+
+    // Wire Combat hit spark particles
+    EventBus.get().on('fx:combat_hit', (data: { x: number; y: number; color?: string }) => {
+      for (let i = 0; i < 6; i++) {
+        const ang = Math.random() * Math.PI * 2;
+        const spd = 35 + Math.random() * 85;
+        this.combatParticles.push({
+          x: data.x,
+          y: data.y,
+          vx: Math.cos(ang) * spd,
+          vy: Math.sin(ang) * spd,
+          color: data.color || '#fbbf24',
+          life: 0.35 + Math.random() * 0.25,
+          maxLife: 0.6,
+          size: 1.5 + Math.random() * 2.0
+        });
+      }
+    });
+
+    // Wire fallen warriors (battlefield decals)
+    EventBus.get().on('combat:unit_killed', (u: UnitEntity) => {
+      this.fallenWarriors.push({
+        x: u.x,
+        y: u.y,
+        owner: u.owner,
+        defId: u.defId,
+        angle: Math.random() * Math.PI * 2,
+        life: 22,
+        maxLife: 22
       });
     });
 
@@ -976,8 +1028,8 @@ class GameApp {
     // Update combat encounters and projectiles
     this.combat.update(dt, this.units, this.buildings);
 
-    // Update Sea Peoples AI Tactical Director
-    this.tacticalDirector.update(dt, this.gridGraph, this.units, 12, 28);
+    // Update Sea Peoples AI Tactical Director with dynamic strategic targeting
+    this.tacticalDirector.update(dt, this.gridGraph, this.units, 12, 28, this.buildings);
 
     // Update Campaign Objective Progression & Evaluation
     if (this.objectiveManager) {
@@ -988,6 +1040,26 @@ class GameApp {
         this.economy,
         this.tacticalDirector
       );
+    }
+
+    // Update combat spark particles
+    for (let i = this.combatParticles.length - 1; i >= 0; i--) {
+      const p = this.combatParticles[i];
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.life -= dt;
+      if (p.life <= 0) {
+        this.combatParticles.splice(i, 1);
+      }
+    }
+
+    // Update fallen warrior corpse decals
+    for (let i = this.fallenWarriors.length - 1; i >= 0; i--) {
+      const f = this.fallenWarriors[i];
+      f.life -= dt;
+      if (f.life <= 0) {
+        this.fallenWarriors.splice(i, 1);
+      }
     }
 
     // Update floating text visual FX
@@ -1048,6 +1120,37 @@ class GameApp {
     // 1. Terrain Layer & Cyclopean Foundation Slabs (World Coordinates)
     this.tileRenderer.render(ctx, this.camera, this.gridGraph);
 
+    // 1b. Fallen Warriors battlefield decals
+    for (const f of this.fallenWarriors) {
+      const alpha = Math.max(0, Math.min(1, f.life / 3.0));
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.translate(f.x, f.y);
+      ctx.rotate(f.angle);
+      // Ground dust / blood mark
+      ctx.fillStyle = f.owner === 'player' ? 'rgba(153, 27, 27, 0.45)' : 'rgba(30, 41, 59, 0.45)';
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 10, 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // Fallen bronze shield and weapon on ground
+      ctx.fillStyle = '#b45309';
+      ctx.beginPath(); ctx.arc(-3, 1, 4.5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillRect(0, -2, 9, 2);
+      ctx.restore();
+    }
+
+    // 1c. Sea Peoples Landing War Galleys (anchored at western water/surf edge)
+    const shipAnim = Date.now() / 320;
+    for (const ship of this.tacticalDirector.landingShips) {
+      SVGAProceduralBank.drawSeaPeoplesShip(
+        ctx,
+        ship.tx * TILE_SIZE + 24,
+        ship.ty * TILE_SIZE + 24,
+        shipAnim + ship.waveNum * 2
+      );
+    }
+
     // 2. Layer Buildings, Units & Mediterranean Cedars with Y-Sorting for 2.5D depth
     const renderList: Array<{ type: 'b' | 'u' | 'd'; y: number; item: any }> = [];
     for (const b of this.buildings) {
@@ -1093,7 +1196,7 @@ class GameApp {
       }
     }
 
-    // 3. In-flight combat projectiles (Arrows with fletchings & Whirling Sling Stones)
+    // 3. In-flight combat projectiles (Parabolic ballistic arcs with shadow & rotation)
     for (const p of this.combat.projectiles) {
       let targetX = p.x;
       let targetY = p.y;
@@ -1104,11 +1207,24 @@ class GameApp {
         const tu = this.units.find(u => u.id === p.targetId);
         if (tu) { targetX = tu.x; targetY = tu.y; }
       }
-      const angle = Math.atan2(targetY - p.y, targetX - p.x);
+      const baseAngle = Math.atan2(targetY - p.y, targetX - p.x);
+
+      // 3D Parabolic Ballistic Arc (Elevation above terrain)
+      const progress = Math.min(1.0, (p.traveled || 0) / (p.totalDist || 180));
+      const arcH = Math.sin(progress * Math.PI) * Math.min(50, (p.totalDist || 180) * 0.28);
+      const renderY = p.y - arcH;
+
+      // Ground shadow tracking beneath the projectile
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y + 4, 3, 1.5, 0, 0, Math.PI * 2);
+      ctx.fill();
 
       ctx.save();
-      ctx.translate(p.x, p.y);
-      ctx.rotate(angle);
+      ctx.translate(p.x, renderY);
+      // Pitch angle based on arc slope: noses down as it plunges
+      const pitch = (progress - 0.5) * 0.6;
+      ctx.rotate(baseAngle + pitch);
 
       if (p.kind === 'sling_stone') {
         // High-velocity river pebble with dust vapor trail
@@ -1152,6 +1268,16 @@ class GameApp {
         ctx.fill();
       }
 
+      ctx.restore();
+    }
+
+    // 3b. Combat hit sparks & battle particles
+    for (const cp of this.combatParticles) {
+      const alpha = Math.max(0, Math.min(1, cp.life / cp.maxLife));
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = cp.color;
+      ctx.fillRect(cp.x - cp.size / 2, cp.y - cp.size / 2, cp.size, cp.size);
       ctx.restore();
     }
 

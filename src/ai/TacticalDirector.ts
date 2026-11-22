@@ -1,5 +1,6 @@
 import { ScenarioData, WaveDefinition } from '../data/types.ts';
 import { UnitEntity } from '../entities/UnitEntity.ts';
+import { BuildingEntity } from '../entities/BuildingEntity.ts';
 import { GridGraph } from '../engine/pathfinding/GridGraph.ts';
 import { FlowField } from '../engine/pathfinding/FlowField.ts';
 import { EventBus } from '../core/EventBus.ts';
@@ -10,6 +11,7 @@ export class TacticalDirector {
   private elapsedTime: number = 0;
   private flowField: FlowField;
   private nextEntityId: number = 10000;
+  public landingShips: Array<{ tx: number; ty: number; waveNum: number; count: number }> = [];
 
   constructor(scenario: ScenarioData, width: number, height: number) {
     this.flowField = new FlowField(width, height);
@@ -27,13 +29,30 @@ export class TacticalDirector {
     graph: GridGraph,
     units: UnitEntity[],
     playerTargetTx: number,
-    playerTargetTy: number
+    playerTargetTy: number,
+    buildings?: BuildingEntity[]
   ): void {
     this.elapsedTime += dt;
 
-    // Ricalcola il Flow Field ogni 5 secondi verso il centro della città del giocatore
-    if (Math.floor(this.elapsedTime) % 5 === 0 && (!this.flowField.target || this.flowField.target.tx !== playerTargetTx)) {
-      this.flowField.compute(graph, { tx: playerTargetTx, ty: playerTargetTy });
+    // Tactical Target Selection:
+    // Raiders first look to sack isolated caravans or peripheral foundries/watchtowers
+    let targetTx = playerTargetTx;
+    let targetTy = playerTargetTy;
+
+    if (buildings && buildings.length > 0) {
+      // Prioritize peripheral economic targets like the bronze foundry or granaries
+      const peripheralTarget = buildings.find(
+        b => b.owner === 'player' && b.buildProgress >= 1.0 && (b.defId === 'bronze_foundry' || b.defId === 'granary')
+      );
+      if (peripheralTarget && Math.random() < 0.4) {
+        targetTx = peripheralTarget.tx + Math.floor(peripheralTarget.def.width / 2);
+        targetTy = peripheralTarget.ty + Math.floor(peripheralTarget.def.height / 2);
+      }
+    }
+
+    // Ricalcola il Flow Field periodicamente verso il bersaglio tattico
+    if (Math.floor(this.elapsedTime) % 4 === 0 && (!this.flowField.target || this.flowField.target.tx !== targetTx || this.flowField.target.ty !== targetTy)) {
+      this.flowField.compute(graph, { tx: targetTx, ty: targetTy });
     }
 
     // Controlla attivazione delle ondate
@@ -74,10 +93,25 @@ export class TacticalDirector {
       });
     }
 
+    const midTy = Math.floor(graph.height / 2);
+
+    // Register landing skiff anchored at the surf line (x = 5.5, y = midTy)
+    const shipRecord = { tx: 5.5, ty: midTy, waveNum: this.landingShips.length + 1, count: wave.units[0]?.count || 3 };
+    this.landingShips.push(shipRecord);
+    EventBus.get().emit('combat:ship_landed', shipRecord);
+
+    EventBus.get().emit('fx:floating_text', {
+      text: 'SHARDANA LANDING FLEET!',
+      color: '#ef4444',
+      x: 7 * TILE_SIZE + 24,
+      y: midTy * TILE_SIZE - 20
+    });
+
     for (const unitReq of wave.units) {
       for (let c = 0; c < unitReq.count; c++) {
-        let spawnTx = 2;
-        let spawnTy = Math.floor(graph.height / 2) + (c - unitReq.count / 2) * 2;
+        // Disembark directly onto the beach dunes (tx = 7)
+        let spawnTx = 7;
+        let spawnTy = midTy + (c - unitReq.count / 2) * 1.5;
 
         if (wave.spawnEdge === 'east') spawnTx = graph.width - 3;
         if (wave.spawnEdge === 'north') {

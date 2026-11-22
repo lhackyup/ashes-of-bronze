@@ -31,7 +31,7 @@ export class UnitFSM {
         break;
 
       case 'MOVE_TO':
-        this.handleMove(u, dt, graph);
+        this.handleMove(u, dt, graph, units);
         break;
 
       case 'ATTACK_TARGET':
@@ -81,7 +81,23 @@ export class UnitFSM {
     }
   }
 
-  private static handleMove(u: UnitEntity, dt: number, _graph: GridGraph): void {
+  private static handleMove(u: UnitEntity, dt: number, _graph: GridGraph, units?: UnitEntity[]): void {
+    // If military unit moving, continuously scan for encroaching enemies within aggro sight (4 tiles)
+    if (units && (u.def.category === 'infantry' || u.def.category === 'skirmisher' || u.def.category === 'chariot')) {
+      const aggroRange = (u.def.attackRange || 1.5) * TILE_SIZE + 80;
+      for (const other of units) {
+        if (other.owner !== u.owner) {
+          const dist = Math.hypot(other.x - u.x, other.y - u.y);
+          if (dist <= aggroRange) {
+            u.targetEntityId = other.id;
+            u.state = 'ATTACK_TARGET';
+            u.path = [];
+            return;
+          }
+        }
+      }
+    }
+
     if (u.path.length === 0) {
       u.state = 'IDLE';
       return;
@@ -153,27 +169,70 @@ export class UnitFSM {
         u.attackCooldown = u.def.attackCooldown || 1.0;
 
         if (u.def.category === 'skirmisher') {
-          combat.fireProjectile(u.x, u.y, u.targetEntityId, isBuilding, u.def.damage || 12, 'sling_stone');
+          combat.fireProjectile(u.x, u.y, u.targetEntityId, isBuilding, u.def.damage || 12, 'sling_stone', dist);
           EventBus.get().emit('audio:arrow');
         } else if (u.def.category === 'chariot') {
-          combat.fireProjectile(u.x, u.y, u.targetEntityId, isBuilding, u.def.damage || 28, 'arrow');
+          combat.fireProjectile(u.x, u.y, u.targetEntityId, isBuilding, u.def.damage || 28, 'arrow', dist);
           EventBus.get().emit('audio:arrow');
         } else {
           // Attacco corpo a corpo immediato
           EventBus.get().emit('audio:combat_hit');
           if (isBuilding) {
             const b = buildings.find(b => b.id === u.targetEntityId);
-            if (b && b.takeDamage(u.def.damage || 15)) {
-              EventBus.get().emit('combat:building_destroyed', b);
-              u.targetEntityId = null;
-              u.state = 'IDLE';
+            if (b) {
+              const dmg = u.def.damage || 15;
+              EventBus.get().emit('fx:floating_text', {
+                text: `-${dmg}`,
+                color: '#f59e0b',
+                x: b.centerX + (Math.random() - 0.5) * 16,
+                y: b.centerY - 20
+              });
+              EventBus.get().emit('fx:combat_hit', {
+                x: b.centerX + (Math.random() - 0.5) * 16,
+                y: b.centerY + (Math.random() - 0.5) * 16,
+                color: '#d97706'
+              });
+
+              if (b.takeDamage(dmg)) {
+                EventBus.get().emit('audio:explosion');
+                EventBus.get().emit('combat:building_destroyed', b);
+                u.targetEntityId = null;
+                u.state = 'IDLE';
+              }
             }
           } else {
             const victim = units.find(unit => unit.id === u.targetEntityId);
-            if (victim && victim.takeDamage(u.def.damage || 15)) {
-              EventBus.get().emit('combat:unit_killed', victim);
-              u.targetEntityId = null;
-              u.state = 'IDLE';
+            if (victim) {
+              let dmg = u.def.damage || 16;
+              let isCrit = false;
+              // Khopesh bronze warriors deliver devastating critical sickle-cleaves
+              if (u.defId === 'bronze_swordsman' && Math.random() < 0.28) {
+                dmg = Math.floor(dmg * 1.5);
+                isCrit = true;
+              }
+
+              EventBus.get().emit('fx:floating_text', {
+                text: isCrit ? `CRIT! -${dmg}` : `-${dmg}`,
+                color: isCrit ? '#fde047' : '#ef4444',
+                x: victim.x + (Math.random() - 0.5) * 8,
+                y: victim.y - 20
+              });
+              EventBus.get().emit('fx:combat_hit', {
+                x: victim.x,
+                y: victim.y,
+                color: isCrit ? '#fde047' : '#fbbf24'
+              });
+
+              const dead = victim.takeDamage(dmg);
+              if (dead) {
+                EventBus.get().emit('combat:unit_killed', victim);
+                u.targetEntityId = null;
+                u.state = 'IDLE';
+              } else if (victim.state === 'IDLE' || victim.state === 'MOVE_TO') {
+                // Immediate tactical retaliation against the attacker
+                victim.targetEntityId = u.id;
+                victim.state = 'ATTACK_TARGET';
+              }
             }
           }
         }

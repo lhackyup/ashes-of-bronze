@@ -6,11 +6,15 @@ import { TILE_SIZE } from '../data/terrain.ts';
 export interface Projectile {
   x: number;
   y: number;
+  startX: number;
+  startY: number;
   targetId: number;
   targetIsBuilding: boolean;
   damage: number;
   speed: number;
   kind: 'arrow' | 'sling_stone' | 'javelin';
+  totalDist: number;
+  traveled: number;
 }
 
 export class CombatSystem {
@@ -27,7 +31,7 @@ export class CombatSystem {
         b.attackCooldown -= dt;
       }
       if (b.buildProgress >= 1.0 && b.def.attackRange && b.def.damage && b.attackCooldown <= 0) {
-        // Cerca nemico più vicino
+        // Cerca nemico più vicino entro il raggio di guardia della torre
         const rangePx = b.def.attackRange * TILE_SIZE;
         let nearest: UnitEntity | null = null;
         let nearestDist = rangePx;
@@ -43,9 +47,12 @@ export class CombatSystem {
         }
 
         if (nearest) {
-          this.fireProjectile(b.centerX, b.centerY, nearest.id, false, b.def.damage, 'arrow');
+          // Salva freccia scoccata dai merli della torre ciclopea (elevata di 28px)
+          const targetDist = Math.hypot(nearest.x - b.centerX, nearest.y - (b.centerY - 28));
+          this.fireProjectile(b.centerX, b.centerY - 28, nearest.id, false, b.def.damage, 'arrow', targetDist);
           b.attackCooldown = 1 / (b.def.attackRate || 1);
           EventBus.get().emit('audio:arrow');
+          EventBus.get().emit('fx:combat_hit', { x: b.centerX, y: b.centerY - 32, color: '#fef08a' });
         }
       }
     }
@@ -82,6 +89,7 @@ export class CombatSystem {
       const dy = targetY - p.y;
       const dist = Math.hypot(dx, dy);
       const step = p.speed * dt;
+      p.traveled += step;
 
       if (dist <= step || dist < 12) {
         // Colpito!
@@ -91,6 +99,18 @@ export class CombatSystem {
         if (p.targetIsBuilding) {
           const tb = buildings.find(b => b.id === p.targetId);
           if (tb) {
+            EventBus.get().emit('fx:floating_text', {
+              text: `-${p.damage}`,
+              color: '#f59e0b',
+              x: tb.centerX,
+              y: tb.centerY - 18
+            });
+            EventBus.get().emit('fx:combat_hit', {
+              x: tb.centerX + (Math.random() - 0.5) * 20,
+              y: tb.centerY + (Math.random() - 0.5) * 20,
+              color: '#d97706'
+            });
+
             const destroyed = tb.takeDamage(p.damage);
             if (destroyed) {
               EventBus.get().emit('audio:explosion');
@@ -100,7 +120,32 @@ export class CombatSystem {
         } else {
           const tu = units.find(u => u.id === p.targetId);
           if (tu) {
-            const dead = tu.takeDamage(p.damage);
+            let effectiveDmg = p.damage;
+            // Shield-Wall deflection: Tower-Shield Spearmen deflect 50% ranged ballistic damage
+            if (tu.defId === 'spear_militia' && (p.kind === 'arrow' || p.kind === 'sling_stone')) {
+              effectiveDmg = Math.max(1, Math.floor(p.damage * 0.45));
+              EventBus.get().emit('fx:floating_text', {
+                text: `SHIELD BLOCKED! -${effectiveDmg}`,
+                color: '#93c5fd',
+                x: tu.x,
+                y: tu.y - 20
+              });
+            } else {
+              EventBus.get().emit('fx:floating_text', {
+                text: `-${effectiveDmg}`,
+                color: '#ef4444',
+                x: tu.x,
+                y: tu.y - 18
+              });
+            }
+
+            EventBus.get().emit('fx:combat_hit', {
+              x: tu.x,
+              y: tu.y,
+              color: '#fbbf24'
+            });
+
+            const dead = tu.takeDamage(effectiveDmg);
             if (dead) {
               EventBus.get().emit('combat:unit_killed', tu);
             }
@@ -119,17 +164,22 @@ export class CombatSystem {
     targetId: number,
     targetIsBuilding: boolean,
     damage: number,
-    kind: 'arrow' | 'sling_stone' | 'javelin'
+    kind: 'arrow' | 'sling_stone' | 'javelin',
+    initialDist: number = 200
   ): void {
     const speed = kind === 'arrow' ? 420 : 360;
     this.projectiles.push({
       x: sx,
       y: sy,
+      startX: sx,
+      startY: sy,
       targetId,
       targetIsBuilding,
       damage,
       speed,
-      kind
+      kind,
+      totalDist: Math.max(50, initialDist),
+      traveled: 0
     });
   }
 }
