@@ -16,6 +16,7 @@ import { TILE_SIZE } from './data/terrain.ts';
 import { BUILDINGS } from './data/buildings.ts';
 import { UNITS } from './data/units.ts';
 import { EventBus } from './core/EventBus.ts';
+import { SVGAProceduralBank } from './engine/rendering/SVGAProceduralBank.ts';
 
 class GameApp {
   private canvas!: HTMLCanvasElement;
@@ -52,6 +53,9 @@ class GameApp {
 
     this.resizeCanvas();
     window.addEventListener('resize', () => this.resizeCanvas());
+
+    // Inizializza generatori procedurali SVGA
+    SVGAProceduralBank.init();
 
     // Carica lo Scenario 1
     const scenario = await ScenarioLoader.loadScenario('scenario_01_horned_sails');
@@ -525,23 +529,30 @@ class GameApp {
     const bw = b.def.width * TILE_SIZE * this.camera.zoom;
     const bh = b.def.height * TILE_SIZE * this.camera.zoom;
 
-    // Ombra edificio
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
-    ctx.fillRect(sp.x + 6, sp.y + 6, bw, bh);
+    // Disegna sprite procedurale SVGA memorizzato nella banca
+    const sprite = SVGAProceduralBank.getBuildingSprite(b.defId, b.owner);
+    if (sprite) {
+      // Ombra edificio
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+      ctx.fillRect(sp.x + 6, sp.y + 6, bw, bh);
+      ctx.drawImage(sprite, sp.x, sp.y, bw, bh);
+    } else {
+      // Fallback
+      ctx.fillStyle = b.owner === 'player' ? '#8a6234' : '#692d2d';
+      ctx.fillRect(sp.x, sp.y, bw, bh);
+    }
 
-    // Corpo edificio SVGA
-    ctx.fillStyle = b.owner === 'player' ? '#8a6234' : '#692d2d';
-    ctx.fillRect(sp.x, sp.y, bw, bh);
+    // Bordo di selezione
+    if (b.isSelected) {
+      ctx.strokeStyle = '#ffff55';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(sp.x, sp.y, bw, bh);
+    }
 
-    // Bordo in pietra/bronzo
-    ctx.strokeStyle = b.isSelected ? '#ffff55' : '#d4af37';
-    ctx.lineWidth = b.isSelected ? 2 : 1;
-    ctx.strokeRect(sp.x, sp.y, bw, bh);
-
-    // Etichetta abbreviata
+    // Etichetta edificio
     ctx.fillStyle = '#ffffff';
     ctx.font = '10px Cinzel, serif';
-    ctx.fillText(b.def.name.substring(0, 12), sp.x + 4, sp.y + 14);
+    ctx.fillText(b.def.name.substring(0, 14), sp.x + 4, sp.y + 14);
 
     // Barra HP se selezionato o danneggiato
     if (b.isSelected || b.hp < b.maxHp) {
@@ -556,30 +567,25 @@ class GameApp {
   private renderUnit(ctx: CanvasRenderingContext2D, u: UnitEntity): void {
     const sp = this.camera.worldToScreen(u.x, u.y);
 
-    // Ombra unità
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
-    ctx.beginPath();
-    ctx.ellipse(sp.x, sp.y + 10, 8, 4, 0, 0, Math.PI * 2);
-    ctx.fill();
+    // Render animato procedurale dell'Età del Bronzo
+    SVGAProceduralBank.drawAnimatedUnit(ctx, u, sp.x, sp.y);
 
-    // Sprite SVGA unità
-    ctx.fillStyle = u.owner === 'player' ? '#2de0a5' : '#e63946';
-    ctx.beginPath();
-    ctx.arc(sp.x, sp.y, 8, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Dettaglio di fazione
-    ctx.strokeStyle = u.isSelected ? '#ffff33' : '#1c130d';
-    ctx.lineWidth = u.isSelected ? 2 : 1;
-    ctx.stroke();
+    // Bordo o indicatore di selezione
+    if (u.isSelected) {
+      ctx.strokeStyle = '#ffff33';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(sp.x, sp.y, 14, 0, Math.PI * 2);
+      ctx.stroke();
+    }
 
     // Barra HP se selezionata o ferita
     if (u.isSelected || u.hp < u.maxHp) {
       const hpPct = Math.max(0, u.hp / u.maxHp);
       ctx.fillStyle = '#1c0909';
-      ctx.fillRect(sp.x - 12, sp.y - 14, 24, 3);
+      ctx.fillRect(sp.x - 12, sp.y - 18, 24, 3);
       ctx.fillStyle = '#2b9348';
-      ctx.fillRect(sp.x - 12, sp.y - 14, 24 * hpPct, 3);
+      ctx.fillRect(sp.x - 12, sp.y - 18, 24 * hpPct, 3);
     }
   }
 

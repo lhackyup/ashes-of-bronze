@@ -100,28 +100,28 @@ ashes-of-bronze/
 
 ## 4. Moduli Architetturali di Dettaglio
 
-### 4.1 Motore di Rendering 2.5D SVGA
-Il rendering attuale ridisegna tutto ogni frame in coordinate canvas assolute. Il nuovo motore adotta una pipeline a layer con **Viewport Culling**:
+### 4.1 Motore di Rendering SVGA Procedurale su Canvas
+Il rendering adotta un approccio procedurale puro su Canvas 2D (stile DOS/SVGA anni '90), senza dipendenze da asset esterni pesanti o modelli 3D. Tutti gli edifici, i ritratti dei consiglieri e le animazioni delle unità sono generati a codice tramite la `SVGAProceduralBank`:
 
 ```mermaid
 flowchart TD
     Loop[Game Loop: Render Pass] --> Cull[Camera Frustum Culling]
-    Cull --> L1[Layer 1: Terreno & Fondamenta su Offscreen Tile Canvas]
-    Cull --> L2[Layer 2: Risorse & Edifici con Y-Sorting]
-    Cull --> L3[Layer 3: Unità con Ombre e Animazione 8-Way]
-    Cull --> L4[Layer 4: Proiettili, Effetti Particellari & Polvere]
-    Cull --> L5[Layer 5: Fog of War Masking via Blending]
+    Cull --> L1[Layer 1: Terreno & Terrapieni Ciclopici su Canvas Pattern]
+    Cull --> L2[Layer 2: Edifici Pre-renderizzati in Offscreen Buffers]
+    Cull --> L3[Layer 3: Unità con Animazione Procedurale dei Passi & Armi]
+    Cull --> L4[Layer 4: Proiettili, Frecce e Polvere]
+    Cull --> L5[Layer 5: Fog of War Masking via Blending a 3 Stati]
     Cull --> L6[Layer 6: UI & HUD Canvas Top-Level]
 ```
 
-1. **Tilemap Caching:** Il terreno statico viene renderizzato su blocchi di chunk pre-renderizzati (es. 16x16 tile) per minimizzare i `drawImage` al secondo.
-2. **Y-Sorting Profondità:** Edifici ciclopici e unità vengono inseriti in una lista z-order ordinata per coordinata `Y + offset`, garantendo la corretta occlusione 2.5D.
-3. **Fog of War a 3 Stati:**
-   * Mantenuto su un `Uint8Array` a griglia: `0 = Inesplorato (Nero)`, `1 = Esplorato ma non visibile (Ombra)`, `2 = Visibile in tempo reale`.
-   * Renderizzato con gradiente radiale morbido per eliminare l'effetto a scacchiera netta.
-4. **Sprite System Ibrido:**
-   * Supporto prioritario per atlanti spritesheet esportati da Blender (8 direzioni: N, NE, E, SE, S, SW, W, NW).
-   * Fallback procedurale per retrocompatibilità con gli asset procedurali SVG/Canvas del prototipo.
+1. **Tilemap & Terrapieni Ciclopici:** Generati tramite pattern procedurali SVGA con giunture megalitiche a secco e nodi di minerale scintillanti (rame, stagno, ferro).
+2. **Edifici Pre-renderizzati (`SVGAProceduralBank`):** All'avvio, ogni edificio (Acropoli, Fonderia, Granai, Torri) viene "cotto" una volta sola su canvas offscreen dedicati tramite forme geometriche e gradienti SVGA, garantendo performance ottimali a 60 fps.
+3. **Unità Animate a Codice:**
+   * Animazione procedurale della camminata (`bobbing`), oscillazione delle zampe degli asinelli e delle ruote raggiate dei carri.
+   * Visualizzazione in tempo reale del carico minerario nelle ceste (verde per rame, argento per stagno, nero per ferro).
+   * Dettagli storici d'epoca: scudi a torre micenei, sciabole ricurve *khopesh*, elmi cornuti degli Shardana e lance bronzee.
+4. **Fog of War a 3 Stati:** Mantenuta su un `Uint8Array` a griglia: `0 = Inesplorato`, `1 = Esplorato in ombra`, `2 = Visibile in tempo reale`.
+5. **Ritratti Storici Procedurali:** I volti di Burna-Khabir (scriba), Tarkhunta (mastro fabbro) e Zalpa (capitana dei carri) sono generati direttamente all'avvio su canvas 64x64.
 
 ---
 

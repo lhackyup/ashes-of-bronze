@@ -5,6 +5,7 @@ import { UNITS } from '../data/units.ts';
 import { UnitEntity } from '../entities/UnitEntity.ts';
 import { BuildingEntity } from '../entities/BuildingEntity.ts';
 import { Camera2D } from '../engine/camera/Camera2D.ts';
+import { SVGAProceduralBank } from '../engine/rendering/SVGAProceduralBank.ts';
 
 export class HUDController {
   private resCopperEl!: HTMLElement;
@@ -72,7 +73,17 @@ export class HUDController {
         this.advisorTextEl.style.color = data.isAlert ? '#ff5555' : '#f7e6b5';
       }
       if (this.advisorPortraitEl) {
-        this.advisorPortraitEl.textContent = data.speaker === 'zalpa' ? 'ZA' : (data.speaker === 'tarkhunta' ? 'TA' : 'BK');
+        const portraitCanvas = SVGAProceduralBank.advisorPortraits.get(data.speaker);
+        if (portraitCanvas) {
+          this.advisorPortraitEl.innerHTML = '';
+          const img = document.createElement('img');
+          img.src = portraitCanvas.toDataURL();
+          img.style.width = '100%';
+          img.style.height = '100%';
+          this.advisorPortraitEl.appendChild(img);
+        } else {
+          this.advisorPortraitEl.textContent = data.speaker === 'zalpa' ? 'ZA' : (data.speaker === 'tarkhunta' ? 'TA' : 'BK');
+        }
       }
     });
   }
