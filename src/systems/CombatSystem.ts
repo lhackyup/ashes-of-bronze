@@ -26,7 +26,7 @@ export class CombatSystem {
       if (b.attackCooldown > 0) {
         b.attackCooldown -= dt;
       }
-      if (b.def.attackRange && b.def.damage && b.attackCooldown <= 0) {
+      if (b.buildProgress >= 1.0 && b.def.attackRange && b.def.damage && b.attackCooldown <= 0) {
         // Cerca nemico più vicino
         const rangePx = b.def.attackRange * TILE_SIZE;
         let nearest: UnitEntity | null = null;

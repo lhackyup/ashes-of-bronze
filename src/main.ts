@@ -117,10 +117,12 @@ class GameApp {
 
     // Position starting Acropolis, Foundry, and foundation slabs
     const pStart = scenario.player.startPosition;
-    this.spawnBuilding('cyclopean_slab', 'player', pStart.tx - 1, pStart.ty - 1);
-    this.spawnBuilding('cyclopean_slab', 'player', pStart.tx + 1, pStart.ty - 1);
-    this.spawnBuilding('acropolis', 'player', pStart.tx, pStart.ty);
-    this.spawnBuilding('bronze_foundry', 'player', pStart.tx + 5, pStart.ty);
+    this.gridGraph.setFoundation(pStart.tx, pStart.ty, 4, 4, true);
+    this.gridGraph.setFoundation(pStart.tx + 5, pStart.ty, 3, 3, true);
+    this.spawnBuilding('cyclopean_slab', 'player', pStart.tx - 2, pStart.ty, true);
+    this.spawnBuilding('cyclopean_slab', 'player', pStart.tx - 2, pStart.ty + 2, true);
+    this.spawnBuilding('acropolis', 'player', pStart.tx, pStart.ty, true);
+    this.spawnBuilding('bronze_foundry', 'player', pStart.tx + 5, pStart.ty, true);
 
     // Spawn starting units
     this.spawnUnit('donkey_caravan', 'player', (pStart.tx + 2) * TILE_SIZE, (pStart.ty + 5) * TILE_SIZE);
@@ -374,9 +376,44 @@ class GameApp {
     }
   }
 
-  private spawnBuilding(defId: string, owner: any, tx: number, ty: number): BuildingEntity {
-    const hasFoundation = this.gridGraph.hasFoundation(tx, ty);
-    const b = new BuildingEntity(this.nextEntityId++, defId, owner, tx, ty, hasFoundation);
+  private canPlaceBuilding(defId: string, tx: number, ty: number): boolean {
+    const bDef = BUILDINGS[defId];
+    if (!bDef) return false;
+
+    if (!this.gridGraph.isInBounds(tx, ty) || !this.gridGraph.isInBounds(tx + bDef.width - 1, ty + bDef.height - 1)) {
+      return false;
+    }
+
+    for (let dy = 0; dy < bDef.height; dy++) {
+      for (let dx = 0; dx < bDef.width; dx++) {
+        const curX = tx + dx;
+        const curY = ty + dy;
+
+        const tile = this.tileRenderer.getTile(curX, curY);
+        // Deep water or cliffs are strictly impassable for all construction
+        if (tile === 'water' || tile === 'cliff') return false;
+
+        // Resource veins (copper, tin, iron) cannot be built over
+        if (tile === 'vein_copper' || tile === 'vein_tin' || tile === 'vein_iron') return false;
+
+        if (defId === 'cyclopean_slab') {
+          // Cannot build slab if slab is already paved
+          if (this.gridGraph.hasFoundation(curX, curY)) return false;
+          // Cannot build slab underneath an existing building
+          if (this.gridGraph.isBuildingOccupied(curX, curY)) return false;
+        } else {
+          // Non-slab buildings cannot overlap another building
+          if (this.gridGraph.isBuildingOccupied(curX, curY)) return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  private spawnBuilding(defId: string, owner: any, tx: number, ty: number, isInstant: boolean = false): BuildingEntity {
+    const bDef = BUILDINGS[defId] || BUILDINGS['barracks'];
+    const hasFoundation = this.gridGraph.hasFoundationArea(tx, ty, bDef.width, bDef.height);
+    const b = new BuildingEntity(this.nextEntityId++, defId, owner, tx, ty, hasFoundation, isInstant);
     this.buildings.push(b);
 
     // Remove any trees in the construction footprint
@@ -392,17 +429,25 @@ class GameApp {
       this.gridGraph.setBuildingOccupied(tx, ty, b.def.width, b.def.height, true);
     }
 
-    if (owner === 'player' && this.objectiveManager) {
+    if (isInstant && owner === 'player' && this.objectiveManager) {
       this.objectiveManager.recordBuildingErected(defId);
     }
 
-    if (owner === 'player' && defId === 'watchtower' && !this.hasWarnedWatchtower) {
-      this.hasWarnedWatchtower = true;
-      EventBus.get().emit('advisor:message', {
-        speaker: 'zalpa',
-        text: 'The Watchtower is manned! We now command sight of the western dunes and coastline.',
-        isAlert: false
-      });
+    // Contextual Advisor warning / confirmation on placement
+    if (!isInstant && owner === 'player') {
+      if (bDef.requiresFoundation && !hasFoundation) {
+        EventBus.get().emit('advisor:message', {
+          speaker: 'tarkhunta',
+          text: `Wanax! You erect ${bDef.name} upon bare sand! Without cyclopean slabs, its structure suffers a 50% HP penalty!`,
+          isAlert: true
+        });
+      } else if (bDef.requiresFoundation && hasFoundation) {
+        EventBus.get().emit('advisor:message', {
+          speaker: 'tarkhunta',
+          text: `Megalithic foundation secured. The stonecutters anchor ${bDef.name} with bronze clamps (100% HP)!`,
+          isAlert: false
+        });
+      }
     }
 
     EventBus.get().emit('audio:build');
@@ -506,9 +551,19 @@ class GameApp {
           const tx = Math.floor(worldPos.x / TILE_SIZE);
           const ty = Math.floor(worldPos.y / TILE_SIZE);
 
+          if (!this.canPlaceBuilding(this.buildingToPlace, tx, ty)) {
+            EventBus.get().emit('advisor:message', {
+              speaker: 'burna_khabir',
+              text: 'Terrain unsuitable or blocked! Cannot erect structure here.',
+              isAlert: true
+            });
+            EventBus.get().emit('audio:combat_hit');
+            return;
+          }
+
           if (this.economy.canAfford(bDef.cost)) {
             this.economy.spend(bDef.cost);
-            this.spawnBuilding(this.buildingToPlace, 'player', tx, ty);
+            this.spawnBuilding(this.buildingToPlace, 'player', tx, ty, false);
             this.buildingToPlace = null;
           } else {
             EventBus.get().emit('advisor:message', {
@@ -524,8 +579,13 @@ class GameApp {
         this.dragStart = { x: sx, y: sy };
         this.dragCurrent = { x: sx, y: sy };
       } else if (e.button === 2) {
-        // Right click: issue contextual command
+        // Right click: cancel building placement or issue contextual command
         e.preventDefault();
+        if (this.buildingToPlace) {
+          this.buildingToPlace = null;
+          EventBus.get().emit('audio:click');
+          return;
+        }
         this.issueContextCommand(worldPos.x, worldPos.y);
       }
     });
@@ -708,20 +768,62 @@ class GameApp {
       }
     }
 
-    // Update buildings
+    // Update buildings (construction progression & destruction)
     for (let i = this.buildings.length - 1; i >= 0; i--) {
       const b = this.buildings[i];
       if (b.hp <= 0) {
-        this.gridGraph.setBuildingOccupied(b.tx, b.ty, b.def.width, b.def.height, false);
+        if (b.defId !== 'cyclopean_slab') {
+          this.gridGraph.setBuildingOccupied(b.tx, b.ty, b.def.width, b.def.height, false);
+        } else {
+          this.gridGraph.setFoundation(b.tx, b.ty, b.def.width, b.def.height, false);
+        }
         this.buildings.splice(i, 1);
+        continue;
+      }
+
+      // Progress active construction sites
+      if (b.buildProgress < 1.0) {
+        const finished = b.updateConstruction(dt);
+        if (finished) {
+          EventBus.get().emit('audio:build');
+          EventBus.get().emit('fx:floating_text', {
+            text: `${b.def.name.toUpperCase()} COMPLETE`,
+            color: '#4ade80',
+            x: b.centerX,
+            y: b.centerY - 24
+          });
+
+          if (b.owner === 'player' && this.objectiveManager) {
+            this.objectiveManager.recordBuildingErected(b.defId);
+          }
+
+          if (b.owner === 'player' && b.defId === 'watchtower' && !this.hasWarnedWatchtower) {
+            this.hasWarnedWatchtower = true;
+            if (b.hasFoundation) {
+              EventBus.get().emit('advisor:message', {
+                speaker: 'zalpa',
+                text: 'The Watchtower is manned upon cyclopean megaliths! We command sight of the western dunes!',
+                isAlert: false
+              });
+            } else {
+              EventBus.get().emit('advisor:message', {
+                speaker: 'tarkhunta',
+                text: 'The Watchtower is finished, but stands on shifting sand! Without megalithic slabs, its defenses are fragile (-50% HP).',
+                isAlert: true
+              });
+            }
+          }
+        }
       }
     }
 
-    // Calculate supply headroom
+    // Calculate supply headroom (only from fully completed structures)
     let totalCap = 10;
     let used = 0;
     for (const b of this.buildings) {
-      if (b.owner === 'player' && b.def.supplyProvided) totalCap += b.def.supplyProvided;
+      if (b.owner === 'player' && b.buildProgress >= 1.0 && b.def.supplyProvided) {
+        totalCap += b.def.supplyProvided;
+      }
     }
     for (const u of this.units) {
       if (u.owner === 'player') used += u.def.supplyCost;
@@ -852,24 +954,97 @@ class GameApp {
       const gw = bDef.width * TILE_SIZE;
       const gh = bDef.height * TILE_SIZE;
 
-      let canPlace = true;
+      const canPlace = this.canPlaceBuilding(this.buildingToPlace, ghostTx, ghostTy);
+      const hasFullFoundation = this.gridGraph.hasFoundationArea(ghostTx, ghostTy, bDef.width, bDef.height);
+      const isSlab = this.buildingToPlace === 'cyclopean_slab';
+
+      // 5a. Tile-by-tile grid cell overlay
       for (let dy = 0; dy < bDef.height; dy++) {
         for (let dx = 0; dx < bDef.width; dx++) {
-          if (!this.gridGraph.isWalkable(ghostTx + dx, ghostTy + dy) && this.buildingToPlace !== 'cyclopean_slab') {
-            canPlace = false;
+          const cx = (ghostTx + dx) * TILE_SIZE;
+          const cy = (ghostTy + dy) * TILE_SIZE;
+          const curTile = this.tileRenderer.getTile(ghostTx + dx, ghostTy + dy);
+          const hasSlab = this.gridGraph.hasFoundation(ghostTx + dx, ghostTy + dy);
+          const isOcc = this.gridGraph.isBuildingOccupied(ghostTx + dx, ghostTy + dy);
+
+          let cellColor = 'rgba(239, 68, 68, 0.35)'; // Red
+          let cellBorder = '#ef4444';
+
+          if (isSlab) {
+            if (curTile !== 'water' && curTile !== 'cliff' && !curTile.startsWith('vein_') && !hasSlab && !isOcc) {
+              cellColor = 'rgba(56, 189, 248, 0.35)';
+              cellBorder = '#38bdf8';
+            }
+          } else {
+            if (curTile !== 'water' && curTile !== 'cliff' && !curTile.startsWith('vein_') && !isOcc) {
+              if (hasSlab) {
+                cellColor = 'rgba(34, 197, 94, 0.4)'; // Green (Cyclopean foundation)
+                cellBorder = '#22c55e';
+              } else {
+                cellColor = 'rgba(245, 158, 11, 0.35)'; // Amber (Unstable bare ground)
+                cellBorder = '#f59e0b';
+              }
+            }
           }
+
+          ctx.fillStyle = cellColor;
+          ctx.fillRect(cx + 1, cy + 1, TILE_SIZE - 2, TILE_SIZE - 2);
+          ctx.strokeStyle = cellBorder;
+          ctx.lineWidth = 1;
+          ctx.strokeRect(cx + 1, cy + 1, TILE_SIZE - 2, TILE_SIZE - 2);
         }
       }
 
+      // 5b. Ghost building sprite
       ctx.save();
-      ctx.globalAlpha = 0.65;
+      ctx.globalAlpha = canPlace ? 0.75 : 0.45;
       const ghostSprite = SVGAProceduralBank.getBuildingSprite(this.buildingToPlace, 'player');
       if (ghostSprite) {
         ctx.drawImage(ghostSprite, ghostTx * TILE_SIZE, ghostTy * TILE_SIZE, gw, gh);
       }
-      ctx.strokeStyle = canPlace ? '#2de0a5' : '#ff4d4d';
+      ctx.strokeStyle = canPlace ? (hasFullFoundation || isSlab ? '#2de0a5' : '#f59e0b') : '#ff4d4d';
       ctx.lineWidth = 2;
       ctx.strokeRect(ghostTx * TILE_SIZE, ghostTy * TILE_SIZE, gw, gh);
+      ctx.restore();
+
+      // 5c. Floating status badge above ghost building
+      ctx.save();
+      ctx.font = 'bold 11px monospace';
+      ctx.textAlign = 'center';
+      const badgeY = ghostTy * TILE_SIZE - 12;
+      let badgeText = '';
+      let badgeBg = '#1c1917';
+      let badgeBorder = '#ef4444';
+      let badgeTextColor = '#f87171';
+
+      if (!canPlace) {
+        badgeText = '✗ BLOCKED TERRAIN';
+      } else if (isSlab) {
+        badgeText = '+ MEGALITHIC SLAB';
+        badgeBorder = '#38bdf8';
+        badgeTextColor = '#7dd3fc';
+      } else if (hasFullFoundation) {
+        badgeText = '✓ CYCLOPEAN SLAB (100% HP)';
+        badgeBorder = '#22c55e';
+        badgeTextColor = '#4ade80';
+      } else if (bDef.requiresFoundation) {
+        badgeText = '⚠ BARE GROUND (-50% HP)';
+        badgeBorder = '#f59e0b';
+        badgeTextColor = '#fbbf24';
+      } else {
+        badgeText = '✓ READY TO ERECT';
+        badgeBorder = '#22c55e';
+        badgeTextColor = '#4ade80';
+      }
+
+      const textW = ctx.measureText(badgeText).width;
+      ctx.fillStyle = badgeBg;
+      ctx.fillRect(ghostTx * TILE_SIZE + gw / 2 - textW / 2 - 6, badgeY - 11, textW + 12, 16);
+      ctx.strokeStyle = badgeBorder;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(ghostTx * TILE_SIZE + gw / 2 - textW / 2 - 6, badgeY - 11, textW + 12, 16);
+      ctx.fillStyle = badgeTextColor;
+      ctx.fillText(badgeText, ghostTx * TILE_SIZE + gw / 2, badgeY + 1);
       ctx.restore();
     }
 
@@ -916,28 +1091,135 @@ class GameApp {
     const bw = b.def.width * TILE_SIZE;
     const bh = b.def.height * TILE_SIZE;
 
-    const sprite = SVGAProceduralBank.getBuildingSprite(b.defId, b.owner);
-    if (sprite) {
-      ctx.drawImage(sprite, drawX, drawY, bw, bh);
-    } else {
-      ctx.fillStyle = b.owner === 'player' ? '#8a6234' : '#692d2d';
-      ctx.fillRect(drawX, drawY, bw, bh);
+    // Cyclopean slabs are rendered natively on the ground terrain layer
+    if (b.defId === 'cyclopean_slab') {
+      if (b.isSelected) {
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(drawX, drawY, bw, bh);
+      }
+      return;
     }
 
-    // Dynamic waving cloth banner (from original prototype)
-    if (b.defId === 'acropolis' || b.defId === 'barracks') {
-      const wave = Math.sin(Date.now() / 200 + b.id) * 2.5;
-      ctx.fillStyle = b.owner === 'player' ? '#dc2626' : '#2563eb';
-      ctx.fillRect(drawX + 12, drawY + 6, 3, 24);
+    // 1. Megalithic Foundation Plinth (Dune II Style Anchor)
+    if (b.hasFoundation) {
+      ctx.fillStyle = '#3a342c';
+      ctx.fillRect(drawX - 2, drawY + bh - 4, bw + 4, 6);
+      ctx.strokeStyle = '#6b5c4b';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(drawX - 2, drawY + bh - 4, bw + 4, 6);
+      // Bronze cramps / anchor pins
+      ctx.fillStyle = '#b45309';
+      ctx.fillRect(drawX + 6, drawY + bh - 3, 4, 4);
+      ctx.fillRect(drawX + bw - 10, drawY + bh - 3, 4, 4);
+    } else if (b.def.requiresFoundation) {
+      // Unstable bare ground: sand drifts encroaching on base
+      ctx.fillStyle = 'rgba(201, 162, 99, 0.65)';
       ctx.beginPath();
-      ctx.moveTo(drawX + 15, drawY + 7);
-      ctx.lineTo(drawX + 30, drawY + 10 + wave);
-      ctx.lineTo(drawX + 15, drawY + 17);
-      ctx.closePath();
+      ctx.moveTo(drawX - 2, drawY + bh);
+      ctx.lineTo(drawX + 10, drawY + bh - 5);
+      ctx.lineTo(drawX + 16, drawY + bh);
       ctx.fill();
     }
 
-    // Selection border and HP bar (original prototype style)
+    // 2. Active Construction Site vs Completed Structure
+    if (b.buildProgress < 1.0) {
+      // Construction foundation floor
+      ctx.fillStyle = '#33271e';
+      ctx.fillRect(drawX, drawY, bw, bh);
+
+      // Progressive vertical reveal of the building sprite
+      const visibleH = Math.max(4, Math.floor(bh * b.buildProgress));
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(drawX, drawY + bh - visibleH, bw, visibleH);
+      ctx.clip();
+      const sprite = SVGAProceduralBank.getBuildingSprite(b.defId, b.owner);
+      if (sprite) {
+        ctx.drawImage(sprite, drawX, drawY, bw, bh);
+      }
+      ctx.restore();
+
+      // Bronze Age Cedar Scaffolding Lattice
+      ctx.strokeStyle = '#78350f';
+      ctx.lineWidth = 1.5;
+      // Vertical scaffold poles
+      for (let px = 8; px < bw; px += 24) {
+        ctx.beginPath();
+        ctx.moveTo(drawX + px, drawY - 4);
+        ctx.lineTo(drawX + px, drawY + bh);
+        ctx.stroke();
+      }
+      // Horizontal planks
+      for (let py = 12; py < bh; py += 18) {
+        ctx.beginPath();
+        ctx.moveTo(drawX - 2, drawY + py);
+        ctx.lineTo(drawX + bw + 2, drawY + py);
+        ctx.stroke();
+      }
+      // Diagonal X-bracing across bays
+      ctx.strokeStyle = 'rgba(146, 64, 14, 0.6)';
+      ctx.lineWidth = 1;
+      for (let px = 8; px + 24 <= bw; px += 24) {
+        ctx.beginPath();
+        ctx.moveTo(drawX + px, drawY + 8);
+        ctx.lineTo(drawX + px + 24, drawY + bh - 4);
+        ctx.moveTo(drawX + px + 24, drawY + 8);
+        ctx.lineTo(drawX + px, drawY + bh - 4);
+        ctx.stroke();
+      }
+
+      // Flying sparks / stone chips at working line
+      const workY = drawY + bh - visibleH;
+      ctx.fillStyle = '#fef08a';
+      for (let s = 0; s < 3; s++) {
+        ctx.fillRect(drawX + Math.random() * bw, workY - Math.random() * 6, 2, 2);
+      }
+
+      // Construction Progress Bar
+      const barW = Math.min(bw, 48);
+      const barX = drawX + (bw - barW) / 2;
+      const barY = drawY - 14;
+
+      ctx.fillStyle = '#110d08';
+      ctx.fillRect(barX, barY, barW, 6);
+      ctx.strokeStyle = '#594a3b';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(barX, barY, barW, 6);
+
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillRect(barX + 1, barY + 1, Math.max(0, (barW - 2) * b.buildProgress), 4);
+
+      // Percentage label
+      ctx.fillStyle = '#fef08a';
+      ctx.font = 'bold 9px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(`${Math.floor(b.buildProgress * 100)}%`, drawX + bw / 2, barY - 2);
+    } else {
+      // Completed Structure
+      const sprite = SVGAProceduralBank.getBuildingSprite(b.defId, b.owner);
+      if (sprite) {
+        ctx.drawImage(sprite, drawX, drawY, bw, bh);
+      } else {
+        ctx.fillStyle = b.owner === 'player' ? '#8a6234' : '#692d2d';
+        ctx.fillRect(drawX, drawY, bw, bh);
+      }
+
+      // Dynamic waving cloth banner (Acropolis / Barracks)
+      if (b.defId === 'acropolis' || b.defId === 'barracks') {
+        const wave = Math.sin(Date.now() / 200 + b.id) * 2.5;
+        ctx.fillStyle = b.owner === 'player' ? '#dc2626' : '#2563eb';
+        ctx.fillRect(drawX + 12, drawY + 6, 3, 24);
+        ctx.beginPath();
+        ctx.moveTo(drawX + 15, drawY + 7);
+        ctx.lineTo(drawX + 30, drawY + 10 + wave);
+        ctx.lineTo(drawX + 15, drawY + 17);
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
+
+    // Selection border and HP bar
     if (b.isSelected) {
       ctx.strokeStyle = b.owner === 'player' ? '#4ade80' : '#f87171';
       ctx.lineWidth = 2;

@@ -85,6 +85,33 @@ export class GridGraph {
     return this.hasFoundationSlab[this.index(tx, ty)] > 0;
   }
 
+  public isBuildingOccupied(tx: number, ty: number): boolean {
+    if (!this.isInBounds(tx, ty)) return false;
+    return this.occupiedByBuilding[this.index(tx, ty)] > 0;
+  }
+
+  public hasFoundationArea(tx: number, ty: number, w: number, h: number): boolean {
+    for (let dy = 0; dy < h; dy++) {
+      for (let dx = 0; dx < w; dx++) {
+        if (!this.hasFoundation(tx + dx, ty + dy)) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  public getFoundationCoverage(tx: number, ty: number, w: number, h: number): number {
+    let count = 0;
+    const total = w * h;
+    for (let dy = 0; dy < h; dy++) {
+      for (let dx = 0; dx < w; dx++) {
+        if (this.hasFoundation(tx + dx, ty + dy)) count++;
+      }
+    }
+    return count / total;
+  }
+
   public getNeighbors(tx: number, ty: number, allowDiagonals = true): GridCoord[] {
     const neighbors: GridCoord[] = [];
     const dirs = [

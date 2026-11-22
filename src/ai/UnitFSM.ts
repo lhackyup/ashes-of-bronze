@@ -242,7 +242,7 @@ export class UnitFSM {
         if (u.currentCargoAmount >= maxCargo) {
           // Cargo full: locate nearest active dropoff depot (Foundry or Acropolis)
           const dropoffs = buildings.filter(
-            b => b.owner === u.owner && (b.defId === 'bronze_foundry' || b.defId === 'acropolis')
+            b => b.owner === u.owner && b.buildProgress >= 1.0 && (b.defId === 'bronze_foundry' || b.defId === 'acropolis')
           );
           if (dropoffs.length > 0) {
             dropoffs.sort((a, b) => Math.hypot(a.centerX - u.x, a.centerY - u.y) - Math.hypot(b.centerX - u.x, b.centerY - u.y));
@@ -270,7 +270,7 @@ export class UnitFSM {
     // 3. RETURN_CARGO: Hauling ore to the smelter / acropolis
     if (u.state === 'RETURN_CARGO') {
       const dropoffs = buildings.filter(
-        b => b.owner === u.owner && (b.defId === 'bronze_foundry' || b.defId === 'acropolis')
+        b => b.owner === u.owner && b.buildProgress >= 1.0 && (b.defId === 'bronze_foundry' || b.defId === 'acropolis')
       );
       if (dropoffs.length === 0) {
         u.state = 'IDLE';

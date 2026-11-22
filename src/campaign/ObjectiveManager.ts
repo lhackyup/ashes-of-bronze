@@ -139,7 +139,7 @@ export class ObjectiveManager {
       if (obj.isCompleted) continue;
 
       if (obj.id === 'build_watchtower') {
-        const towers = buildings.filter(b => b.owner === 'player' && b.defId === 'watchtower');
+        const towers = buildings.filter(b => b.owner === 'player' && b.defId === 'watchtower' && b.buildProgress >= 1.0);
         obj.currentAmount = towers.length;
         if (towers.length >= (obj.targetAmount || 1)) {
           this.completeObjective(obj);
