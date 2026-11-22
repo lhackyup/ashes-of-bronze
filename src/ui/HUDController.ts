@@ -72,13 +72,40 @@ export class HUDController {
       this.updateObjectives(objs);
     });
 
+    let latestRes: ResourcePool = { copper: 400, tin: 100, iron: 0, grain: 200, stone: 150, timber: 150 };
+    let latestMax: Record<string, number> = { copper: 500, tin: 500, iron: 500, grain: 500, stone: 500, timber: 500 };
+
+    const updateDisplay = () => {
+      const format = (cur: number, max: number, el: HTMLElement | null, baseColor: string) => {
+        if (!el) return;
+        const val = Math.floor(cur);
+        const isFull = cur >= max;
+        el.textContent = `${val}/${max}`;
+        if (isFull) {
+          el.style.color = '#ef4444';
+          el.title = `Storage Full (${val}/${max})! Construct Granary or Foundry to expand.`;
+        } else {
+          el.style.color = baseColor;
+          el.title = `Stored: ${val} / Capacity: ${max}`;
+        }
+      };
+
+      format(latestRes.copper, latestMax.copper, this.resCopperEl, '#2de0a5');
+      format(latestRes.tin, latestMax.tin, this.resTinEl, '#c0c6cc');
+      format(latestRes.stone, latestMax.stone, this.resStoneEl, '#e2e8f0');
+      format(latestRes.timber, latestMax.timber, this.resTimberEl, '#f59e0b');
+      format(latestRes.iron, latestMax.iron, this.resIronEl, '#e07a5f');
+      format(latestRes.grain, latestMax.grain, this.resGrainEl, '#ffd166');
+    };
+
     bus.on('economy:changed', (res: ResourcePool) => {
-      if (this.resCopperEl) this.resCopperEl.textContent = Math.floor(res.copper).toString();
-      if (this.resTinEl) this.resTinEl.textContent = Math.floor(res.tin).toString();
-      if (this.resStoneEl) this.resStoneEl.textContent = Math.floor(res.stone).toString();
-      if (this.resTimberEl) this.resTimberEl.textContent = Math.floor(res.timber).toString();
-      if (this.resIronEl) this.resIronEl.textContent = Math.floor(res.iron).toString();
-      if (this.resGrainEl) this.resGrainEl.textContent = Math.floor(res.grain).toString();
+      latestRes = res;
+      updateDisplay();
+    });
+
+    bus.on('economy:storage_changed', (storage: Record<string, number>) => {
+      latestMax = storage;
+      updateDisplay();
     });
 
     bus.on('economy:supply_changed', (data: { max: number; used: number }) => {
@@ -176,7 +203,18 @@ export class HUDController {
     if (selectedUnit) {
       this.inspectorPanelEl.style.display = 'flex';
       this.inspectorNameEl.textContent = selectedUnit.def.name;
-      this.inspectorDescEl.textContent = selectedUnit.def.description;
+      let desc = selectedUnit.def.description;
+      if (selectedUnit.def.category === 'worker') {
+        const cType = (selectedUnit.currentCargoType || 'cargo').toUpperCase();
+        if (selectedUnit.state === 'WAITING_STORAGE') {
+          desc += `\n[STATUS: WAITING FOR STORAGE SPACE - Baskets Full: ${selectedUnit.currentCargoAmount} ${cType}]`;
+        } else if (selectedUnit.state === 'HARVESTING') {
+          desc += `\n[STATUS: Harvesting ${cType} - Baskets: ${selectedUnit.currentCargoAmount}/${selectedUnit.def.cargoCapacity || 120}]`;
+        } else if (selectedUnit.state === 'RETURN_CARGO') {
+          desc += `\n[STATUS: Hauling ${selectedUnit.currentCargoAmount} ${cType} to depot]`;
+        }
+      }
+      this.inspectorDescEl.textContent = desc;
       const hpPct = Math.max(0, Math.min(100, (selectedUnit.hp / selectedUnit.maxHp) * 100));
       this.inspectorHpFillEl.style.width = `${hpPct}%`;
 

@@ -7,6 +7,7 @@ import { EconomySystem } from '../systems/EconomySystem.ts';
 import { TileRenderer } from '../engine/rendering/TileRenderer.ts';
 import { TILE_SIZE } from '../data/terrain.ts';
 import { EventBus } from '../core/EventBus.ts';
+import { ResourceType } from '../data/types.ts';
 
 export class UnitFSM {
   public static updateUnit(
@@ -41,6 +42,7 @@ export class UnitFSM {
       case 'HARVESTING':
       case 'RETURN_CARGO':
       case 'UNLOADING':
+      case 'WAITING_STORAGE':
         this.handleHarvestCycle(u, dt, graph, buildings, economy, tileRenderer, decorations);
         break;
     }
@@ -443,9 +445,29 @@ export class UnitFSM {
       if (distToDropoff <= reachDist || u.path.length === 0) {
         // Depot reached: Unload cargo
         if (u.currentCargoType && u.currentCargoAmount > 0) {
-          const type = u.currentCargoType;
-          const amount = u.currentCargoAmount;
-          economy.addResource(type as any, amount);
+          const type = u.currentCargoType as ResourceType;
+          const remainingSpace = economy.getRemainingStorage(type);
+
+          if (remainingSpace <= 0) {
+            // Storage is 100% full! Donkey CANNOT unload!
+            u.state = 'WAITING_STORAGE';
+            u.path = [];
+            EventBus.get().emit('fx:floating_text', {
+              text: `STORAGE FULL! [${type.toUpperCase()}]`,
+              color: '#ef4444',
+              x: u.x,
+              y: u.y - 24
+            });
+            EventBus.get().emit('advisor:message', {
+              speaker: 'burna_khabir',
+              text: `Wanax, our storerooms are packed to the brim with ${type}! Build Granaries or Foundries to expand storage capacity.`,
+              isAlert: true
+            });
+            return;
+          }
+
+          const added = economy.addResource(type, u.currentCargoAmount);
+          u.currentCargoAmount -= added;
           EventBus.get().emit('audio:build');
 
           const colorMap: Record<string, string> = {
@@ -458,11 +480,24 @@ export class UnitFSM {
           };
 
           EventBus.get().emit('fx:floating_text', {
-            text: `+${amount} ${type.toUpperCase()}`,
+            text: `+${added} ${type.toUpperCase()}`,
             color: colorMap[type] || '#fef08a',
             x: u.x,
             y: u.y - 24
           });
+
+          if (u.currentCargoAmount > 0) {
+            // Partial unload because storage filled up!
+            u.state = 'WAITING_STORAGE';
+            u.path = [];
+            EventBus.get().emit('fx:floating_text', {
+              text: `STORAGE FULL! [${u.currentCargoAmount} LEFT]`,
+              color: '#f59e0b',
+              x: u.x,
+              y: u.y - 38
+            });
+            return;
+          }
         }
         u.currentCargoAmount = 0;
 
@@ -502,6 +537,50 @@ export class UnitFSM {
       } else {
         this.handleMove(u, dt, graph);
       }
+      return;
+    }
+
+    // 4. WAITING_STORAGE: Donkey holds cargo at the depot waiting for storage capacity to free up
+    if (u.state === 'WAITING_STORAGE') {
+      if (!u.currentCargoType || u.currentCargoAmount <= 0) {
+        u.state = u.targetMineCoord ? 'HARVEST_SEEK' : 'IDLE';
+        return;
+      }
+
+      const type = u.currentCargoType as ResourceType;
+      const space = economy.getRemainingStorage(type);
+      if (space > 0) {
+        const added = economy.addResource(type, u.currentCargoAmount);
+        u.currentCargoAmount -= added;
+        EventBus.get().emit('audio:build');
+
+        const colorMap: Record<string, string> = {
+          tin: '#93c5fd',
+          copper: '#fbbf24',
+          iron: '#cbd5e1',
+          grain: '#fde047',
+          stone: '#e2e8f0',
+          timber: '#f59e0b'
+        };
+
+        EventBus.get().emit('fx:floating_text', {
+          text: `+${added} ${type.toUpperCase()}`,
+          color: colorMap[type] || '#4ade80',
+          x: u.x,
+          y: u.y - 24
+        });
+
+        if (u.currentCargoAmount <= 0) {
+          u.currentCargoAmount = 0;
+          if (u.targetMineCoord) {
+            u.state = 'HARVEST_SEEK';
+            u.path = [];
+          } else {
+            u.state = 'IDLE';
+          }
+        }
+      }
+      return;
     }
   }
 }

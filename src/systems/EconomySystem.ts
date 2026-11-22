@@ -1,10 +1,21 @@
 import { Cost, ResourcePool, ResourceType } from '../data/types.ts';
 import { EventBus } from '../core/EventBus.ts';
+import { BuildingEntity } from '../entities/BuildingEntity.ts';
 
 export class EconomySystem {
   public resources: ResourcePool;
   public supplyMax: number = 20;
   public supplyUsed: number = 0;
+
+  // Maximum capacity per resource type provided by storehouses, granaries & foundries
+  public storageMax: Record<ResourceType, number> = {
+    copper: 500,
+    tin: 500,
+    iron: 500,
+    grain: 500,
+    stone: 500,
+    timber: 500
+  };
 
   constructor(initialResources: Partial<ResourcePool> = {}) {
     this.resources = {
@@ -15,6 +26,72 @@ export class EconomySystem {
       stone: initialResources.stone ?? 150,
       timber: initialResources.timber ?? 150
     };
+  }
+
+  public updateStorageCapacity(buildings: BuildingEntity[]): void {
+    // Base capacity from royal Megaron / administrative settlement
+    const newMax: Record<ResourceType, number> = {
+      copper: 500,
+      tin: 500,
+      iron: 500,
+      grain: 500,
+      stone: 500,
+      timber: 500
+    };
+
+    let acropolisCount = 0;
+    for (const b of buildings) {
+      if (b.owner === 'player' && b.buildProgress >= 1.0) {
+        if (b.defId === 'acropolis') {
+          acropolisCount++;
+          if (acropolisCount > 1) {
+            newMax.copper += 500;
+            newMax.tin += 500;
+            newMax.iron += 500;
+            newMax.grain += 500;
+            newMax.stone += 500;
+            newMax.timber += 500;
+          }
+        } else if (b.defId === 'granary') {
+          // Granary & Water Well: increases grain, timber and stone storage by +500, ores by +200
+          newMax.grain += 500;
+          newMax.timber += 500;
+          newMax.stone += 400;
+          newMax.copper += 200;
+          newMax.tin += 200;
+          newMax.iron += 200;
+        } else if (b.defId === 'bronze_foundry') {
+          // Bronze Foundry & Storage: increases copper, tin, iron by +500, stone by +350
+          newMax.copper += 500;
+          newMax.tin += 500;
+          newMax.iron += 500;
+          newMax.stone += 350;
+        }
+      }
+    }
+
+    let changed = false;
+    for (const k of Object.keys(newMax) as ResourceType[]) {
+      if (this.storageMax[k] !== newMax[k]) {
+        this.storageMax[k] = newMax[k];
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      EventBus.get().emit('economy:storage_changed', this.storageMax);
+      EventBus.get().emit('economy:changed', this.resources);
+    }
+  }
+
+  public getRemainingStorage(type: ResourceType): number {
+    const cur = this.resources[type] || 0;
+    const max = this.storageMax[type] || 500;
+    return Math.max(0, max - cur);
+  }
+
+  public isStorageFull(type: ResourceType): boolean {
+    return this.getRemainingStorage(type) <= 0;
   }
 
   public canAfford(cost: Cost): boolean {
@@ -41,11 +118,17 @@ export class EconomySystem {
     return true;
   }
 
-  public addResource(type: ResourceType, amount: number): void {
+  public addResource(type: ResourceType, amount: number): number {
     if (this.resources[type] !== undefined) {
-      this.resources[type] += amount;
-      EventBus.get().emit('economy:changed', this.resources);
+      const space = this.getRemainingStorage(type);
+      const toAdd = Math.min(amount, space);
+      if (toAdd > 0) {
+        this.resources[type] += toAdd;
+        EventBus.get().emit('economy:changed', this.resources);
+      }
+      return toAdd;
     }
+    return 0;
   }
 
   public updateSupply(max: number, used: number): void {

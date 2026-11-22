@@ -23,10 +23,11 @@ export const BUILDINGS: Record<string, BuildingDef> = {
     maxHp: 2400,
     cost: { copper: 350, stone: 200, timber: 150 },
     buildTime: 25,
-    description: 'Beating heart of the city-state. Stores resources, coordinates administration, and trains donkey caravans.',
+    description: 'Beating heart of the city-state. Stores 500 of all resources, coordinates administration, and trains donkey caravans.',
     requiresFoundation: true,
     foundationPenaltyHpRatio: 0.5,
     supplyProvided: 15,
+    storageProvided: 500,
     dropsOffResources: ['copper', 'tin', 'iron', 'grain', 'stone', 'timber'],
     producesUnits: ['donkey_caravan']
   },
@@ -40,10 +41,11 @@ export const BUILDINGS: Record<string, BuildingDef> = {
     maxHp: 650,
     cost: { copper: 80, timber: 60 },
     buildTime: 8,
-    description: 'Stores grain and sustains population, increasing maximum unit capacity (+10 Supply).',
+    description: 'Stores grain and supplies. Increases resource storage (+500 Grain/Timber/Stone, +200 Ores) and unit capacity (+10 Supply).',
     requiresFoundation: true,
     foundationPenaltyHpRatio: 0.5,
-    supplyProvided: 10
+    supplyProvided: 10,
+    storageProvided: 500
   },
 
   bronze_foundry: {
@@ -55,9 +57,10 @@ export const BUILDINGS: Record<string, BuildingDef> = {
     maxHp: 1100,
     cost: { copper: 200, stone: 80, timber: 50 },
     buildTime: 14,
-    description: 'Primary drop-off facility for ore caravans. Smelts copper and tin into oxhide ingots.',
+    description: 'Primary drop-off facility for ore caravans. Smelts ingots and expands mineral storage capacity (+500 Copper/Tin/Iron, +300 Stone).',
     requiresFoundation: true,
     foundationPenaltyHpRatio: 0.5,
+    storageProvided: 500,
     dropsOffResources: ['copper', 'tin', 'iron'],
     producesUnits: ['donkey_caravan']
   },

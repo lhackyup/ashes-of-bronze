@@ -971,6 +971,7 @@ class GameApp {
       if (u.owner === 'player') used += u.def.supplyCost;
     }
     this.economy.updateSupply(totalCap, used);
+    this.economy.updateStorageCapacity(this.buildings);
 
     // Update combat encounters and projectiles
     this.combat.update(dt, this.units, this.buildings);
@@ -1478,7 +1479,7 @@ class GameApp {
     }
 
     // Cargo progress bar & status indicator for worker/donkey caravan
-    if (u.def.category === 'worker' && (u.currentCargoAmount > 0 || u.state === 'HARVESTING' || u.isSelected)) {
+    if (u.def.category === 'worker' && (u.currentCargoAmount > 0 || u.state === 'HARVESTING' || u.isSelected || u.state === 'WAITING_STORAGE')) {
       const maxCargo = u.def.cargoCapacity || 120;
       const cargoPct = Math.min(1.0, u.currentCargoAmount / maxCargo);
       const barY = drawY - (hasHpBar ? 23 : 16);
@@ -1503,6 +1504,14 @@ class GameApp {
         ctx.beginPath();
         ctx.arc(drawX + 17, barY + 2, 2.5, 0, Math.PI * 2);
         ctx.fill();
+      }
+
+      // Red flashing FULL indicator when depot cannot accept more cargo
+      if (u.state === 'WAITING_STORAGE') {
+        const pulse = Math.sin(Date.now() / 150) * 0.5 + 0.5;
+        ctx.fillStyle = `rgba(239, 68, 68, ${0.6 + pulse * 0.4})`;
+        ctx.font = 'bold 8px monospace';
+        ctx.fillText('FULL', drawX - 9, barY - 2);
       }
     }
   }

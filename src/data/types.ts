@@ -63,6 +63,7 @@ export interface BuildingDef {
   requiresFoundation: boolean;
   foundationPenaltyHpRatio?: number; // es. 0.50 se non posizionato su terrapieno
   supplyProvided?: number;
+  storageProvided?: number | Partial<Record<ResourceType, number>>;
   unlockEra?: Era;
   producesUnits?: string[];
   dropsOffResources?: ResourceType[];
@@ -102,6 +103,7 @@ export type UnitState =
   | 'HARVESTING'
   | 'RETURN_CARGO'
   | 'UNLOADING'
+  | 'WAITING_STORAGE'
   | 'FLEE';
 
 export interface Vector2 {
