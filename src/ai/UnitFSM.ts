@@ -117,13 +117,15 @@ export class UnitFSM {
       u.x = waterEdgePx;
     }
 
-    // Skip current tile waypoint if already on it
-    if (u.path.length > 1) {
+    // Skip current tile waypoint if already on it or very close
+    while (u.path.length > 1) {
       const firstWp = u.path[0];
       const fwTx = Math.floor(firstWp.x / TILE_SIZE);
       const fwTy = Math.floor(firstWp.y / TILE_SIZE);
       if (fwTx === curTx && fwTy === curTy && Math.hypot(firstWp.x - u.x, firstWp.y - u.y) < 14) {
         u.path.shift();
+      } else {
+        break;
       }
     }
 
@@ -135,13 +137,16 @@ export class UnitFSM {
     const isTerrainBlocked = !graph.isInBounds(nextTx, nextTy) || !graph.isWalkable(nextTx, nextTy) || nextTx < 6;
     const isOccupiedByOtherUnit = units ? units.some(other =>
       other.id !== u.id && other.hp > 0 &&
-      Math.floor(other.x / TILE_SIZE) === nextTx &&
-      Math.floor(other.y / TILE_SIZE) === nextTy
+      (Math.floor(other.x / TILE_SIZE) === nextTx && Math.floor(other.y / TILE_SIZE) === nextTy ||
+       Math.hypot(other.x - (nextTx * TILE_SIZE + 24), other.y - (nextTy * TILE_SIZE + 24)) < 32)
     ) : false;
 
     if (isTerrainBlocked || isOccupiedByOtherUnit) {
       // The direct waypoint ahead is blocked!
-      // Look at the final destination and determine if we can reroute or need to stop.
+      // Firmly snap to current tile center first to avoid overlapping or springing
+      u.x = Math.max(waterEdgePx, curTx * TILE_SIZE + 24);
+      u.y = curTy * TILE_SIZE + 24;
+
       const finalWp = u.path[u.path.length - 1];
       let goalTx = Math.floor(finalWp.x / TILE_SIZE);
       let goalTy = Math.floor(finalWp.y / TILE_SIZE);
@@ -157,8 +162,6 @@ export class UnitFSM {
         // If current position is already adjacent to the target, we have arrived!
         const isAdjacent = Math.abs(curTx - goalTx) <= 1 && Math.abs(curTy - goalTy) <= 1;
         if (isAdjacent) {
-          u.x = Math.max(waterEdgePx, curTx * TILE_SIZE + 24);
-          u.y = curTy * TILE_SIZE + 24;
           u.path = [];
           u.state = 'IDLE';
           return;
@@ -193,8 +196,6 @@ export class UnitFSM {
 
         if (bestAdjTile) {
           if (curTx === bestAdjTile.tx && curTy === bestAdjTile.ty) {
-            u.x = Math.max(waterEdgePx, curTx * TILE_SIZE + 24);
-            u.y = curTy * TILE_SIZE + 24;
             u.path = [];
             u.state = 'IDLE';
             return;
@@ -203,8 +204,6 @@ export class UnitFSM {
           goalTy = bestAdjTile.ty;
         } else {
           // No free tile around destination: stop in current tile center
-          u.x = Math.max(waterEdgePx, curTx * TILE_SIZE + 24);
-          u.y = curTy * TILE_SIZE + 24;
           u.path = [];
           u.state = 'IDLE';
           return;
@@ -218,7 +217,7 @@ export class UnitFSM {
           if (other.id !== u.id && other.hp > 0) {
             const otx = Math.floor(other.x / TILE_SIZE);
             const oty = Math.floor(other.y / TILE_SIZE);
-            if ((otx !== curTx || oty !== curTy) && (otx !== goalTx || oty !== goalTy)) {
+            if (otx !== curTx || oty !== curTy) {
               blockedKeys.add(oty * graph.width + otx);
             }
           }
@@ -234,10 +233,9 @@ export class UnitFSM {
           x: Math.max(waterEdgePx, c.tx * TILE_SIZE + 24),
           y: c.ty * TILE_SIZE + 24
         }));
+        return; // Start detour on next frame
       } else {
         // No alternative route found: halt cleanly in current tile center
-        u.x = Math.max(waterEdgePx, curTx * TILE_SIZE + 24);
-        u.y = curTy * TILE_SIZE + 24;
         u.path = [];
         u.state = 'IDLE';
         return;
@@ -464,63 +462,47 @@ export class UnitFSM {
           u.x = Math.max(6 * TILE_SIZE + 24, curTx * TILE_SIZE + 24);
           u.y = ejTy * TILE_SIZE + 24;
         }
+
+        // Cancel movement trying to push through a solid building
+        if (u.path.length > 0) {
+          u.path = [];
+          u.state = 'IDLE';
+        }
       }
     }
   }
 
   // --- Strict Unit-to-Unit Collision & Tile Occupancy Separation ---
-  // Guarantees no two units (troops, donkeys, Sea Peoples raiders) occupy the same tile.
-  // Stationary units are firmly locked to the exact center of their tile.
-  // Completely eliminates spring-bounce oscillations and marble-pushing dynamics!
+  // Guarantees stationary units are firmly locked to the exact center of their tile.
+  // Stationary units never share a tile. Moving units avoid occupied tiles dynamically via handleMove.
   public static resolveUnitCollisions(units: UnitEntity[], buildings: BuildingEntity[]): void {
     const minWaterX = 6 * TILE_SIZE + 24;
 
-    // 1. Firmly lock all stationary units to the exact center of their tile
-    for (const u of units) {
-      if (u.hp <= 0) continue;
-      if (u.state === 'IDLE' || u.state === 'WAITING_STORAGE' || u.path.length === 0) {
-        const tx = Math.floor(u.x / TILE_SIZE);
-        const ty = Math.floor(u.y / TILE_SIZE);
-        u.x = Math.max(minWaterX, tx * TILE_SIZE + 24);
-        u.y = ty * TILE_SIZE + 24;
-      }
-    }
-
-    // 2. Tile Exclusivity Enforcement: No two units can occupy the same tile
+    // 1. Lock all stationary units firmly to the exact center of their tile
     const occupiedTiles = new Map<number, UnitEntity>();
+
     for (const u of units) {
       if (u.hp <= 0) continue;
+      const isStationary = u.state === 'IDLE' || u.state === 'WAITING_STORAGE' || u.path.length === 0;
+      if (!isStationary) continue;
+
       const tx = Math.floor(u.x / TILE_SIZE);
       const ty = Math.floor(u.y / TILE_SIZE);
-      const key = ty * 10000 + tx;
+      u.x = Math.max(minWaterX, tx * TILE_SIZE + 24);
+      u.y = ty * TILE_SIZE + 24;
 
+      const key = ty * 10000 + tx;
       const resident = occupiedTiles.get(key);
       if (!resident) {
         occupiedTiles.set(key, u);
       } else {
-        // Conflict! Both units are in the same tile (tx, ty).
-        // Decide who stays: stationary unit stays; if both or neither, resident with lower ID stays.
-        const residentStationary = resident.state === 'IDLE' || resident.state === 'WAITING_STORAGE';
-        const uStationary = u.state === 'IDLE' || u.state === 'WAITING_STORAGE';
-
-        let unitToKeep = resident;
-        let unitToMove = u;
-
-        if (!residentStationary && uStationary) {
-          unitToKeep = u;
-          unitToMove = resident;
-        }
-
-        occupiedTiles.set(key, unitToKeep);
-
-        // Find nearest free adjacent walkable tile for unitToMove
+        // Two stationary units sharing the exact same tile: relocate the secondary unit to the nearest free adjacent tile
         const neighborOffsets = [
           { dx: 0, dy: 1 }, { dx: 0, dy: -1 }, { dx: 1, dy: 0 }, { dx: -1, dy: 0 },
           { dx: 1, dy: 1 }, { dx: -1, dy: 1 }, { dx: 1, dy: -1 }, { dx: -1, dy: -1 },
           { dx: 0, dy: 2 }, { dx: 0, dy: -2 }, { dx: 2, dy: 0 }, { dx: -2, dy: 0 }
         ];
 
-        let relocated = false;
         for (const off of neighborOffsets) {
           const atx = tx + off.dx;
           const aty = ty + off.dy;
@@ -532,28 +514,19 @@ export class UnitFSM {
               aty >= b.ty && aty < b.ty + b.def.height
             );
             if (!insideB) {
-              unitToMove.x = atx * TILE_SIZE + 24;
-              unitToMove.y = aty * TILE_SIZE + 24;
-              unitToMove.path = [];
-              unitToMove.state = 'IDLE';
-              occupiedTiles.set(aKey, unitToMove);
-              relocated = true;
+              u.x = atx * TILE_SIZE + 24;
+              u.y = aty * TILE_SIZE + 24;
+              u.path = [];
+              u.state = 'IDLE';
+              occupiedTiles.set(aKey, u);
               break;
             }
           }
         }
-
-        if (!relocated) {
-          // Keep at current tile if no adjacent spot available
-          unitToMove.x = Math.max(minWaterX, tx * TILE_SIZE + 24);
-          unitToMove.y = ty * TILE_SIZE + 24;
-          unitToMove.path = [];
-          unitToMove.state = 'IDLE';
-        }
       }
     }
 
-    // 3. Eject any unit from building interiors and keep out of deep sea
+    // 2. Eject any unit from building interiors and keep out of deep sea
     for (const u of units) {
       if (u.hp <= 0) continue;
       if (u.x < minWaterX) u.x = minWaterX;

@@ -917,14 +917,18 @@ class GameApp {
         const startTy = Math.floor(u.y / TILE_SIZE);
         const pathCoords = AStar.findPath(this.gridGraph, { tx: startTx, ty: startTy }, { tx: dropTx, ty: dropTy });
         if (pathCoords.length > 0) {
-          u.path = pathCoords.map(c => ({
-            x: Math.max(6 * TILE_SIZE + 12, c.tx * TILE_SIZE + 24),
+          const finalCoords = (pathCoords.length > 1 && pathCoords[0].tx === startTx && pathCoords[0].ty === startTy)
+            ? pathCoords.slice(1)
+            : pathCoords;
+          u.path = finalCoords.map(c => ({
+            x: Math.max(6 * TILE_SIZE + 24, c.tx * TILE_SIZE + 24),
             y: c.ty * TILE_SIZE + 24
           }));
+          u.state = 'RETURN_CARGO';
         } else {
-          u.path = [{ x: dropTx * TILE_SIZE + 24, y: dropTy * TILE_SIZE + 24 }];
+          u.path = [];
+          u.state = 'IDLE';
         }
-        u.state = 'RETURN_CARGO';
 
         EventBus.get().emit('fx:floating_text', {
           text: `DELIVERING TO ${targetFriendlyBuilding.def.name.split(' ')[0].toUpperCase()}!`,
@@ -949,14 +953,18 @@ class GameApp {
         const startTy = Math.floor(u.y / TILE_SIZE);
         const pathCoords = AStar.findPath(this.gridGraph, { tx: startTx, ty: startTy }, { tx: targetTx, ty: targetTy });
         if (pathCoords.length > 0) {
-          u.path = pathCoords.map(c => ({
-            x: Math.max(6 * TILE_SIZE + 12, c.tx * TILE_SIZE + 24),
+          const finalCoords = (pathCoords.length > 1 && pathCoords[0].tx === startTx && pathCoords[0].ty === startTy)
+            ? pathCoords.slice(1)
+            : pathCoords;
+          u.path = finalCoords.map(c => ({
+            x: Math.max(6 * TILE_SIZE + 24, c.tx * TILE_SIZE + 24),
             y: c.ty * TILE_SIZE + 24
           }));
+          u.state = 'HARVEST_SEEK';
         } else {
-          u.path = [{ x: targetTx * TILE_SIZE + 24, y: targetTy * TILE_SIZE + 24 }];
+          u.path = [];
+          u.state = 'IDLE';
         }
-        u.state = 'HARVEST_SEEK';
       } else if (targetTree && u.def.category === 'worker') {
         // Caravan dispatched to fell and harvest cedar timber
         const treeTx = Math.floor(targetTree.x);
@@ -971,14 +979,18 @@ class GameApp {
         const startTy = Math.floor(u.y / TILE_SIZE);
         const pathCoords = AStar.findPath(this.gridGraph, { tx: startTx, ty: startTy }, { tx: treeTx, ty: treeTy });
         if (pathCoords.length > 0) {
-          u.path = pathCoords.map(c => ({
-            x: Math.max(6 * TILE_SIZE + 12, c.tx * TILE_SIZE + 24),
+          const finalCoords = (pathCoords.length > 1 && pathCoords[0].tx === startTx && pathCoords[0].ty === startTy)
+            ? pathCoords.slice(1)
+            : pathCoords;
+          u.path = finalCoords.map(c => ({
+            x: Math.max(6 * TILE_SIZE + 24, c.tx * TILE_SIZE + 24),
             y: c.ty * TILE_SIZE + 24
           }));
+          u.state = 'HARVEST_SEEK';
         } else {
-          u.path = [{ x: treeTx * TILE_SIZE + 24, y: treeTy * TILE_SIZE + 24 }];
+          u.path = [];
+          u.state = 'IDLE';
         }
-        u.state = 'HARVEST_SEEK';
       } else {
         // Normal unit movement order: assign distinct destination tile for this unit
         u.targetMineCoord = null;
@@ -1026,15 +1038,16 @@ class GameApp {
         const pathCoords = AStar.findPath(this.gridGraph, { tx: startTx, ty: startTy }, { tx: unitTargetTx, ty: unitTargetTy }, 3000, blockedKeys);
 
         if (pathCoords.length > 0) {
-          u.path = pathCoords.map(c => ({
-            x: Math.max(6 * TILE_SIZE + 12, c.tx * TILE_SIZE + 24),
+          const finalCoords = (pathCoords.length > 1 && pathCoords[0].tx === startTx && pathCoords[0].ty === startTy)
+            ? pathCoords.slice(1)
+            : pathCoords;
+          u.path = finalCoords.map(c => ({
+            x: Math.max(6 * TILE_SIZE + 24, c.tx * TILE_SIZE + 24),
             y: c.ty * TILE_SIZE + 24
           }));
           u.state = 'MOVE_TO';
-        } else if (this.gridGraph.isWalkable(unitTargetTx, unitTargetTy) && unitTargetTx >= 6) {
-          u.path = [{ x: Math.max(6 * TILE_SIZE + 12, unitTargetTx * TILE_SIZE + 24), y: unitTargetTy * TILE_SIZE + 24 }];
-          u.state = 'MOVE_TO';
         } else {
+          // If no path can be found to the destination avoiding stationary units, stop in current tile!
           u.path = [];
           u.state = 'IDLE';
         }

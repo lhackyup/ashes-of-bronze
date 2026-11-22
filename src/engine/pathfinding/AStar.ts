@@ -34,25 +34,29 @@ export class AStar {
       return [{ tx: start.tx, ty: start.ty }];
     }
 
-    // Se l'obiettivo non è calpestabile (es. clic su un edificio nemico per attaccare),
-    // cerca il vicino calpestabile più prossimo al punto di partenza
+    const toKey = (tx: number, ty: number) => ty * graph.width + tx;
+
+    // Se l'obiettivo non è calpestabile o è bloccato da un'altra unità,
+    // cerca il vicino calpestabile libero più prossimo al punto di partenza
     let targetGoal = goal;
-    if (!graph.isWalkable(goal.tx, goal.ty)) {
+    const isGoalBlocked = !graph.isWalkable(goal.tx, goal.ty) || (blockedTileKeys && blockedTileKeys.has(toKey(goal.tx, goal.ty)));
+    if (isGoalBlocked) {
       const neighbors = graph.getNeighbors(goal.tx, goal.ty, true);
-      if (neighbors.length === 0) return [];
-      neighbors.sort((a, b) => {
+      const freeNeighbors = neighbors.filter(n =>
+        graph.isWalkable(n.tx, n.ty) && (!blockedTileKeys || !blockedTileKeys.has(toKey(n.tx, n.ty)))
+      );
+      if (freeNeighbors.length === 0) return [];
+      freeNeighbors.sort((a, b) => {
         const da = Math.hypot(a.tx - start.tx, a.ty - start.ty);
         const db = Math.hypot(b.tx - start.tx, b.ty - start.ty);
         return da - db;
       });
-      targetGoal = neighbors[0];
+      targetGoal = freeNeighbors[0];
     }
 
     const openList: PathNode[] = [];
     const openSet: Map<number, PathNode> = new Map();
     const closedSet: Set<number> = new Set();
-
-    const toKey = (tx: number, ty: number) => ty * graph.width + tx;
 
     const startNode: PathNode = {
       tx: start.tx,
