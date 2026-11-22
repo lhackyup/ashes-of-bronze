@@ -43,7 +43,7 @@ export class UnitFSM {
       case 'RETURN_CARGO':
       case 'UNLOADING':
       case 'WAITING_STORAGE':
-        this.handleHarvestCycle(u, dt, graph, buildings, economy, tileRenderer, decorations);
+        this.handleHarvestCycle(u, dt, graph, buildings, economy, tileRenderer, decorations, units);
         break;
     }
 
@@ -60,7 +60,7 @@ export class UnitFSM {
     if (u.def.category === 'infantry' || u.def.category === 'skirmisher' || u.def.category === 'chariot') {
       const aggroRange = (u.def.attackRange || 2) * TILE_SIZE + 96;
       for (const other of units) {
-        if (other.owner !== u.owner) {
+        if (other.owner !== u.owner && other.hp > 0) {
           const dist = Math.hypot(other.x - u.x, other.y - u.y);
           if (dist <= aggroRange) {
             u.targetEntityId = other.id;
@@ -72,7 +72,7 @@ export class UnitFSM {
 
       // Se non ci sono unità nemiche vicine, cerca edifici nemici
       for (const b of buildings) {
-        if (b.owner !== u.owner) {
+        if (b.owner !== u.owner && b.hp > 0) {
           const dist = Math.hypot(b.centerX - u.x, b.centerY - u.y);
           if (dist <= aggroRange) {
             u.targetEntityId = b.id;
@@ -84,12 +84,12 @@ export class UnitFSM {
     }
   }
 
-  private static handleMove(u: UnitEntity, dt: number, _graph: GridGraph, units?: UnitEntity[]): void {
+  private static handleMove(u: UnitEntity, dt: number, graph: GridGraph, units?: UnitEntity[]): void {
     // If military unit moving, continuously scan for encroaching enemies within aggro sight (4 tiles)
     if (units && (u.def.category === 'infantry' || u.def.category === 'skirmisher' || u.def.category === 'chariot')) {
       const aggroRange = (u.def.attackRange || 1.5) * TILE_SIZE + 80;
       for (const other of units) {
-        if (other.owner !== u.owner) {
+        if (other.owner !== u.owner && other.hp > 0) {
           const dist = Math.hypot(other.x - u.x, other.y - u.y);
           if (dist <= aggroRange) {
             u.targetEntityId = other.id;
@@ -118,12 +118,96 @@ export class UnitFSM {
       }
     }
 
+    // DYNAMIC TARGET OCCUPANCY RESOLUTION:
+    // When destination tile is occupied by another unit, redirect to the adjacent free tile!
+    if (units && u.path.length > 0) {
+      const finalWp = u.path[u.path.length - 1];
+      const destTx = Math.floor(finalWp.x / TILE_SIZE);
+      const destTy = Math.floor(finalWp.y / TILE_SIZE);
+      const curTx = Math.floor(u.x / TILE_SIZE);
+      const curTy = Math.floor(u.y / TILE_SIZE);
+
+      // Check if another unit is stationed at destination
+      const occupier = units.find(
+        other => other.id !== u.id && other.hp > 0 &&
+        (Math.floor(other.x / TILE_SIZE) === destTx && Math.floor(other.y / TILE_SIZE) === destTy ||
+         Math.hypot(other.x - finalWp.x, other.y - finalWp.y) < 26)
+      );
+
+      if (occupier) {
+        // Destination tile is already occupied!
+        const isAdjacent = Math.abs(curTx - destTx) <= 1 && Math.abs(curTy - destTy) <= 1 && (curTx !== destTx || curTy !== destTy);
+        const distToDest = Math.hypot(finalWp.x - u.x, finalWp.y - u.y);
+
+        if (isAdjacent && distToDest <= TILE_SIZE * 0.95) {
+          // Already in adjacent free tile next to the target: stop cleanly without pushing in!
+          u.path = [];
+          u.state = 'IDLE';
+          return;
+        }
+
+        // Search for the closest free adjacent tile next to destTx, destTy
+        const neighborOffsets = [
+          { dx: 0, dy: 1 }, { dx: 0, dy: -1 }, { dx: 1, dy: 0 }, { dx: -1, dy: 0 },
+          { dx: 1, dy: 1 }, { dx: -1, dy: 1 }, { dx: 1, dy: -1 }, { dx: -1, dy: -1 }
+        ];
+
+        let bestAdjTile: { tx: number; ty: number } | null = null;
+        let bestDist = Infinity;
+
+        for (const off of neighborOffsets) {
+          const atx = destTx + off.dx;
+          const aty = destTy + off.dy;
+          if (atx >= 6 && graph.isInBounds(atx, aty) && graph.isWalkable(atx, aty)) {
+            const isTaken = units.some(
+              un => un.id !== u.id && un.hp > 0 &&
+              (Math.floor(un.x / TILE_SIZE) === atx && Math.floor(un.y / TILE_SIZE) === aty ||
+               Math.hypot(un.x - (atx * TILE_SIZE + 24), un.y - (aty * TILE_SIZE + 24)) < 26)
+            );
+            if (!isTaken) {
+              const d = Math.hypot(atx * TILE_SIZE + 24 - u.x, aty * TILE_SIZE + 24 - u.y);
+              if (d < bestDist) {
+                bestDist = d;
+                bestAdjTile = { tx: atx, ty: aty };
+              }
+            }
+          }
+        }
+
+        if (bestAdjTile) {
+          if (curTx === bestAdjTile.tx && curTy === bestAdjTile.ty) {
+            u.path = [];
+            u.state = 'IDLE';
+            return;
+          }
+          u.path[u.path.length - 1] = {
+            x: bestAdjTile.tx * TILE_SIZE + 24,
+            y: bestAdjTile.ty * TILE_SIZE + 24
+          };
+        }
+      }
+    }
+
     const nextWp = u.path[0];
     const targetWpX = Math.max(waterEdgePx, nextWp.x);
     const dx = targetWpX - u.x;
     const dy = nextWp.y - u.y;
     const dist = Math.hypot(dx, dy);
     const speedPx = u.def.speed * TILE_SIZE * dt;
+
+    // Check if next waypoint is blocked by a stationary unit within collision reach
+    if (units && u.path.length === 1 && dist <= 34) {
+      const blocker = units.find(
+        other => other.id !== u.id && other.hp > 0 &&
+        Math.hypot(other.x - u.x, other.y - u.y) < 32
+      );
+      if (blocker) {
+        // Unit has reached the perimeter of the occupied space: stop gracefully
+        u.path = [];
+        u.state = 'IDLE';
+        return;
+      }
+    }
 
     if (dist <= speedPx) {
       u.x = targetWpX;
@@ -357,11 +441,20 @@ export class UnitFSM {
             let w1 = 0.5;
             let w2 = 0.5;
             if (u1Moving && !u2Moving) {
-              w1 = 0.75;
-              w2 = 0.25;
+              w1 = 0.85;
+              w2 = 0.15;
+              if (u1.state === 'MOVE_TO' && u1.path.length <= 1) {
+                // Arrived at the occupant's perimeter: stop smoothly on this adjacent spot
+                u1.path = [];
+                u1.state = 'IDLE';
+              }
             } else if (!u1Moving && u2Moving) {
-              w1 = 0.25;
-              w2 = 0.75;
+              w1 = 0.15;
+              w2 = 0.85;
+              if (u2.state === 'MOVE_TO' && u2.path.length <= 1) {
+                u2.path = [];
+                u2.state = 'IDLE';
+              }
             }
 
             u1.x -= nx * overlap * w1;
@@ -455,7 +548,8 @@ export class UnitFSM {
     buildings: BuildingEntity[],
     economy: EconomySystem,
     tileRenderer?: TileRenderer,
-    decorations?: Array<{ x: number; y: number; type: string; current?: number; max?: number }>
+    decorations?: Array<{ x: number; y: number; type: string; current?: number; max?: number }>,
+    units?: UnitEntity[]
   ): void {
     if (u.def.category !== 'worker') {
       u.state = 'IDLE';
@@ -531,7 +625,7 @@ export class UnitFSM {
         }
       }
 
-      this.handleMove(u, dt, graph);
+      this.handleMove(u, dt, graph, units);
       return;
     }
 
@@ -791,7 +885,7 @@ export class UnitFSM {
           u.state = 'IDLE';
         }
       } else {
-        this.handleMove(u, dt, graph);
+        this.handleMove(u, dt, graph, units);
       }
       return;
     }

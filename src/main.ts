@@ -971,15 +971,22 @@ class GameApp {
         let unitTargetTy = targetTy;
 
         // Find a distinct walkable tile around the target point that no other selected unit has taken
+        // and that is not already occupied by another stationary unit
         for (const off of spiralOffsets) {
           const cTx = targetTx + off.dx;
           const cTy = targetTy + off.dy;
           const key = `${cTx},${cTy}`;
           if (cTx >= 6 && this.gridGraph.isInBounds(cTx, cTy) && this.gridGraph.isWalkable(cTx, cTy) && !assignedTiles.has(key)) {
-            unitTargetTx = cTx;
-            unitTargetTy = cTy;
-            assignedTiles.add(key);
-            break;
+            const isOccupiedByOther = this.units.some(
+              un => un.id !== u.id && !this.selectedUnits.includes(un) && un.hp > 0 &&
+              Math.hypot(un.x - (cTx * TILE_SIZE + 24), un.y - (cTy * TILE_SIZE + 24)) < 28
+            );
+            if (!isOccupiedByOther) {
+              unitTargetTx = cTx;
+              unitTargetTy = cTy;
+              assignedTiles.add(key);
+              break;
+            }
           }
         }
 
