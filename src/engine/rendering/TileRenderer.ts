@@ -1,7 +1,13 @@
 import { Camera2D } from '../camera/Camera2D.ts';
-import { TILE_SIZE } from '../../data/terrain.ts';
+import { TILE_SIZE, TERRAINS } from '../../data/terrain.ts';
 import { TerrainType } from '../../data/types.ts';
 import { GridGraph } from '../pathfinding/GridGraph.ts';
+
+export interface VeinReserve {
+  current: number;
+  max: number;
+  type: 'copper' | 'tin' | 'iron';
+}
 
 function hash2D(x: number, y: number): number {
   const n = Math.sin(x * 127.1 + y * 311.7) * 43758.5453123;
@@ -22,6 +28,7 @@ export class TileRenderer {
   public readonly height: number;
   private mapTiles: TerrainType[];
   private tileCache: Map<string, HTMLCanvasElement> = new Map();
+  private veinReserves: Map<string, VeinReserve> = new Map();
   public cedarTreeCanvas!: HTMLCanvasElement;
 
   constructor(width: number, height: number, initialTerrain: TerrainType = 'plain') {
@@ -31,10 +38,40 @@ export class TileRenderer {
     this.initPatterns();
   }
 
-  public setTile(tx: number, ty: number, type: TerrainType): void {
+  public setTile(tx: number, ty: number, type: TerrainType, reserveAmount?: number): void {
     if (tx >= 0 && tx < this.width && ty >= 0 && ty < this.height) {
       this.mapTiles[ty * this.width + tx] = type;
+      const key = `${tx},${ty}`;
+      if (type.startsWith('vein_')) {
+        const oreType = type.replace('vein_', '') as 'copper' | 'tin' | 'iron';
+        const defaultTotal = oreType === 'copper' ? 600 : (oreType === 'tin' ? 300 : 800);
+        const max = reserveAmount ?? (TERRAINS[type]?.resourceYield?.totalAmount ?? defaultTotal);
+        this.veinReserves.set(key, { current: max, max, type: oreType });
+      } else {
+        this.veinReserves.delete(key);
+      }
     }
+  }
+
+  public getVeinReserve(tx: number, ty: number): VeinReserve | null {
+    return this.veinReserves.get(`${tx},${ty}`) || null;
+  }
+
+  public harvestVein(tx: number, ty: number, amount: number): { harvested: number; remaining: number; depleted: boolean } {
+    const key = `${tx},${ty}`;
+    const res = this.veinReserves.get(key);
+    if (!res || res.current <= 0) {
+      return { harvested: 0, remaining: 0, depleted: true };
+    }
+    const harvested = Math.min(amount, res.current);
+    res.current -= harvested;
+    if (res.current <= 0) {
+      res.current = 0;
+      this.veinReserves.delete(key);
+      this.mapTiles[ty * this.width + tx] = 'plain';
+      return { harvested, remaining: 0, depleted: true };
+    }
+    return { harvested, remaining: res.current, depleted: false };
   }
 
   public getTile(tx: number, ty: number): TerrainType {
@@ -171,32 +208,74 @@ export class TileRenderer {
     ];
 
     oreTypes.forEach((ore) => {
-      this.tileCache.set(ore.id, makeCanvas(TILE_SIZE, TILE_SIZE, (ctx) => {
-        ctx.fillStyle = '#5c4d3c';
-        ctx.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+      // 4 progressive depletion stages:
+      // stage 4 (75-100%): 4 nodules (rich vein)
+      // stage 3 (50-75%): 3 nodules + slight pickaxe fissures
+      // stage 2 (25-50%): 2 nodules + quarry rubble
+      // stage 1 (1-25%): 1 nodule + deep excavation pit
+      for (let stage = 1; stage <= 4; stage++) {
+        this.tileCache.set(`${ore.id}_${stage}`, makeCanvas(TILE_SIZE, TILE_SIZE, (ctx) => {
+          ctx.fillStyle = '#5c4d3c';
+          ctx.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
 
-        ctx.fillStyle = '#786652';
-        ctx.beginPath();
-        ctx.ellipse(24, 24, 21, 18, 0.2, 0, Math.PI * 2);
-        ctx.fill();
+          ctx.fillStyle = '#786652';
+          ctx.beginPath();
+          ctx.ellipse(24, 24, 21, 18, 0.2, 0, Math.PI * 2);
+          ctx.fill();
 
-        const nodes = [
-          { x: 15, y: 16, r: 7 }, { x: 31, y: 19, r: 8 },
-          { x: 21, y: 31, r: 7 }, { x: 34, y: 32, r: 5 }
-        ];
-        nodes.forEach(n => {
-          ctx.fillStyle = 'rgba(0,0,0,0.45)';
-          ctx.beginPath(); ctx.arc(n.x + 2, n.y + 2, n.r, 0, Math.PI * 2); ctx.fill();
+          // Pickaxe excavation / rubble cracks if partially mined
+          if (stage < 4) {
+            ctx.strokeStyle = '#2d2218';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(14, 20); ctx.lineTo(24, 26); ctx.lineTo(34, 18);
+            if (stage <= 2) {
+              ctx.moveTo(20, 14); ctx.lineTo(28, 34);
+            }
+            ctx.stroke();
 
-          const g = ctx.createRadialGradient(n.x - 2, n.y - 2, 1, n.x, n.y, n.r);
-          g.addColorStop(0, ore.cCenter);
-          g.addColorStop(0.45, ore.cMid);
-          g.addColorStop(1, ore.cDark);
-          ctx.fillStyle = g;
-          ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2); ctx.fill();
-        });
-      }));
+            // Rubble dust around excavation
+            ctx.fillStyle = 'rgba(40, 30, 20, 0.45)';
+            ctx.fillRect(12, 12, 10, 8);
+          }
+
+          const allNodes = [
+            { x: 15, y: 16, r: 7 },
+            { x: 31, y: 19, r: 8 },
+            { x: 21, y: 31, r: 7 },
+            { x: 34, y: 32, r: 5 }
+          ];
+          const activeNodes = allNodes.slice(0, stage);
+          activeNodes.forEach(n => {
+            ctx.fillStyle = 'rgba(0,0,0,0.45)';
+            ctx.beginPath(); ctx.arc(n.x + 2, n.y + 2, n.r, 0, Math.PI * 2); ctx.fill();
+
+            const g = ctx.createRadialGradient(n.x - 2, n.y - 2, 1, n.x, n.y, n.r);
+            g.addColorStop(0, ore.cCenter);
+            g.addColorStop(0.45, ore.cMid);
+            g.addColorStop(1, ore.cDark);
+            ctx.fillStyle = g;
+            ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2); ctx.fill();
+          });
+        }));
+      }
+      this.tileCache.set(ore.id, this.tileCache.get(`${ore.id}_4`)!);
     });
+
+    // Depleted quarry rubble pit
+    this.tileCache.set('vein_depleted', makeCanvas(TILE_SIZE, TILE_SIZE, (ctx) => {
+      ctx.fillStyle = '#635543';
+      ctx.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+      ctx.fillStyle = '#453a2d';
+      ctx.beginPath();
+      ctx.ellipse(24, 24, 18, 14, 0.1, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#7a6b57';
+      ctx.fillRect(16, 20, 4, 3);
+      ctx.fillRect(26, 24, 5, 4);
+      ctx.fillRect(20, 28, 3, 3);
+      ctx.fillRect(30, 18, 4, 3);
+    }));
 
     // 6. Mediterranean Cedar / Cypress Tree Sprite (48x64 px)
     this.cedarTreeCanvas = makeCanvas(48, 64, (ctx) => {
@@ -240,6 +319,17 @@ export class TileRenderer {
         const wy = ty * TILE_SIZE;
 
         let tileImg = this.tileCache.get(tileType);
+        let veinRes: VeinReserve | null = null;
+
+        if (tileType.startsWith('vein_')) {
+          veinRes = this.getVeinReserve(tx, ty);
+          if (veinRes) {
+            const ratio = Math.max(0, Math.min(1, veinRes.current / veinRes.max));
+            const stage = Math.max(1, Math.min(4, Math.ceil(ratio * 4)));
+            tileImg = this.tileCache.get(`${tileType}_${stage}`) || tileImg;
+          }
+        }
+
         if (!tileImg) {
           // Plain / Sand terrain uses organic hash2D multi-variant tiles
           const bIdx = tileType === 'sand' ? 1 : 0;
@@ -249,6 +339,19 @@ export class TileRenderer {
 
         if (tileImg) {
           ctx.drawImage(tileImg, wx, wy, TILE_SIZE, TILE_SIZE);
+        }
+
+        // Render discrete remaining reserve bar on harvested veins
+        if (veinRes && veinRes.current < veinRes.max && veinRes.current > 0) {
+          const barW = 30;
+          const barH = 3;
+          const bx = wx + Math.floor((TILE_SIZE - barW) / 2);
+          const by = wy + TILE_SIZE - 5;
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+          ctx.fillRect(bx - 1, by - 1, barW + 2, barH + 2);
+          const fillW = Math.max(1, Math.floor((veinRes.current / veinRes.max) * barW));
+          ctx.fillStyle = veinRes.type === 'copper' ? '#2de0a5' : (veinRes.type === 'tin' ? '#c0c6cc' : '#e07a5f');
+          ctx.fillRect(bx, by, fillW, barH);
         }
 
         // Draw Foundation Slab if present

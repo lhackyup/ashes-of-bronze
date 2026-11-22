@@ -166,10 +166,12 @@ export class HUDController {
 
   public updateInspector(
     selectedUnit: UnitEntity | null,
-    selectedBuilding: BuildingEntity | null
+    selectedBuilding: BuildingEntity | null,
+    selectedVein?: { name: string; type: string; current: number; max: number } | null
   ): void {
     const actionsBox = document.getElementById('inspector-actions');
     if (actionsBox) actionsBox.innerHTML = '';
+    this.inspectorHpFillEl.style.backgroundColor = '';
 
     if (selectedUnit) {
       this.inspectorPanelEl.style.display = 'flex';
@@ -214,6 +216,14 @@ export class HUDController {
           actionsBox.appendChild(trainBtn);
         }
       }
+    } else if (selectedVein) {
+      this.inspectorPanelEl.style.display = 'flex';
+      this.inspectorNameEl.textContent = selectedVein.name;
+      const typeLabel = selectedVein.type === 'copper' ? 'Copper [Cop]' : (selectedVein.type === 'tin' ? 'Tin [Tin]' : 'Iron [Irn]');
+      this.inspectorDescEl.textContent = `Mineral reserve: ${Math.floor(selectedVein.current)} / ${selectedVein.max} ${typeLabel}. Harvested by Caravans.`;
+      const pct = Math.max(0, Math.min(100, (selectedVein.current / selectedVein.max) * 100));
+      this.inspectorHpFillEl.style.width = `${pct}%`;
+      this.inspectorHpFillEl.style.backgroundColor = selectedVein.type === 'copper' ? '#2de0a5' : (selectedVein.type === 'tin' ? '#c0c6cc' : '#e07a5f');
     } else {
       this.inspectorPanelEl.style.display = 'none';
     }

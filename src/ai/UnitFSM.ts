@@ -4,6 +4,7 @@ import { GridGraph } from '../engine/pathfinding/GridGraph.ts';
 import { AStar } from '../engine/pathfinding/AStar.ts';
 import { CombatSystem } from '../systems/CombatSystem.ts';
 import { EconomySystem } from '../systems/EconomySystem.ts';
+import { TileRenderer } from '../engine/rendering/TileRenderer.ts';
 import { TILE_SIZE } from '../data/terrain.ts';
 import { EventBus } from '../core/EventBus.ts';
 
@@ -15,7 +16,8 @@ export class UnitFSM {
     units: UnitEntity[],
     buildings: BuildingEntity[],
     combat: CombatSystem,
-    economy: EconomySystem
+    economy: EconomySystem,
+    tileRenderer?: TileRenderer
   ): void {
     if (u.attackCooldown > 0) {
       u.attackCooldown -= dt;
@@ -38,7 +40,7 @@ export class UnitFSM {
       case 'HARVESTING':
       case 'RETURN_CARGO':
       case 'UNLOADING':
-        this.handleHarvestCycle(u, dt, graph, buildings, economy);
+        this.handleHarvestCycle(u, dt, graph, buildings, economy, tileRenderer);
         break;
     }
   }
@@ -178,12 +180,40 @@ export class UnitFSM {
     }
   }
 
+  public static findNearestVein(
+    tileRenderer: TileRenderer,
+    fromTx: number,
+    fromTy: number,
+    oreType: string,
+    maxRadius: number = 25
+  ): { tx: number; ty: number } | null {
+    const targetTileType = `vein_${oreType}`;
+    let bestCoord: { tx: number; ty: number } | null = null;
+    let bestDist = Infinity;
+
+    for (let dy = -maxRadius; dy <= maxRadius; dy++) {
+      for (let dx = -maxRadius; dx <= maxRadius; dx++) {
+        const tx = fromTx + dx;
+        const ty = fromTy + dy;
+        if (tileRenderer.getTile(tx, ty) === targetTileType) {
+          const dist = Math.hypot(dx, dy);
+          if (dist < bestDist) {
+            bestDist = dist;
+            bestCoord = { tx, ty };
+          }
+        }
+      }
+    }
+    return bestCoord;
+  }
+
   private static handleHarvestCycle(
     u: UnitEntity,
     dt: number,
     graph: GridGraph,
     buildings: BuildingEntity[],
-    economy: EconomySystem
+    economy: EconomySystem,
+    tileRenderer?: TileRenderer
   ): void {
     if (u.def.category !== 'worker') {
       u.state = 'IDLE';
@@ -197,6 +227,26 @@ export class UnitFSM {
       if (!u.targetMineCoord) {
         u.state = 'IDLE';
         return;
+      }
+
+      // Check if target mine was depleted before arrival
+      if (tileRenderer) {
+        const curTile = tileRenderer.getTile(u.targetMineCoord.tx, u.targetMineCoord.ty);
+        if (!curTile.startsWith('vein_')) {
+          const nextVein = UnitFSM.findNearestVein(tileRenderer, u.targetMineCoord.tx, u.targetMineCoord.ty, u.currentCargoType || 'copper');
+          if (nextVein) {
+            u.targetMineCoord = nextVein;
+            u.path = [];
+          } else {
+            u.targetMineCoord = null;
+            if (u.currentCargoAmount > 0) {
+              u.state = 'RETURN_CARGO';
+            } else {
+              u.state = 'IDLE';
+            }
+            return;
+          }
+        }
       }
 
       const mineTargetX = u.targetMineCoord.tx * TILE_SIZE + 24;
@@ -236,31 +286,73 @@ export class UnitFSM {
 
       if (u.harvestCooldown >= 10) {
         u.harvestCooldown = 0;
-        u.currentCargoAmount = Math.min(maxCargo, u.currentCargoAmount + 10);
+        const needed = maxCargo - u.currentCargoAmount;
+        const want = Math.min(10, needed);
+
+        let extracted = want;
+        let isDepleted = false;
+
+        if (tileRenderer && u.targetMineCoord) {
+          const harvestResult = tileRenderer.harvestVein(u.targetMineCoord.tx, u.targetMineCoord.ty, want);
+          extracted = harvestResult.harvested;
+          isDepleted = harvestResult.depleted;
+          if (isDepleted) {
+            // Free pathfinding on depleted tile
+            graph.setTileCost(u.targetMineCoord.tx, u.targetMineCoord.ty, 10);
+            const oreLabel = (u.currentCargoType || 'ore').toUpperCase();
+            EventBus.get().emit('fx:floating_text', {
+              text: `${oreLabel} VEIN DEPLETED!`,
+              color: '#ef4444',
+              x: u.targetMineCoord.tx * TILE_SIZE + 24,
+              y: u.targetMineCoord.ty * TILE_SIZE + 12
+            });
+            EventBus.get().emit('audio:combat_hit');
+            EventBus.get().emit('advisor:message', {
+              speaker: 'burna_khabir',
+              text: `Wanax, an ore vein has been exhausted! The earth gives no more.`,
+              isAlert: false
+            });
+          }
+        }
+
+        u.currentCargoAmount = Math.min(maxCargo, u.currentCargoAmount + extracted);
         EventBus.get().emit('audio:harvest');
 
-        if (u.currentCargoAmount >= maxCargo) {
-          // Cargo full: locate nearest active dropoff depot (Foundry or Acropolis)
-          const dropoffs = buildings.filter(
-            b => b.owner === u.owner && b.buildProgress >= 1.0 && (b.defId === 'bronze_foundry' || b.defId === 'acropolis')
-          );
-          if (dropoffs.length > 0) {
-            dropoffs.sort((a, b) => Math.hypot(a.centerX - u.x, a.centerY - u.y) - Math.hypot(b.centerX - u.x, b.centerY - u.y));
-            const nearest = dropoffs[0];
-            const curTx = Math.floor(u.x / TILE_SIZE);
-            const curTy = Math.floor(u.y / TILE_SIZE);
-            const dropTx = nearest.tx + Math.floor(nearest.def.width / 2);
-            const dropTy = nearest.ty + Math.floor(nearest.def.height / 2);
+        // Check if cargo full OR vein depleted
+        if (u.currentCargoAmount >= maxCargo || isDepleted) {
+          if (isDepleted && tileRenderer && u.targetMineCoord) {
+            // Check for adjacent/nearby vein of the same mineral
+            const nextVein = UnitFSM.findNearestVein(tileRenderer, u.targetMineCoord.tx, u.targetMineCoord.ty, u.currentCargoType || 'copper');
+            u.targetMineCoord = nextVein;
+          }
 
-            const pathCoords = AStar.findPath(graph, { tx: curTx, ty: curTy }, { tx: dropTx, ty: dropTy });
-            if (pathCoords.length > 0) {
-              u.path = pathCoords.map(c => ({ x: c.tx * TILE_SIZE + 24, y: c.ty * TILE_SIZE + 24 }));
+          if (u.currentCargoAmount >= maxCargo || (isDepleted && (!u.targetMineCoord || u.currentCargoAmount > 0))) {
+            // Cargo full: locate nearest active dropoff depot (Foundry or Acropolis)
+            const dropoffs = buildings.filter(
+              b => b.owner === u.owner && b.buildProgress >= 1.0 && (b.defId === 'bronze_foundry' || b.defId === 'acropolis')
+            );
+            if (dropoffs.length > 0) {
+              dropoffs.sort((a, b) => Math.hypot(a.centerX - u.x, a.centerY - u.y) - Math.hypot(b.centerX - u.x, b.centerY - u.y));
+              const nearest = dropoffs[0];
+              const curTx = Math.floor(u.x / TILE_SIZE);
+              const curTy = Math.floor(u.y / TILE_SIZE);
+              const dropTx = nearest.tx + Math.floor(nearest.def.width / 2);
+              const dropTy = nearest.ty + Math.floor(nearest.def.height / 2);
+
+              const pathCoords = AStar.findPath(graph, { tx: curTx, ty: curTy }, { tx: dropTx, ty: dropTy });
+              if (pathCoords.length > 0) {
+                u.path = pathCoords.map(c => ({ x: c.tx * TILE_SIZE + 24, y: c.ty * TILE_SIZE + 24 }));
+              } else {
+                u.path = [{ x: nearest.centerX, y: nearest.centerY }];
+              }
+              u.state = 'RETURN_CARGO';
             } else {
-              u.path = [{ x: nearest.centerX, y: nearest.centerY }];
+              u.state = 'IDLE';
             }
-            u.state = 'RETURN_CARGO';
-          } else {
-            u.state = 'IDLE';
+          } else if (isDepleted && u.targetMineCoord) {
+            // Still have cargo room and adjacent vein available! Head straight to next vein
+            u.path = [];
+            u.state = 'HARVEST_SEEK';
           }
         }
       }
@@ -308,6 +400,15 @@ export class UnitFSM {
         u.currentCargoAmount = 0;
 
         // AUTOMATIC LOOP: Return to target mine if assigned
+        if (u.targetMineCoord) {
+          if (tileRenderer) {
+            const curTile = tileRenderer.getTile(u.targetMineCoord.tx, u.targetMineCoord.ty);
+            if (!curTile.startsWith('vein_')) {
+              u.targetMineCoord = UnitFSM.findNearestVein(tileRenderer, u.targetMineCoord.tx, u.targetMineCoord.ty, u.currentCargoType || 'copper');
+            }
+          }
+        }
+
         if (u.targetMineCoord) {
           const curTx = Math.floor(u.x / TILE_SIZE);
           const curTy = Math.floor(u.y / TILE_SIZE);

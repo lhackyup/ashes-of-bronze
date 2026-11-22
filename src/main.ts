@@ -70,6 +70,7 @@ class GameApp {
 
   private selectedUnits: UnitEntity[] = [];
   private selectedBuilding: BuildingEntity | null = null;
+  private selectedVein: { name: string; type: string; current: number; max: number; tx: number; ty: number } | null = null;
   private buildingToPlace: string | null = null;
 
   private isDraggingBox = false;
@@ -349,18 +350,18 @@ class GameApp {
       }
     }
 
-    // Copper resource nodes east of the base
+    // Copper resource nodes east of the base (9 tiles, 600 copper each)
     for (let dy = 0; dy < 3; dy++) {
       for (let dx = 0; dx < 3; dx++) {
-        this.tileRenderer.setTile(22 + dx, 26 + dy, 'vein_copper');
+        this.tileRenderer.setTile(22 + dx, 26 + dy, 'vein_copper', 600);
         this.gridGraph.setTileCost(22 + dx, 26 + dy, 0);
       }
     }
 
-    // Rare Tin (Cassiterite) nodes northeast of the settlement
+    // Rare Tin (Cassiterite) nodes northeast of the settlement (4 tiles, 300 tin each)
     for (let dy = 0; dy < 2; dy++) {
       for (let dx = 0; dx < 2; dx++) {
-        this.tileRenderer.setTile(20 + dx, 14 + dy, 'vein_tin');
+        this.tileRenderer.setTile(20 + dx, 14 + dy, 'vein_tin', 300);
         this.gridGraph.setTileCost(20 + dx, 14 + dy, 0);
       }
     }
@@ -643,9 +644,10 @@ class GameApp {
     for (const b of this.buildings) b.isSelected = false;
     this.selectedUnits = [];
     this.selectedBuilding = null;
+    this.selectedVein = null;
 
     if (isClick) {
-      // Single click: select unit or building
+      // Single click: select unit, building, or resource vein
       const clickedUnit = this.units.find(u => Math.hypot(u.x - p1.x, u.y - p1.y) < 24);
       if (clickedUnit) {
         clickedUnit.isSelected = true;
@@ -661,6 +663,24 @@ class GameApp {
           clickedB.isSelected = true;
           this.selectedBuilding = clickedB;
           EventBus.get().emit('audio:select');
+        } else {
+          // Check if clicking on an ore vein deposit
+          const tileType = this.tileRenderer.getTile(tx, ty);
+          if (tileType.startsWith('vein_')) {
+            const res = this.tileRenderer.getVeinReserve(tx, ty);
+            if (res) {
+              const oreName = res.type === 'copper' ? 'Malachite / Copper Deposit' : (res.type === 'tin' ? 'Cassiterite / Tin Deposit' : 'Hematite / Iron Deposit');
+              this.selectedVein = {
+                name: oreName,
+                type: res.type,
+                current: res.current,
+                max: res.max,
+                tx,
+                ty
+              };
+              EventBus.get().emit('audio:select');
+            }
+          }
         }
       }
     } else {
@@ -678,7 +698,8 @@ class GameApp {
 
     this.hud.updateInspector(
       this.selectedUnits.length > 0 ? this.selectedUnits[0] : null,
-      this.selectedBuilding
+      this.selectedBuilding,
+      this.selectedVein
     );
   }
 
@@ -773,7 +794,8 @@ class GameApp {
         this.units,
         this.buildings,
         this.combat,
-        this.economy
+        this.economy,
+        this.tileRenderer
       );
 
       // Remove fallen units and record casualties
@@ -784,6 +806,18 @@ class GameApp {
           this.objectiveManager.recordFriendlyLost();
         }
         this.units.splice(i, 1);
+      }
+    }
+
+    // Real-time update for inspected ore vein
+    if (this.selectedVein) {
+      const res = this.tileRenderer.getVeinReserve(this.selectedVein.tx, this.selectedVein.ty);
+      if (res && res.current > 0) {
+        this.selectedVein.current = res.current;
+        this.hud.updateInspector(null, null, this.selectedVein);
+      } else {
+        this.selectedVein = null;
+        this.hud.updateInspector(null, null, null);
       }
     }
 
