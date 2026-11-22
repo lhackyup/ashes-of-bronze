@@ -193,7 +193,13 @@ export class HUDController {
     } else if (selectedBuilding) {
       this.inspectorPanelEl.style.display = 'flex';
       this.inspectorNameEl.textContent = selectedBuilding.def.name;
-      this.inspectorDescEl.textContent = selectedBuilding.def.description;
+      const isUnderConstruction = selectedBuilding.buildProgress < 1.0;
+      if (isUnderConstruction) {
+        const buildPct = Math.floor(selectedBuilding.buildProgress * 100);
+        this.inspectorDescEl.textContent = `[Under Construction ${buildPct}%] Scaffolding active. Cedar frames being lashed.`;
+      } else {
+        this.inspectorDescEl.textContent = selectedBuilding.def.description;
+      }
       const hpPct = Math.max(0, Math.min(100, (selectedBuilding.hp / selectedBuilding.maxHp) * 100));
       this.inspectorHpFillEl.style.width = `${hpPct}%`;
 
@@ -201,16 +207,38 @@ export class HUDController {
         for (const uId of selectedBuilding.def.producesUnits) {
           const uDef = UNITS[uId];
           if (!uDef) continue;
+          // Filter out future era locked units
+          if (uDef.unlockEra === 'early_iron') continue;
+
           const uCostHtml = this.formatCostHtml(uDef.cost);
           const uCostText = this.formatCostTooltip(uDef.cost);
+          const shortName = uId === 'spear_militia' ? 'Spearman' :
+                            (uId === 'skirmisher' ? 'Slinger' :
+                            (uId === 'bronze_swordsman' ? 'Khopesh' :
+                            (uId === 'donkey_caravan' ? 'Donkey' : uDef.name.split(' ')[0])));
+
           const trainBtn = document.createElement('button');
           trainBtn.className = 'svga-btn';
-          trainBtn.title = `Train ${uDef.name} (${uCostText}, Supply: ${uDef.supplyCost}) - ${uDef.description}`;
+          trainBtn.title = isUnderConstruction ?
+            `Cannot train during construction (${Math.floor(selectedBuilding.buildProgress * 100)}%)` :
+            `Train ${uDef.name} (${uCostText}, Supply: ${uDef.supplyCost}) - ${uDef.description}`;
+          if (isUnderConstruction) {
+            trainBtn.style.opacity = '0.5';
+            trainBtn.style.cursor = 'not-allowed';
+          }
           trainBtn.innerHTML = `
-            <div style="font-weight: bold; font-size: 11px;">Train ${uDef.name.split(' ')[0]}</div>
+            <div style="font-weight: bold; font-size: 11px;">Train ${shortName}</div>
             <div style="font-size: 9px; margin-top: 2px;">${uCostHtml}</div>
           `;
           trainBtn.onclick = () => {
+            if (isUnderConstruction) {
+              EventBus.get().emit('advisor:message', {
+                speaker: 'tarkhunta',
+                text: 'The Barracks is still swarming with carpenters! Wait for scaffolding removal.',
+                isAlert: true
+              });
+              return;
+            }
             if (this.onTrainUnit) this.onTrainUnit(uId);
           };
           actionsBox.appendChild(trainBtn);

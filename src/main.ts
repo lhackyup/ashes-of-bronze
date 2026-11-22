@@ -501,9 +501,21 @@ class GameApp {
     }
 
     this.economy.spend(def.cost);
-    const pStart = { tx: 14, ty: 33 };
-    this.spawnUnit(unitDefId, 'player', pStart.tx * TILE_SIZE, pStart.ty * TILE_SIZE);
+    let spawnTx = 14;
+    let spawnTy = 33;
+    if (this.selectedBuilding && this.selectedBuilding.owner === 'player') {
+      spawnTx = this.selectedBuilding.tx + Math.floor(this.selectedBuilding.def.width / 2);
+      spawnTy = this.selectedBuilding.ty + this.selectedBuilding.def.height;
+    }
+    const spawned = this.spawnUnit(unitDefId, 'player', spawnTx * TILE_SIZE + 12, spawnTy * TILE_SIZE + 12);
+    spawned.y += 10;
     EventBus.get().emit('audio:command');
+    EventBus.get().emit('fx:floating_text', {
+      text: `${def.name.split(' ')[0].toUpperCase()} READY`,
+      color: '#4ade80',
+      x: spawnTx * TILE_SIZE + 24,
+      y: spawnTy * TILE_SIZE - 12
+    });
   }
 
   private closeAllModals(): void {
@@ -664,7 +676,13 @@ class GameApp {
       } else {
         const tx = Math.floor(p1.x / TILE_SIZE);
         const ty = Math.floor(p1.y / TILE_SIZE);
-        const clickedB = this.buildings.find(
+        // Prioritize actual buildings over cyclopean foundation slabs, and allow roof vertical reach
+        const clickedRealB = this.buildings.find(
+          b => b.defId !== 'cyclopean_slab' &&
+               tx >= b.tx && tx < b.tx + b.def.width &&
+               ty >= b.ty - 0.7 && ty < b.ty + b.def.height
+        );
+        const clickedB = clickedRealB || this.buildings.find(
           b => tx >= b.tx && tx < b.tx + b.def.width && ty >= b.ty && ty < b.ty + b.def.height
         );
         if (clickedB) {
@@ -931,6 +949,12 @@ class GameApp {
               });
             }
           }
+
+          if (b === this.selectedBuilding) {
+            this.hud.updateInspector(null, b);
+          }
+        } else if (b === this.selectedBuilding) {
+          this.hud.updateInspector(null, b);
         }
       }
     }
