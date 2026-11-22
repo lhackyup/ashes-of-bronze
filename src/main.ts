@@ -238,12 +238,28 @@ class GameApp {
       if (e.code === 'KeyM') {
         const muted = this.audio.toggleMute();
         console.log('Audio muted:', muted);
+      } else if (e.code === 'Equal' || e.code === 'NumpadAdd') {
+        this.camera.setZoom(this.camera.zoom + 0.05);
+      } else if (e.code === 'Minus' || e.code === 'NumpadSubtract') {
+        this.camera.setZoom(this.camera.zoom - 0.05);
+      } else if (e.code === 'Digit0' || e.code === 'Numpad0') {
+        this.camera.setZoom(0.85);
       }
     });
 
     window.addEventListener('keyup', (e) => {
       this.keysDown.delete(e.code);
     });
+
+    // Smooth mouse wheel zoom anchored to cursor
+    this.canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const rect = this.canvas.getBoundingClientRect();
+      const sx = e.clientX - rect.left;
+      const sy = e.clientY - rect.top;
+      const step = e.deltaY < 0 ? 0.05 : -0.05;
+      this.camera.setZoom(this.camera.zoom + step, sx, sy);
+    }, { passive: false });
 
     this.canvas.addEventListener('mousedown', (e) => {
       // Begin BGM on first interaction
@@ -489,7 +505,10 @@ class GameApp {
     const ctx = this.ctx;
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    // 1. Terrain Layer & Cyclopean Foundation Slabs
+    ctx.save();
+    this.camera.applyTransform(ctx);
+
+    // 1. Terrain Layer & Cyclopean Foundation Slabs (World Coordinates)
     this.tileRenderer.render(ctx, this.camera, this.gridGraph);
 
     // 2. Layer Buildings, Units & Mediterranean Cedars with Y-Sorting for 2.5D depth
@@ -515,17 +534,17 @@ class GameApp {
         const tx = Math.floor(d.x);
         const ty = Math.floor(d.y);
         if (this.fogRenderer.getFog(tx, ty) === 0) continue;
-        const sp = this.camera.worldToScreen(d.x * TILE_SIZE - 24, d.y * TILE_SIZE - 52);
-        ctx.drawImage(this.tileRenderer.cedarTreeCanvas, Math.floor(sp.x), Math.floor(sp.y));
+        const wx = Math.round(d.x * TILE_SIZE - 24);
+        const wy = Math.round(d.y * TILE_SIZE - 52);
+        ctx.drawImage(this.tileRenderer.cedarTreeCanvas, wx, wy);
       }
     }
 
     // 3. In-flight combat projectiles
     ctx.fillStyle = '#ffdf73';
     for (const p of this.combat.projectiles) {
-      const sp = this.camera.worldToScreen(p.x, p.y);
       ctx.beginPath();
-      ctx.arc(sp.x, sp.y, 3, 0, Math.PI * 2);
+      ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
       ctx.fill();
     }
 
@@ -538,7 +557,6 @@ class GameApp {
       const mouseWorld = this.camera.screenToWorld(this.dragCurrent.x, this.dragCurrent.y);
       const ghostTx = Math.floor(mouseWorld.x / TILE_SIZE);
       const ghostTy = Math.floor(mouseWorld.y / TILE_SIZE);
-      const ghostScreen = this.camera.worldToScreen(ghostTx * TILE_SIZE, ghostTy * TILE_SIZE);
       const gw = bDef.width * TILE_SIZE;
       const gh = bDef.height * TILE_SIZE;
 
@@ -555,15 +573,17 @@ class GameApp {
       ctx.globalAlpha = 0.65;
       const ghostSprite = SVGAProceduralBank.getBuildingSprite(this.buildingToPlace, 'player');
       if (ghostSprite) {
-        ctx.drawImage(ghostSprite, ghostScreen.x, ghostScreen.y, gw, gh);
+        ctx.drawImage(ghostSprite, ghostTx * TILE_SIZE, ghostTy * TILE_SIZE, gw, gh);
       }
       ctx.strokeStyle = canPlace ? '#2de0a5' : '#ff4d4d';
       ctx.lineWidth = 2;
-      ctx.strokeRect(ghostScreen.x, ghostScreen.y, gw, gh);
+      ctx.strokeRect(ghostTx * TILE_SIZE, ghostTy * TILE_SIZE, gw, gh);
       ctx.restore();
     }
 
-    // 6. Box selection dragging rectangle
+    ctx.restore(); // Restore world transform
+
+    // 6. Box selection dragging rectangle (Screen space)
     if (this.isDraggingBox) {
       ctx.strokeStyle = '#2de0a5';
       ctx.lineWidth = 1;
@@ -585,11 +605,10 @@ class GameApp {
   }
 
   private renderBuilding(ctx: CanvasRenderingContext2D, b: BuildingEntity): void {
-    const sp = this.camera.worldToScreen(b.tx * TILE_SIZE, b.ty * TILE_SIZE);
+    const drawX = b.tx * TILE_SIZE;
+    const drawY = b.ty * TILE_SIZE;
     const bw = b.def.width * TILE_SIZE;
     const bh = b.def.height * TILE_SIZE;
-    const drawX = Math.round(sp.x);
-    const drawY = Math.round(sp.y);
 
     const sprite = SVGAProceduralBank.getBuildingSprite(b.defId, b.owner);
     if (sprite) {
@@ -631,9 +650,8 @@ class GameApp {
   }
 
   private renderUnit(ctx: CanvasRenderingContext2D, u: UnitEntity): void {
-    const sp = this.camera.worldToScreen(u.x, u.y);
-    const drawX = Math.round(sp.x);
-    const drawY = Math.round(sp.y);
+    const drawX = Math.round(u.x);
+    const drawY = Math.round(u.y);
 
     // Selection ring (original prototype green/red ellipse)
     if (u.isSelected) {

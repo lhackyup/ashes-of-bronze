@@ -7,7 +7,7 @@ export class Camera2D {
   public viewportHeight: number = 600;
   public worldWidth: number = 2304; // 48 * 48
   public worldHeight: number = 2304;
-  public zoom: number = 1.0;
+  public zoom: number = 0.85; // Slightly less zoom for wider tactical battlefield view
   public panSpeed: number = 650; // pixels per second
 
   constructor(vw: number, vh: number, ww: number, wh: number) {
@@ -21,6 +21,28 @@ export class Camera2D {
     this.viewportWidth = vw;
     this.viewportHeight = vh;
     this.clamp();
+  }
+
+  public setZoom(newZoom: number, focusScreenX?: number, focusScreenY?: number): void {
+    const clampedZoom = Math.max(0.55, Math.min(1.25, Math.round(newZoom * 100) / 100));
+    if (focusScreenX !== undefined && focusScreenY !== undefined) {
+      const worldBefore = this.screenToWorld(focusScreenX, focusScreenY);
+      this.zoom = clampedZoom;
+      this.x = worldBefore.x - focusScreenX / this.zoom;
+      this.y = worldBefore.y - focusScreenY / this.zoom;
+    } else {
+      const centerWx = this.x + (this.viewportWidth / 2) / this.zoom;
+      const centerWy = this.y + (this.viewportHeight / 2) / this.zoom;
+      this.zoom = clampedZoom;
+      this.x = centerWx - (this.viewportWidth / 2) / this.zoom;
+      this.y = centerWy - (this.viewportHeight / 2) / this.zoom;
+    }
+    this.clamp();
+  }
+
+  public applyTransform(ctx: CanvasRenderingContext2D): void {
+    ctx.scale(this.zoom, this.zoom);
+    ctx.translate(-Math.floor(this.x), -Math.floor(this.y));
   }
 
   public centerOn(wx: number, wy: number): void {

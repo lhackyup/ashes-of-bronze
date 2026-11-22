@@ -57,8 +57,8 @@ export class FogRenderer {
   public render(ctx: CanvasRenderingContext2D, camera: Camera2D): void {
     const startTileX = Math.max(0, Math.floor(camera.x / TILE_SIZE));
     const startTileY = Math.max(0, Math.floor(camera.y / TILE_SIZE));
-    const endTileX = Math.min(this.width - 1, Math.ceil((camera.x + camera.viewportWidth) / TILE_SIZE));
-    const endTileY = Math.min(this.height - 1, Math.ceil((camera.y + camera.viewportHeight) / TILE_SIZE));
+    const endTileX = Math.min(this.width - 1, Math.ceil((camera.x + camera.viewportWidth / camera.zoom) / TILE_SIZE));
+    const endTileY = Math.min(this.height - 1, Math.ceil((camera.y + camera.viewportHeight / camera.zoom) / TILE_SIZE));
 
     ctx.save();
 
@@ -67,18 +67,17 @@ export class FogRenderer {
         const state = this.getFog(tx, ty);
         if (state === FOG_VISIBLE) continue;
 
-        const screenPos = camera.worldToScreen(tx * TILE_SIZE, ty * TILE_SIZE);
-        const drawX = Math.round(screenPos.x);
-        const drawY = Math.round(screenPos.y);
+        const wx = tx * TILE_SIZE;
+        const wy = ty * TILE_SIZE;
 
         if (state === FOG_UNEXPLORED) {
           // Pitch-black unexplored shroud
           ctx.fillStyle = '#060504';
-          ctx.fillRect(drawX, drawY, TILE_SIZE, TILE_SIZE);
+          ctx.fillRect(wx, wy, TILE_SIZE, TILE_SIZE);
         } else if (state === FOG_EXPLORED) {
           // Dune II semi-transparent shadow shroud (50% dither / dark overlay)
           ctx.fillStyle = 'rgba(12, 9, 7, 0.62)';
-          ctx.fillRect(drawX, drawY, TILE_SIZE, TILE_SIZE);
+          ctx.fillRect(wx, wy, TILE_SIZE, TILE_SIZE);
         }
       }
     }

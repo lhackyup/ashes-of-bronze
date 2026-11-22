@@ -230,15 +230,14 @@ export class TileRenderer {
   ): void {
     const startTileX = Math.max(0, Math.floor(camera.x / TILE_SIZE));
     const startTileY = Math.max(0, Math.floor(camera.y / TILE_SIZE));
-    const endTileX = Math.min(this.width - 1, Math.ceil((camera.x + camera.viewportWidth) / TILE_SIZE));
-    const endTileY = Math.min(this.height - 1, Math.ceil((camera.y + camera.viewportHeight) / TILE_SIZE));
+    const endTileX = Math.min(this.width - 1, Math.ceil((camera.x + camera.viewportWidth / camera.zoom) / TILE_SIZE));
+    const endTileY = Math.min(this.height - 1, Math.ceil((camera.y + camera.viewportHeight / camera.zoom) / TILE_SIZE));
 
     for (let ty = startTileY; ty <= endTileY; ty++) {
       for (let tx = startTileX; tx <= endTileX; tx++) {
         const tileType = this.getTile(tx, ty);
-        const screenPos = camera.worldToScreen(tx * TILE_SIZE, ty * TILE_SIZE);
-        const drawX = Math.floor(screenPos.x);
-        const drawY = Math.floor(screenPos.y);
+        const wx = tx * TILE_SIZE;
+        const wy = ty * TILE_SIZE;
 
         let tileImg = this.tileCache.get(tileType);
         if (!tileImg) {
@@ -249,14 +248,14 @@ export class TileRenderer {
         }
 
         if (tileImg) {
-          ctx.drawImage(tileImg, drawX, drawY, TILE_SIZE, TILE_SIZE);
+          ctx.drawImage(tileImg, wx, wy, TILE_SIZE, TILE_SIZE);
         }
 
         // Draw Foundation Slab if present
         if (graph.hasFoundation(tx, ty)) {
           const slabImg = this.tileCache.get('slab');
           if (slabImg) {
-            ctx.drawImage(slabImg, drawX, drawY, TILE_SIZE, TILE_SIZE);
+            ctx.drawImage(slabImg, wx, wy, TILE_SIZE, TILE_SIZE);
           }
         }
       }
