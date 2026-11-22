@@ -561,14 +561,34 @@ class GameApp {
     // Disegna sprite procedurale SVGA memorizzato nella banca
     const sprite = SVGAProceduralBank.getBuildingSprite(b.defId, b.owner);
     if (sprite) {
-      // Ombra edificio
+      // Ombra edificio proiettata
       ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
       ctx.fillRect(sp.x + 6, sp.y + 6, bw, bh);
       ctx.drawImage(sprite, sp.x, sp.y, bw, bh);
     } else {
-      // Fallback
       ctx.fillStyle = b.owner === 'player' ? '#8a6234' : '#692d2d';
       ctx.fillRect(sp.x, sp.y, bw, bh);
+    }
+
+    // Bandiere animate che sventolano nel vento per Acropoli, Caserma e Torri
+    if (b.defId === 'acropolis' || b.defId === 'barracks' || b.defId === 'watchtower') {
+      const now = Date.now() / 200;
+      const wave = Math.sin(now + b.id) * 3;
+      const poleX = sp.x + (b.defId === 'watchtower' ? 14 : 24);
+      const poleY = sp.y + 8;
+
+      // Asta in bronzo
+      ctx.fillStyle = '#b8944d';
+      ctx.fillRect(poleX, poleY, 3, 22);
+
+      // Tessuto bandiera con pieghe mosse dal vento levantino
+      ctx.fillStyle = b.owner === 'player' ? '#2de0a5' : '#e63946';
+      ctx.beginPath();
+      ctx.moveTo(poleX + 3, poleY + 2);
+      ctx.lineTo(poleX + 18, poleY + 5 + wave);
+      ctx.lineTo(poleX + 3, poleY + 12);
+      ctx.closePath();
+      ctx.fill();
     }
 
     // Bordo di selezione
@@ -581,7 +601,7 @@ class GameApp {
     // Etichetta edificio
     ctx.fillStyle = '#ffffff';
     ctx.font = '10px Cinzel, serif';
-    ctx.fillText(b.def.name.substring(0, 14), sp.x + 4, sp.y + 14);
+    ctx.fillText(b.def.name.substring(0, 14), sp.x + 4, sp.y + bh + 12);
 
     // Barra HP se selezionato o danneggiato
     if (b.isSelected || b.hp < b.maxHp) {

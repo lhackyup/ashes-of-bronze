@@ -18,251 +18,208 @@ export class SVGAProceduralBank {
     this.initBuildingSprites();
   }
 
-  // --- Helper Grafici SVGA per Texture dell'Età del Bronzo ---
-
-  // Disegna un muro in blocchi megalitici ciclopici poligonali a secco con ombre 3D su ogni pietra
-  private static drawMegalithicWall(
+  // --- Helper per Tetti a Falde Inclinate e Coppi dell'Età del Bronzo ---
+  private static drawBronzeAgeRoof(
     ctx: CanvasRenderingContext2D,
     x: number,
     y: number,
     w: number,
     h: number,
-    baseColor = '#695c4d',
-    lightColor = '#8f7f6d',
-    shadowColor = '#3b332b'
+    baseColor = '#a8422b', // Terracotta levantina aranciata
+    hiColor = '#d96548'
   ): void {
-    // Sfondo base
-    ctx.fillStyle = baseColor;
+    // Sfumatura tetto spiovente a falda frontale
+    const g = ctx.createLinearGradient(x, y, x, y + h);
+    g.addColorStop(0, hiColor);
+    g.addColorStop(0.3, baseColor);
+    g.addColorStop(1, '#662416');
+    ctx.fillStyle = g;
     ctx.fillRect(x, y, w, h);
 
-    const rowH = 14;
-    let rowIndex = 0;
-    for (let curY = y; curY < y + h - 2; curY += rowH) {
-      const actualH = Math.min(rowH, (y + h) - curY);
-      const isShifted = (rowIndex % 2) === 1;
-      const blockW = 22;
-      const startX = isShifted ? x - 10 : x;
-
-      for (let curX = startX; curX < x + w; curX += blockW) {
-        const bx = Math.max(x, curX);
-        const bw = Math.min(blockW - 2, (x + w) - bx);
-        if (bw <= 3) continue;
-
-        // Gradiente di luce diagonale su ogni masso ciclopico
-        const grad = ctx.createLinearGradient(bx, curY, bx + bw, curY + actualH);
-        grad.addColorStop(0, lightColor);
-        grad.addColorStop(0.5, baseColor);
-        grad.addColorStop(1, shadowColor);
-        ctx.fillStyle = grad;
-        ctx.fillRect(bx, curY, bw, actualH - 2);
-
-        // Bordo in rilievo luce / ombra tipico anni '90 (bevel)
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.22)';
-        ctx.beginPath();
-        ctx.moveTo(bx, curY + actualH - 2);
-        ctx.lineTo(bx, curY);
-        ctx.lineTo(bx + bw, curY);
-        ctx.stroke();
-
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.55)';
-        ctx.beginPath();
-        ctx.moveTo(bx + bw, curY);
-        ctx.lineTo(bx + bw, curY + actualH - 2);
-        ctx.lineTo(bx, curY + actualH - 2);
-        ctx.stroke();
-      }
-      rowIndex++;
+    // Scanalature e giunture dei coppi d'argilla
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
+    ctx.lineWidth = 1.2;
+    for (let tx = x + 5; tx < x + w - 2; tx += 6) {
+      ctx.beginPath();
+      ctx.moveTo(tx, y);
+      ctx.lineTo(tx, y + h);
+      ctx.stroke();
     }
+    for (let ty = y + 5; ty < y + h; ty += 6) {
+      ctx.beginPath();
+      ctx.moveTo(x, ty);
+      ctx.lineTo(x + w, ty);
+      ctx.stroke();
+    }
+
+    // Cornicione di grondaia in rilievo
+    ctx.fillStyle = '#42160d';
+    ctx.fillRect(x - 2, y + h - 2, w + 4, 3);
+    ctx.fillStyle = '#fce788';
+    ctx.fillRect(x - 2, y + h - 1, w + 4, 1);
   }
 
-  // Merlature ciclopiche squadrate sulla sommità degli edifici
-  private static drawBattlements(
+  // --- Helper per Mura in Pietra Calcarea Levantina ad Alto Contrasto ---
+  private static drawAshlarWall(
     ctx: CanvasRenderingContext2D,
     x: number,
     y: number,
     w: number,
-    battlementH = 8,
-    merlonW = 10,
-    gapW = 8
+    h: number,
+    wallColor = '#d4cbbd', // Pietra calcarea chiara molto leggibile
+    shadeColor = '#948a7b',
+    shadowColor = '#4a4237'
   ): void {
-    let curX = x;
-    while (curX < x + w) {
-      const curMerlonW = Math.min(merlonW, (x + w) - curX);
-      if (curMerlonW <= 2) break;
+    // Corpo muro
+    const g = ctx.createLinearGradient(x, y, x, y + h);
+    g.addColorStop(0, wallColor);
+    g.addColorStop(0.7, shadeColor);
+    g.addColorStop(1, shadowColor);
+    ctx.fillStyle = g;
+    ctx.fillRect(x, y, w, h);
 
-      ctx.fillStyle = '#8f7f6d';
-      ctx.fillRect(curX, y - battlementH, curMerlonW, battlementH);
+    // Bordo squadrato
+    ctx.strokeStyle = '#383127';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(x, y, w, h);
 
-      ctx.strokeStyle = '#2b241e';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(curX, y - battlementH, curMerlonW, battlementH);
+    // Conci di pietra a file sfalsate con chiaroscuro SVGA
+    const rowH = 10;
+    let rIdx = 0;
+    for (let cy = y; cy < y + h - 1; cy += rowH) {
+      const curH = Math.min(rowH, (y + h) - cy);
+      const shift = (rIdx % 2) * 10;
 
-      // Ombra sotto il merlo
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
-      ctx.fillRect(curX, y, curMerlonW, 2);
+      for (let cx = x - shift; cx < x + w; cx += 20) {
+        const bx = Math.max(x, cx);
+        const bw = Math.min(19, (x + w) - bx);
+        if (bw <= 2) continue;
 
-      curX += merlonW + gapW;
+        // Linea di malta orizzontale e verticale
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+        ctx.strokeRect(bx, cy, bw, curH);
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
+        ctx.strokeRect(bx + 1, cy + 1, bw - 1, curH - 1);
+      }
+      rIdx++;
     }
   }
 
-  // Colonne rastremate di cedro (stile miceneo/minoico, più larghe in cima)
-  private static drawBronzeAgeColumn(
+  // --- Colonne Frontali Scanalate con Riflesso Cilindrico ---
+  private static drawColumn(
     ctx: CanvasRenderingContext2D,
-    topX: number,
-    topY: number,
-    bottomY: number,
-    topW = 12,
-    bottomW = 8,
-    color = '#9e2a2b'
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    color = '#9e2a2b',
+    capColor = '#f5c542'
   ): void {
-    // Fusto rastremato
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.moveTo(topX - topW / 2, topY);
-    ctx.lineTo(topX + topW / 2, topY);
-    ctx.lineTo(topX + bottomW / 2, bottomY);
-    ctx.lineTo(topX - bottomW / 2, bottomY);
-    ctx.closePath();
-    ctx.fill();
+    // Fusto colonna con sfumatura cilindrica
+    const colG = ctx.createLinearGradient(x, y, x + w, y);
+    colG.addColorStop(0, '#591617');
+    colG.addColorStop(0.35, '#e64548');
+    colG.addColorStop(0.7, color);
+    colG.addColorStop(1, '#3b0d0e');
+    ctx.fillStyle = colG;
+    ctx.fillRect(x, y, w, h);
 
-    // Sfumatura cilindrica luce/ombra
-    const colGrad = ctx.createLinearGradient(topX - topW / 2, 0, topX + topW / 2, 0);
-    colGrad.addColorStop(0, 'rgba(0,0,0,0.4)');
-    colGrad.addColorStop(0.35, 'rgba(255,255,255,0.3)');
-    colGrad.addColorStop(1, 'rgba(0,0,0,0.5)');
-    ctx.fillStyle = colGrad;
-    ctx.fill();
-
-    // Capitello a disco dorato
-    ctx.fillStyle = '#ffd166';
-    ctx.fillRect(topX - topW / 2 - 2, topY - 3, topW + 4, 3);
-    ctx.fillStyle = '#b8944d';
-    ctx.fillRect(topX - topW / 2 - 4, topY - 6, topW + 8, 3);
+    // Capitello dorato in rilievo
+    ctx.fillStyle = capColor;
+    ctx.fillRect(x - 2, y - 3, w + 4, 4);
+    ctx.strokeStyle = '#422803';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x - 2, y - 3, w + 4, 4);
 
     // Base in pietra
-    ctx.fillStyle = '#473d33';
-    ctx.fillRect(topX - bottomW / 2 - 2, bottomY, bottomW + 4, 3);
-  }
-
-  // Portale monumentale con architrave monolitico e triangolo di scarico (stile Porta dei Leoni)
-  private static drawMegalithicPortal(
-    ctx: CanvasRenderingContext2D,
-    x: number,
-    y: number,
-    w: number,
-    h: number,
-    trimColor = '#c9933b'
-  ): void {
-    // Apertura interna buia
-    ctx.fillStyle = '#17120e';
-    ctx.fillRect(x, y, w, h);
-
-    // Porte a doppio battente di legno rinforzate in bronzo
-    ctx.fillStyle = '#422a18';
-    ctx.fillRect(x + 2, y + 2, w / 2 - 2, h - 2);
-    ctx.fillRect(x + w / 2, y + 2, w / 2 - 2, h - 2);
-
-    // Borchie di bronzo sulle porte
-    ctx.fillStyle = trimColor;
-    for (let by = y + 6; by < y + h - 4; by += 8) {
-      ctx.fillRect(x + 5, by, 3, 3);
-      ctx.fillRect(x + w - 8, by, 3, 3);
-    }
-
-    // Architrave monolitico massiccio
-    const lintelH = 8;
-    ctx.fillStyle = '#7a6b5a';
-    ctx.fillRect(x - 5, y - lintelH, w + 10, lintelH);
-    ctx.strokeStyle = '#382f26';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(x - 5, y - lintelH, w + 10, lintelH);
-
-    // Triangolo di scarico superiore miceneo
-    ctx.fillStyle = '#473c31';
-    ctx.beginPath();
-    ctx.moveTo(x - 3, y - lintelH);
-    ctx.lineTo(x + w / 2, y - lintelH - 12);
-    ctx.lineTo(x + w + 3, y - lintelH);
-    ctx.closePath();
-    ctx.fill();
-    ctx.strokeStyle = '#29221b';
-    ctx.stroke();
-
-    // Rilievo simbolico al centro del triangolo (es. emblema delleoni/spirale)
-    ctx.fillStyle = trimColor;
-    ctx.beginPath();
-    ctx.arc(x + w / 2, y - lintelH - 5, 3.5, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.fillStyle = '#7a7063';
+    ctx.fillRect(x - 2, y + h - 2, w + 4, 4);
   }
 
   // --- Ritratti Consiglieri Storici ---
   private static initAdvisorPortraits(): void {
-    // 1. Burna-Khabir
+    // 1. Burna-Khabir (Scriba anziano con barba nobile e copricapo levantino)
     this.advisorPortraits.set('burna_khabir', makeCanvas(64, 64, (ctx) => {
       const grad = ctx.createLinearGradient(0, 0, 0, 64);
-      grad.addColorStop(0, '#2d2218');
-      grad.addColorStop(1, '#120d09');
+      grad.addColorStop(0, '#2e261f');
+      grad.addColorStop(1, '#14100c');
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, 64, 64);
 
-      // Copricapo cilindrico levantino
-      ctx.fillStyle = '#8a6234';
-      ctx.fillRect(22, 10, 20, 14);
-      ctx.fillStyle = '#b8944d';
-      ctx.fillRect(20, 22, 24, 3);
+      // Copricapo cilindrico levantino color porpora e oro
+      ctx.fillStyle = '#6b1d2e';
+      ctx.fillRect(20, 8, 24, 15);
+      ctx.fillStyle = '#ffd166';
+      ctx.fillRect(18, 20, 28, 4);
 
-      // Viso
-      ctx.fillStyle = '#d49b6a';
-      ctx.fillRect(24, 24, 16, 16);
+      // Viso anziano
+      ctx.fillStyle = '#dca275';
+      ctx.fillRect(24, 23, 16, 17);
 
-      // Barba arcaica a onde
-      ctx.fillStyle = '#2b1c11';
-      ctx.fillRect(22, 36, 20, 16);
-      ctx.fillRect(25, 52, 14, 6);
+      // Occhi espressivi
+      ctx.fillStyle = '#1c130d';
+      ctx.fillRect(27, 28, 3, 2);
+      ctx.fillRect(34, 28, 3, 2);
 
-      // Toga con bordo dorato
-      ctx.fillStyle = '#e8dfcf';
+      // Barba folta a onde
+      ctx.fillStyle = '#382b20';
+      ctx.fillRect(20, 36, 24, 18);
+      ctx.fillRect(24, 54, 16, 6);
+
+      // Toga bianca di lino con fascia rossa
+      ctx.fillStyle = '#f5efe6';
       ctx.beginPath();
-      ctx.ellipse(32, 66, 24, 18, 0, Math.PI, 0);
+      ctx.ellipse(32, 68, 26, 18, 0, Math.PI, 0);
       ctx.fill();
+
+      ctx.fillStyle = '#8c1919';
+      ctx.fillRect(26, 52, 12, 12);
 
       ctx.strokeStyle = '#c9933b';
       ctx.lineWidth = 2;
       ctx.strokeRect(1, 1, 62, 62);
     }));
 
-    // 2. Tarkhunta
+    // 2. Tarkhunta (Mastro Fabbro)
     this.advisorPortraits.set('tarkhunta', makeCanvas(64, 64, (ctx) => {
       const grad = ctx.createLinearGradient(0, 0, 0, 64);
-      grad.addColorStop(0, '#361b14');
-      grad.addColorStop(1, '#170c09');
+      grad.addColorStop(0, '#381c15');
+      grad.addColorStop(1, '#140805');
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, 64, 64);
 
-      ctx.fillStyle = '#c48558';
-      ctx.fillRect(24, 20, 16, 18);
-      ctx.fillStyle = 'rgba(20, 15, 10, 0.4)';
-      ctx.fillRect(26, 26, 8, 5);
+      // Fascia di cuoio e capelli scuri
+      ctx.fillStyle = '#17110d';
+      ctx.fillRect(20, 12, 24, 10);
+      ctx.fillStyle = '#b85d18';
+      ctx.fillRect(18, 19, 28, 4);
 
-      ctx.fillStyle = '#1c1511';
-      ctx.fillRect(21, 14, 22, 8);
-      ctx.fillStyle = '#7a3e23';
-      ctx.fillRect(20, 20, 24, 4);
+      ctx.fillStyle = '#c78255';
+      ctx.fillRect(24, 21, 16, 18);
 
-      ctx.fillStyle = '#17120e';
-      ctx.fillRect(22, 34, 20, 18);
+      // Fuliggine e barba
+      ctx.fillStyle = 'rgba(20, 15, 10, 0.55)';
+      ctx.fillRect(26, 27, 7, 5);
 
-      ctx.fillStyle = '#59321f';
+      ctx.fillStyle = '#1f1610';
+      ctx.fillRect(22, 35, 20, 18);
+
+      // Grembiule di cuoio spesso
+      ctx.fillStyle = '#5c351c';
       ctx.beginPath();
-      ctx.ellipse(32, 66, 24, 18, 0, Math.PI, 0);
+      ctx.ellipse(32, 68, 26, 18, 0, Math.PI, 0);
       ctx.fill();
 
-      ctx.strokeStyle = '#c9933b';
+      // Martello stilizzato sulla spalla
+      ctx.fillStyle = '#8f8881';
+      ctx.fillRect(12, 42, 8, 14);
+
+      ctx.strokeStyle = '#ffd166';
       ctx.lineWidth = 2;
       ctx.strokeRect(1, 1, 62, 62);
     }));
 
-    // 3. Zalpa
+    // 3. Zalpa (Capitana degli Esploratori)
     this.advisorPortraits.set('zalpa', makeCanvas(64, 64, (ctx) => {
       const grad = ctx.createLinearGradient(0, 0, 0, 64);
       grad.addColorStop(0, '#1c2826');
@@ -270,17 +227,24 @@ export class SVGAProceduralBank {
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, 64, 64);
 
+      // Diadema in bronzo
       ctx.fillStyle = '#1a130e';
-      ctx.fillRect(20, 14, 24, 10);
-      ctx.fillStyle = '#d4af37';
-      ctx.fillRect(20, 20, 24, 4);
+      ctx.fillRect(20, 12, 24, 10);
+      ctx.fillStyle = '#ffd166';
+      ctx.fillRect(18, 18, 28, 5);
 
       ctx.fillStyle = '#dca275';
-      ctx.fillRect(24, 22, 16, 18);
+      ctx.fillRect(24, 21, 16, 18);
 
-      ctx.fillStyle = '#26594d';
+      // Occhi attenti da vedetta
+      ctx.fillStyle = '#17120e';
+      ctx.fillRect(27, 26, 3, 2);
+      ctx.fillRect(34, 26, 3, 2);
+
+      // Mantello verde e sciarpa levantina
+      ctx.fillStyle = '#225e52';
       ctx.beginPath();
-      ctx.ellipse(32, 66, 24, 18, 0, Math.PI, 0);
+      ctx.ellipse(32, 68, 26, 18, 0, Math.PI, 0);
       ctx.fill();
 
       ctx.strokeStyle = '#2de0a5';
@@ -289,431 +253,413 @@ export class SVGAProceduralBank {
     }));
   }
 
-  // --- Sprite Edifici dell'Età del Bronzo ad Alto Dettaglio SVGA ---
+  // --- Sprite Edifici ad Alto Livello di Dettaglio SVGA Anni '90 ---
   private static initBuildingSprites(): void {
     const owners: ('player' | 'sea_peoples')[] = ['player', 'sea_peoples'];
 
     for (const owner of owners) {
       const isPlayer = owner === 'player';
-      const cPrimary = isPlayer ? '#7a5a3a' : '#5c2222';
-      const cLight = isPlayer ? '#9e7952' : '#7d3838';
-      const cDark = isPlayer ? '#47321e' : '#331212';
-      const cTrim = isPlayer ? '#c9933b' : '#ff4d4d';
-      const cTrimBright = isPlayer ? '#ffd166' : '#ff8585';
+      const cRoof = isPlayer ? '#9e2a2b' : '#3b1212';
+      const cRoofHi = isPlayer ? '#d94144' : '#692020';
+      const cTrim = isPlayer ? '#ffd166' : '#ff4d4d';
 
-      // 0. Cyclopean Slab / Terrapieno Ciclopico (2x2 tile = 96x96 px)
+      // 0. Cyclopean Slab / Fondamenta Ciclopiche (2x2 = 96x96 px)
       this.buildingSprites.set(`cyclopean_slab_${owner}`, makeCanvas(96, 96, (ctx) => {
-        // Blocco megalitico con 4 grandi lastroni poligonali ad incastro
-        const slabs = [
-          { x: 3, y: 3, w: 43, h: 43 },
-          { x: 49, y: 3, w: 44, h: 43 },
-          { x: 3, y: 49, w: 43, h: 44 },
-          { x: 49, y: 49, w: 44, h: 44 }
-        ];
-
-        ctx.fillStyle = '#29221b';
+        // Terrapieno in massi megalitici poligonali ben visibile dal terreno
+        ctx.fillStyle = '#2e261f';
         ctx.fillRect(0, 0, 96, 96);
 
-        for (const s of slabs) {
-          const g = ctx.createLinearGradient(s.x, s.y, s.x + s.w, s.y + s.h);
-          g.addColorStop(0, '#9e8e7c');
-          g.addColorStop(0.5, '#736657');
-          g.addColorStop(1, '#42392f');
+        const slabs = [
+          [2, 2, 44, 44], [48, 2, 46, 44],
+          [2, 48, 44, 46], [48, 48, 46, 46]
+        ];
+
+        slabs.forEach(([x, y, w, h]) => {
+          const g = ctx.createLinearGradient(x, y, x + w, y + h);
+          g.addColorStop(0, '#c7baa9');
+          g.addColorStop(0.4, '#8f8373');
+          g.addColorStop(1, '#544b3f');
           ctx.fillStyle = g;
-          ctx.fillRect(s.x, s.y, s.w, s.h);
+          ctx.fillRect(x, y, w, h);
 
-          // Crepe e scanalature arcaiche
-          ctx.strokeStyle = '#2e261f';
+          // Bevel 3D anni '90 (bordo chiaro in alto-sinistra, scuro in basso-destra)
+          ctx.strokeStyle = '#ded5c7';
           ctx.lineWidth = 1.5;
+          ctx.strokeRect(x, y, w, h);
+
+          // Crepe decorative
+          ctx.strokeStyle = '#382f25';
+          ctx.lineWidth = 1;
           ctx.beginPath();
-          ctx.moveTo(s.x + 8, s.y + 4);
-          ctx.lineTo(s.x + 14, s.y + 16);
-          ctx.lineTo(s.x + 28, s.y + 20);
+          ctx.moveTo(x + 10, y + 6); ctx.lineTo(x + 18, y + 20); ctx.lineTo(x + 32, y + 24);
           ctx.stroke();
+        });
 
-          // Bevel 3D
-          ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-          ctx.strokeRect(s.x + 1, s.y + 1, s.w - 2, s.h - 2);
-        }
-
-        // Sigillo centrale di ancoraggio in bronzo
+        // Borchia centrale di legamento in bronzo
         ctx.fillStyle = cTrim;
-        ctx.fillRect(44, 44, 8, 8);
-        ctx.strokeStyle = cTrimBright;
-        ctx.strokeRect(44, 44, 8, 8);
+        ctx.fillRect(42, 42, 12, 12);
+        ctx.strokeStyle = '#2b1c04';
+        ctx.strokeRect(42, 42, 12, 12);
       }));
 
-      // 1. Acropolis / Megaron del Wanax (4x4 tile = 192x192 px)
+      // 1. Acropolis / Megaron del Wanax (4x4 = 192x192 px)
       this.buildingSprites.set(`acropolis_${owner}`, makeCanvas(192, 192, (ctx) => {
-        // Ombra monumentale
+        // Ombra diagonale proiettata a terra verso destra
         ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
-        ctx.fillRect(12, 16, 172, 172);
+        ctx.fillRect(16, 20, 168, 164);
 
-        // Terrazza Megalitica Basale (Podio a gradoni ciclopico)
-        this.drawMegalithicWall(ctx, 8, 8, 176, 176, '#524536', '#7a6a57', '#30281f');
+        // 1. Basamento a gradoni monumentale (Podio in pietra calcarea chiara)
+        this.drawAshlarWall(ctx, 12, 18, 168, 166, '#ded6c8', '#b0a594', '#665d50');
 
-        // Secondo livello: Corpo centrale del palazzo
-        this.drawMegalithicWall(ctx, 24, 20, 144, 150, cPrimary, cLight, cDark);
-
-        // Merli ciclopici lungo il bordo superiore
-        this.drawBattlements(ctx, 24, 20, 144, 10, 12, 6);
-
-        // Terrazza superiore pavimentata
-        const terraceGrad = ctx.createLinearGradient(34, 30, 34, 110);
-        terraceGrad.addColorStop(0, '#c7a36d');
-        terraceGrad.addColorStop(1, '#785b34');
-        ctx.fillStyle = terraceGrad;
-        ctx.fillRect(34, 30, 124, 80);
-
-        // Piastrelle della terrazza
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
-        ctx.lineWidth = 1;
-        for (let tx = 44; tx < 150; tx += 12) {
-          ctx.beginPath(); ctx.moveTo(tx, 30); ctx.lineTo(tx, 110); ctx.stroke();
-        }
-        for (let ty = 40; ty < 110; ty += 12) {
-          ctx.beginPath(); ctx.moveTo(34, ty); ctx.lineTo(158, ty); ctx.stroke();
+        // Scalinata frontale d'ingresso
+        for (let st = 0; st < 4; st++) {
+          const stepY = 158 + st * 6;
+          ctx.fillStyle = '#ebdcc7';
+          ctx.fillRect(66 - st * 3, stepY, 60 + st * 6, 5);
+          ctx.strokeStyle = '#473d31';
+          ctx.strokeRect(66 - st * 3, stepY, 60 + st * 6, 5);
         }
 
-        // Colonne rastremate di cedro che sostengono il portico
-        this.drawBronzeAgeColumn(ctx, 48, 120, 168, 14, 10);
-        this.drawBronzeAgeColumn(ctx, 80, 120, 168, 14, 10);
-        this.drawBronzeAgeColumn(ctx, 112, 120, 168, 14, 10);
-        this.drawBronzeAgeColumn(ctx, 144, 120, 168, 14, 10);
+        // 2. Corpo principale del Megaron
+        this.drawAshlarWall(ctx, 28, 48, 136, 110, '#f0e8dc', '#c2b6a3', '#7a6f5e');
 
-        // Portale monumentale miceneo centrale con triangolo di scarico
-        this.drawMegalithicPortal(ctx, 82, 126, 28, 42, cTrim);
+        // 3. Tetto frontale spiovente a due falde con tegole in terracotta
+        this.drawBronzeAgeRoof(ctx, 24, 26, 144, 38, cRoof, cRoofHi);
 
-        // Focolare Sacro Centrale (Megaron) sulla terrazza con braci ardenti e fumo
-        ctx.fillStyle = '#261b14';
-        ctx.fillRect(80, 52, 32, 32);
+        // 4. Frontone triangolare monumentale sopra le colonne
+        ctx.fillStyle = '#ebdcc7';
+        ctx.beginPath();
+        ctx.moveTo(28, 64);
+        ctx.lineTo(96, 28);
+        ctx.lineTo(164, 64);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#594d3d';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Rilievo centrale dorato sul frontone (Disco solare / Toro sacro)
+        ctx.fillStyle = cTrim;
+        ctx.beginPath();
+        ctx.arc(96, 48, 9, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#422a03';
+        ctx.stroke();
+
+        // 5. Porticato frontale a 6 colonne di cedro slanciate
+        const colPositions = [36, 58, 80, 112, 134, 156];
+        for (const cx of colPositions) {
+          this.drawColumn(ctx, cx - 4, 64, 8, 88, '#9e2a2b', cTrim);
+        }
+
+        // 6. Portale monumentale in legno scuro e bronzo
+        ctx.fillStyle = '#1c140d';
+        ctx.fillRect(84, 88, 24, 68);
         ctx.strokeStyle = cTrim;
         ctx.lineWidth = 2;
-        ctx.strokeRect(80, 52, 32, 32);
+        ctx.strokeRect(84, 88, 24, 68);
 
-        const flameGrad = ctx.createRadialGradient(96, 68, 2, 96, 68, 14);
-        flameGrad.addColorStop(0, '#ffff73');
-        flameGrad.addColorStop(0.4, '#ff6a00');
-        flameGrad.addColorStop(1, 'rgba(180, 30, 10, 0)');
-        ctx.fillStyle = flameGrad;
-        ctx.beginPath();
-        ctx.arc(96, 68, 14, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Stendardi di fazione appesi ai lati del palazzo
+        // Borchie di bronzo sulle ante
         ctx.fillStyle = cTrim;
-        ctx.fillRect(36, 124, 6, 32);
-        ctx.fillRect(150, 124, 6, 32);
-        ctx.fillStyle = isPlayer ? '#2de0a5' : '#8c1919';
-        ctx.fillRect(38, 126, 14, 20);
-        ctx.fillRect(140, 126, 14, 20);
+        ctx.fillRect(88, 106, 4, 4);
+        ctx.fillRect(100, 106, 4, 4);
+        ctx.fillRect(88, 128, 4, 4);
+        ctx.fillRect(100, 128, 4, 4);
+
+        // 7. Stendardi verticali ai lati
+        ctx.fillStyle = '#614830';
+        ctx.fillRect(20, 48, 4, 52);
+        ctx.fillRect(168, 48, 4, 52);
+
+        ctx.fillStyle = isPlayer ? '#2de0a5' : '#e63946';
+        ctx.fillRect(24, 52, 14, 28);
+        ctx.fillRect(154, 52, 14, 28);
+        ctx.strokeStyle = cTrim;
+        ctx.strokeRect(24, 52, 14, 28);
+        ctx.strokeRect(154, 52, 14, 28);
       }));
 
-      // 2. Bronze Foundry / Fonderia del Bronzo (3x3 tile = 144x144 px)
+      // 2. Bronze Foundry / Fonderia del Bronzo (3x3 = 144x144 px)
       this.buildingSprites.set(`bronze_foundry_${owner}`, makeCanvas(144, 144, (ctx) => {
-        // Mura megalitiche basse con corte aperta
-        this.drawMegalithicWall(ctx, 10, 10, 124, 124, '#4a3f35', '#6b5c4f', '#2b231d');
+        // Ombra
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.42)';
+        ctx.fillRect(12, 14, 124, 124);
 
-        // Due forni a cupola gemelli per la fusione del rame e dello stagno
-        const furnaces = [{ cx: 44, cy: 50 }, { cx: 98, cy: 50 }];
-        for (const f of furnaces) {
-          // Cupola in argilla refrattaria scura
-          const domeGrad = ctx.createRadialGradient(f.cx - 6, f.cy - 6, 4, f.cx, f.cy, 26);
-          domeGrad.addColorStop(0, '#80593b');
-          domeGrad.addColorStop(0.7, '#422c1b');
-          domeGrad.addColorStop(1, '#1a1008');
-          ctx.fillStyle = domeGrad;
-          ctx.beginPath();
-          ctx.arc(f.cx, f.cy, 26, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.strokeStyle = '#2b1b11';
-          ctx.lineWidth = 2;
-          ctx.stroke();
+        // Muro di cinta e corpo officina in pietra
+        this.drawAshlarWall(ctx, 10, 18, 124, 118, '#c9bfb1', '#9e9485', '#574e41');
 
-          // Bocca del forno con metallo ribollente incandescente
-          ctx.fillStyle = '#170e08';
-          ctx.beginPath();
-          ctx.ellipse(f.cx, f.cy + 12, 12, 6, 0, 0, Math.PI * 2);
-          ctx.fill();
+        // Tettoia spiovente a sinistra
+        this.drawBronzeAgeRoof(ctx, 12, 16, 68, 36, cRoof, cRoofHi);
 
-          const moltenG = ctx.createRadialGradient(f.cx, f.cy + 12, 1, f.cx, f.cy + 12, 10);
-          moltenG.addColorStop(0, '#ffffff');
-          moltenG.addColorStop(0.3, '#ffea00');
-          moltenG.addColorStop(0.7, '#ff6200');
-          moltenG.addColorStop(1, 'rgba(180, 20, 0, 0)');
-          ctx.fillStyle = moltenG;
-          ctx.beginPath();
-          ctx.ellipse(f.cx, f.cy + 12, 10, 5, 0, 0, Math.PI * 2);
-          ctx.fill();
+        // Due alte ciminiere verticali in mattoni refrattari
+        const chimneys = [88, 114];
+        for (const chx of chimneys) {
+          const chG = ctx.createLinearGradient(chx, 10, chx + 14, 10);
+          chG.addColorStop(0, '#594435');
+          chG.addColorStop(0.5, '#876953');
+          chG.addColorStop(1, '#3b2c21');
+          ctx.fillStyle = chG;
+          ctx.fillRect(chx, 14, 16, 56);
+          ctx.strokeStyle = '#241b14';
+          ctx.strokeRect(chx, 14, 16, 56);
 
-          // Canna fumaria sommitale con cenere e fumo
-          ctx.fillStyle = '#1c120c';
-          ctx.fillRect(f.cx - 5, f.cy - 24, 10, 8);
+          // Bocca del camino con fumo
+          ctx.fillStyle = '#140f0c';
+          ctx.fillRect(chx - 2, 10, 20, 6);
         }
 
-        // Mantici doppi in cuoio azionati da travi
-        ctx.fillStyle = '#59341b';
-        ctx.fillRect(66, 42, 12, 18);
-        ctx.fillStyle = '#8a5c36';
-        ctx.fillRect(68, 38, 8, 4);
+        // Grande fornace a cupola aperta al centro
+        ctx.fillStyle = '#2b1b11';
+        ctx.beginPath();
+        ctx.ellipse(50, 84, 26, 20, 0, 0, Math.PI * 2);
+        ctx.fill();
 
-        // Canale di colata verso la vasca di lingotti
-        ctx.fillStyle = '#261b14';
-        ctx.fillRect(36, 82, 72, 12);
-        ctx.fillStyle = '#ff7b00';
-        ctx.fillRect(40, 86, 64, 4);
+        // Bagliore del metallo fuso incandescente (oro e rame)
+        const fireG = ctx.createRadialGradient(50, 84, 2, 50, 84, 18);
+        fireG.addColorStop(0, '#ffffff');
+        fireG.addColorStop(0.35, '#ffdd33');
+        fireG.addColorStop(0.7, '#ff5500');
+        fireG.addColorStop(1, 'rgba(150, 20, 0, 0)');
+        ctx.fillStyle = fireG;
+        ctx.beginPath();
+        ctx.ellipse(50, 84, 20, 14, 0, 0, Math.PI * 2);
+        ctx.fill();
 
-        // Catasta di Lingotti di Bronzo a Pelle di Bue (Oxhide Ingots) con riflessi dorati
-        const ingotRows = [
-          [{ x: 26, y: 104 }, { x: 50, y: 104 }, { x: 74, y: 104 }, { x: 98, y: 104 }],
-          [{ x: 38, y: 96 }, { x: 62, y: 96 }, { x: 86, y: 96 }]
+        // Gru / Argano di sollevamento in legno per scaricare le carovane
+        ctx.fillStyle = '#5c3d21';
+        ctx.fillRect(92, 68, 6, 54);
+        ctx.fillRect(72, 68, 32, 6);
+        ctx.strokeStyle = '#d4af37';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(76, 74); ctx.lineTo(76, 96);
+        ctx.stroke();
+        ctx.fillStyle = cTrim;
+        ctx.fillRect(73, 96, 6, 6); // Gancio
+
+        // Pila di lingotti di bronzo lucenti (Oxhide Ingots) all'esterno
+        for (let i = 0; i < 3; i++) {
+          const ingG = ctx.createLinearGradient(92 + i * 10, 110, 108 + i * 10, 122);
+          ingG.addColorStop(0, '#ffd166');
+          ingG.addColorStop(0.6, '#c9933b');
+          ingG.addColorStop(1, '#694711');
+          ctx.fillStyle = ingG;
+          ctx.fillRect(86 + i * 12, 116 - i * 4, 16, 8);
+          ctx.strokeStyle = '#382204';
+          ctx.strokeRect(86 + i * 12, 116 - i * 4, 16, 8);
+        }
+      }));
+
+      // 3. Granary / Granaio (2x2 = 96x96 px)
+      this.buildingSprites.set(`granary_${owner}`, makeCanvas(96, 96, (ctx) => {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+        ctx.fillRect(10, 12, 80, 80);
+
+        // Basamento circolare in pietra calcarea
+        this.drawAshlarWall(ctx, 12, 28, 72, 62, '#ded6c8', '#b3a896', '#665d50');
+
+        // Tetto conico a falde in argilla e paglia
+        const coneG = ctx.createLinearGradient(12, 6, 84, 40);
+        coneG.addColorStop(0, '#e8aa58');
+        coneG.addColorStop(0.6, '#9e6d31');
+        coneG.addColorStop(1, '#543612');
+        ctx.fillStyle = coneG;
+        ctx.beginPath();
+        ctx.moveTo(48, 6);
+        ctx.lineTo(88, 36);
+        ctx.lineTo(8, 36);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#3b240a';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // Finestrella superiore di carico
+        ctx.fillStyle = '#261b11';
+        ctx.fillRect(43, 20, 10, 8);
+        ctx.strokeStyle = cTrim;
+        ctx.strokeRect(43, 20, 10, 8);
+
+        // Grande porta d'accesso con sacchi di grano appoggiati
+        ctx.fillStyle = '#362213';
+        ctx.fillRect(38, 54, 20, 36);
+        ctx.strokeStyle = cTrim;
+        ctx.strokeRect(38, 54, 20, 36);
+
+        // Sacchi di grano di lino
+        const sacks = [
+          { x: 24, y: 76, r: 6 }, { x: 30, y: 80, r: 7 },
+          { x: 66, y: 78, r: 7 }, { x: 73, y: 82, r: 6 }
         ];
-        for (const row of ingotRows) {
-          for (const ing of row) {
-            // Forma a pelle di bue con quattro appendici angolari
-            const ig = ctx.createLinearGradient(ing.x, ing.y, ing.x + 18, ing.y + 9);
-            ig.addColorStop(0, cTrimBright);
-            ig.addColorStop(0.5, cTrim);
-            ig.addColorStop(1, '#664514');
-            ctx.fillStyle = ig;
-            ctx.fillRect(ing.x, ing.y, 18, 9);
-            ctx.strokeStyle = '#382205';
-            ctx.lineWidth = 1;
-            ctx.strokeRect(ing.x, ing.y, 18, 9);
+        for (const s of sacks) {
+          ctx.fillStyle = '#e8d8be';
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = '#574833';
+          ctx.stroke();
+        }
+      }));
+
+      // 4. Barracks / Caserma delle Milizie (3x3 = 144x144 px)
+      this.buildingSprites.set(`barracks_${owner}`, makeCanvas(144, 144, (ctx) => {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.42)';
+        ctx.fillRect(10, 14, 126, 122);
+
+        // Mura forti in pietra
+        this.drawAshlarWall(ctx, 8, 16, 128, 120, '#d6cec0', '#a39989', '#574e41');
+
+        // Tetto frontale spiovente con tegole rosse
+        this.drawBronzeAgeRoof(ctx, 8, 14, 128, 32, cRoof, cRoofHi);
+
+        // Cortile d'armi interno
+        ctx.fillStyle = '#b89f74';
+        ctx.fillRect(20, 48, 104, 76);
+        ctx.strokeStyle = '#473a26';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(20, 48, 104, 76);
+
+        // Portone d'accesso fortificato con arco in pietra
+        ctx.fillStyle = '#261b11';
+        ctx.fillRect(58, 88, 28, 36);
+        ctx.strokeStyle = cTrim;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(58, 88, 28, 36);
+
+        // Rastrelliere con scudi e lance da guerra
+        const shieldPositions = [28, 44, 92, 108];
+        for (const sx of shieldPositions) {
+          // Scudo a torre
+          ctx.fillStyle = cTrim;
+          ctx.fillRect(sx, 58, 10, 18);
+          ctx.strokeStyle = '#291b05';
+          ctx.strokeRect(sx, 58, 10, 18);
+
+          // Lancia
+          ctx.strokeStyle = '#594433';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(sx + 5, 50); ctx.lineTo(sx + 5, 82);
+          ctx.stroke();
+        }
+
+        // Stendardo di battaglia appeso sulla porta
+        ctx.fillStyle = isPlayer ? '#2de0a5' : '#e63946';
+        ctx.fillRect(62, 56, 20, 26);
+        ctx.strokeStyle = cTrim;
+        ctx.strokeRect(62, 56, 20, 26);
+      }));
+
+      // 5. Watchtower / Torre di Vedetta Ciclopica (2x2 = 96x96 px)
+      this.buildingSprites.set(`watchtower_${owner}`, makeCanvas(96, 96, (ctx) => {
+        // Ombra verticale slanciata
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+        ctx.fillRect(16, 12, 70, 78);
+
+        // Fusto della torre alto a 3 livelli con sfumatura di luce
+        const twG = ctx.createLinearGradient(24, 0, 72, 0);
+        twG.addColorStop(0, '#a69c8e');
+        twG.addColorStop(0.4, '#f0e8dc');
+        twG.addColorStop(1, '#544a3e');
+        ctx.fillStyle = twG;
+        ctx.fillRect(24, 16, 48, 74);
+        ctx.strokeStyle = '#383025';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(24, 16, 48, 74);
+
+        // Tetto a spiovente superiore protetto
+        this.drawBronzeAgeRoof(ctx, 16, 6, 64, 18, cRoof, cRoofHi);
+
+        // Piattaforma di guardia con feritoie verticali
+        ctx.fillStyle = '#1c150f';
+        ctx.fillRect(34, 34, 6, 18);
+        ctx.fillRect(56, 34, 6, 18);
+
+        // Portone alla base
+        ctx.fillStyle = '#291c12';
+        ctx.fillRect(38, 64, 20, 26);
+        ctx.strokeStyle = cTrim;
+        ctx.strokeRect(38, 64, 20, 26);
+
+        // Braciere di segnalazione sul balcone
+        ctx.fillStyle = '#ffd166';
+        ctx.beginPath();
+        ctx.arc(48, 28, 5, 0, Math.PI * 2);
+        ctx.fill();
+      }));
+
+      // 6. Chariot Stable / Scuderia dei Carri da Guerra (3x3 = 144x144 px)
+      this.buildingSprites.set(`chariot_stable_${owner}`, makeCanvas(144, 144, (ctx) => {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+        ctx.fillRect(10, 14, 126, 122);
+
+        this.drawAshlarWall(ctx, 8, 16, 128, 120, '#d6cec0', '#a39989', '#574e41');
+        this.drawBronzeAgeRoof(ctx, 8, 14, 128, 30, cRoof, cRoofHi);
+
+        // Area paddock e scuderia
+        ctx.fillStyle = '#9c8158';
+        ctx.fillRect(18, 46, 108, 80);
+
+        // Colonne di legno per le stalle
+        this.drawColumn(ctx, 28, 48, 6, 76, '#734624', '#fce788');
+        this.drawColumn(ctx, 68, 48, 6, 76, '#734624', '#fce788');
+        this.drawColumn(ctx, 108, 48, 6, 76, '#734624', '#fce788');
+
+        // Due grandi ruote raggiate di carro in bronzo appoggiate alla parete
+        const wheelXs = [46, 88];
+        for (const wx of wheelXs) {
+          ctx.strokeStyle = cTrim;
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(wx, 88, 14, 0, Math.PI * 2);
+          ctx.stroke();
+
+          ctx.lineWidth = 1.2;
+          for (let a = 0; a < Math.PI * 2; a += Math.PI / 3) {
+            ctx.beginPath();
+            ctx.moveTo(wx, 88);
+            ctx.lineTo(wx + Math.cos(a) * 14, 88 + Math.sin(a) * 14);
+            ctx.stroke();
           }
         }
       }));
 
-      // 3. Granary / Granaio & Riserva Idrica (2x2 tile = 96x96 px)
-      this.buildingSprites.set(`granary_${owner}`, makeCanvas(96, 96, (ctx) => {
-        // Piattaforma circolare rialzata antiumidità
-        ctx.fillStyle = '#3d342b';
-        ctx.beginPath();
-        ctx.arc(48, 48, 44, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Corpo circolare del silos in argilla levigata color ocra
-        const siloGrad = ctx.createRadialGradient(36, 36, 8, 48, 48, 38);
-        siloGrad.addColorStop(0, '#c99f6b');
-        siloGrad.addColorStop(0.6, '#8c653a');
-        siloGrad.addColorStop(1, '#47321a');
-        ctx.fillStyle = siloGrad;
-        ctx.beginPath();
-        ctx.arc(48, 48, 38, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Fasce cerchiate di rinforzo in corda di giunco e bronzo
-        ctx.strokeStyle = cTrim;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(48, 48, 28, 0, Math.PI * 2);
-        ctx.stroke();
-
-        // Tetto a cono in paglia intrecciata con trama radiante
-        ctx.fillStyle = '#6e512c';
-        ctx.beginPath();
-        ctx.arc(48, 48, 18, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
-        ctx.lineWidth = 1;
-        for (let a = 0; a < Math.PI * 2; a += Math.PI / 6) {
-          ctx.beginPath();
-          ctx.moveTo(48, 48);
-          ctx.lineTo(48 + Math.cos(a) * 18, 48 + Math.sin(a) * 18);
-          ctx.stroke();
-        }
-
-        // Abbaino e botola superiore di carico
-        ctx.fillStyle = '#261b11';
-        ctx.fillRect(44, 44, 8, 8);
-
-        // Sacchi di grano di lino e ceste all'esterno del granaio
-        const sacks = [
-          { x: 18, y: 72, r: 6 },
-          { x: 28, y: 76, r: 7 },
-          { x: 70, y: 74, r: 6 }
-        ];
-        for (const s of sacks) {
-          ctx.fillStyle = '#d6c8b2';
-          ctx.beginPath();
-          ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.strokeStyle = '#544733';
-          ctx.stroke();
-        }
-      }));
-
-      // 4. Barracks / Caserma delle Milizie & Forgia Armi (3x3 tile = 144x144 px)
-      this.buildingSprites.set(`barracks_${owner}`, makeCanvas(144, 144, (ctx) => {
-        // Mura perimetrali megalitiche
-        this.drawMegalithicWall(ctx, 10, 10, 124, 124, cPrimary, cLight, cDark);
-        this.drawBattlements(ctx, 10, 10, 124, 8, 10, 6);
-
-        // Cortile interno di terra battuta/sabbia per l'addestramento alla falange
-        const sandGrad = ctx.createLinearGradient(28, 28, 116, 116);
-        sandGrad.addColorStop(0, '#c7ab77');
-        sandGrad.addColorStop(1, '#8f7243');
-        ctx.fillStyle = sandGrad;
-        ctx.fillRect(28, 28, 88, 88);
-
-        // Tettoia d'armeria lungo il lato nord
-        ctx.fillStyle = '#4a3321';
-        ctx.fillRect(32, 32, 80, 20);
-        ctx.strokeStyle = '#291b10';
-        ctx.lineWidth = 1.5;
-        ctx.strokeRect(32, 32, 80, 20);
-
-        // Rastrelliere con grandi scudi a otto micenei e picche
-        const shields = [42, 58, 74, 90];
-        for (const sx of shields) {
-          // Scudo miceneo a figura di otto
-          ctx.fillStyle = cTrim;
-          ctx.beginPath();
-          ctx.arc(sx, 40, 5, 0, Math.PI * 2);
-          ctx.arc(sx, 46, 6, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.strokeStyle = '#362106';
-          ctx.stroke();
-        }
-
-        // Bersagli d'addestramento e manichini con armature di paglia
-        ctx.fillStyle = '#7a5a3a';
-        ctx.fillRect(44, 76, 14, 14);
-        ctx.fillStyle = '#b83b3b';
-        ctx.beginPath();
-        ctx.arc(51, 83, 4, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = '#7a5a3a';
-        ctx.fillRect(84, 76, 14, 14);
-        ctx.fillStyle = '#b83b3b';
-        ctx.beginPath();
-        ctx.arc(91, 83, 4, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Portale massiccio a sud
-        this.drawMegalithicPortal(ctx, 60, 100, 24, 28, cTrim);
-      }));
-
-      // 5. Watchtower / Torre di Vedetta Ciclopica (2x2 tile = 96x96 px)
-      this.buildingSprites.set(`watchtower_${owner}`, makeCanvas(96, 96, (ctx) => {
-        // Ombra alta della torre
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
-        ctx.fillRect(16, 16, 72, 72);
-
-        // Bastione piramidale a gradoni megalitici (base 76x76)
-        this.drawMegalithicWall(ctx, 10, 10, 76, 76, '#594d40', '#7d6e5d', '#362e26');
-
-        // Secondo gradone della torre (54x54)
-        this.drawMegalithicWall(ctx, 21, 21, 54, 54, cPrimary, cLight, cDark);
-
-        // Piattaforma sommitale con merlatura di vedetta
-        this.drawBattlements(ctx, 21, 21, 54, 8, 8, 5);
-
-        // Feritoie verticali strette per gli arcieri
-        ctx.fillStyle = '#140f0b';
-        ctx.fillRect(36, 42, 4, 16);
-        ctx.fillRect(56, 42, 4, 16);
-
-        // Braciere monumentale con fiamma e segnali di fumo
-        ctx.fillStyle = '#1c1510';
-        ctx.fillRect(42, 42, 12, 12);
-        ctx.strokeStyle = cTrim;
-        ctx.lineWidth = 1.5;
-        ctx.strokeRect(42, 42, 12, 12);
-
-        const beaconGrad = ctx.createRadialGradient(48, 48, 2, 48, 48, 10);
-        beaconGrad.addColorStop(0, '#ffffa3');
-        beaconGrad.addColorStop(0.4, '#ff6a00');
-        beaconGrad.addColorStop(1, 'rgba(180, 20, 0, 0)');
-        ctx.fillStyle = beaconGrad;
-        ctx.beginPath();
-        ctx.arc(48, 48, 10, 0, Math.PI * 2);
-        ctx.fill();
-      }));
-
-      // 6. Chariot Stable / Scuderia dei Carri da Guerra (3x3 tile = 144x144 px)
-      this.buildingSprites.set(`chariot_stable_${owner}`, makeCanvas(144, 144, (ctx) => {
-        this.drawMegalithicWall(ctx, 10, 10, 124, 124, '#544638', '#73614f', '#2b231c');
-
-        // Tettoie aperte in legno e pali di cedro
-        ctx.fillStyle = '#3d2817';
-        ctx.fillRect(20, 20, 104, 30);
-        this.drawBronzeAgeColumn(ctx, 28, 20, 50, 8, 6);
-        this.drawBronzeAgeColumn(ctx, 72, 20, 50, 8, 6);
-        this.drawBronzeAgeColumn(ctx, 116, 20, 50, 8, 6);
-
-        // Mangiatoie e balle di fieno
-        ctx.fillStyle = '#b8944d';
-        ctx.fillRect(34, 26, 32, 14);
-        ctx.fillRect(78, 26, 32, 14);
-
-        // Carro da guerra smontato in manutenzione: ruote raggiate appoggiate alla parete
-        ctx.strokeStyle = cTrim;
-        ctx.lineWidth = 2.5;
-        ctx.beginPath();
-        ctx.arc(40, 84, 14, 0, Math.PI * 2);
-        ctx.arc(104, 84, 14, 0, Math.PI * 2);
-        ctx.stroke();
-
-        // Raggi ruote
-        ctx.lineWidth = 1;
-        for (let a = 0; a < Math.PI * 2; a += Math.PI / 3) {
-          ctx.beginPath();
-          ctx.moveTo(40, 84); ctx.lineTo(40 + Math.cos(a) * 14, 84 + Math.sin(a) * 14);
-          ctx.moveTo(104, 84); ctx.lineTo(104 + Math.cos(a) * 14, 84 + Math.sin(a) * 14);
-          ctx.stroke();
-        }
-
-        // Timone e cassa del carro in legno curvo
-        ctx.fillStyle = '#593a1f';
-        ctx.fillRect(58, 74, 28, 30);
-        ctx.fillStyle = cTrim;
-        ctx.fillRect(62, 70, 20, 4);
-      }));
-
-      // 7. Iron Smelter / Forni di Riduzione del Ferro (3x3 tile = 144x144 px)
+      // 7. Iron Smelter / Forni di Riduzione del Ferro (3x3 = 144x144 px)
       this.buildingSprites.set(`iron_smelter_${owner}`, makeCanvas(144, 144, (ctx) => {
-        // Mura scure e pesanti in blocchi di basalto nero e calcare
-        this.drawMegalithicWall(ctx, 10, 10, 124, 124, '#2e2825', '#453d39', '#141210');
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+        ctx.fillRect(10, 14, 126, 122);
 
-        // Grande fornace verticale di riduzione (bloomery) a torre conica
-        const bloomGrad = ctx.createLinearGradient(48, 20, 96, 110);
-        bloomGrad.addColorStop(0, '#524b47');
-        bloomGrad.addColorStop(0.5, '#2e2a28');
-        bloomGrad.addColorStop(1, '#171514');
-        ctx.fillStyle = bloomGrad;
+        // Mura pesanti in blocchi di basalto scuro
+        this.drawAshlarWall(ctx, 8, 16, 128, 120, '#59534f', '#3b3633', '#1f1c1a');
+
+        // Torre conica da fusione del ferro (bloomery)
+        const bloomG = ctx.createLinearGradient(48, 10, 96, 90);
+        bloomG.addColorStop(0, '#69605b');
+        bloomG.addColorStop(0.5, '#3d3733');
+        bloomG.addColorStop(1, '#1c1917');
+        ctx.fillStyle = bloomG;
         ctx.beginPath();
-        ctx.moveTo(60, 24);
-        ctx.lineTo(84, 24);
-        ctx.lineTo(98, 106);
-        ctx.lineTo(46, 106);
+        ctx.moveTo(56, 16);
+        ctx.lineTo(88, 16);
+        ctx.lineTo(104, 100);
+        ctx.lineTo(40, 100);
         ctx.closePath();
         ctx.fill();
-        ctx.strokeStyle = '#0d0c0b';
+        ctx.strokeStyle = '#120f0e';
         ctx.lineWidth = 2;
         ctx.stroke();
 
-        // Bocca inferiore della fornace con grumo di ferro spugnoso (massello/bloom) incandescente
-        ctx.fillStyle = '#ff3700';
-        ctx.fillRect(62, 88, 20, 14);
-        ctx.fillStyle = '#ffdd55';
-        ctx.fillRect(66, 92, 12, 6);
+        // Bocca del forno con massello di ferro incandescente ardente
+        ctx.fillStyle = '#ff2b00';
+        ctx.fillRect(58, 80, 28, 18);
+        ctx.fillStyle = '#ffeb3b';
+        ctx.fillRect(62, 84, 20, 10);
 
         // Cumuli di minerale grezzo di ferro scuro (ematite) all'esterno
-        ctx.fillStyle = '#3b3230';
-        ctx.beginPath();
-        ctx.ellipse(32, 96, 14, 8, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = '#4a3f3c';
-        ctx.beginPath();
-        ctx.ellipse(112, 96, 14, 8, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Canna fumaria sommitale con fumo denso
-        ctx.fillStyle = '#12100f';
-        ctx.fillRect(64, 16, 16, 8);
+        ctx.fillStyle = '#38322e';
+        ctx.beginPath(); ctx.ellipse(28, 98, 14, 8, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#473f3b';
+        ctx.beginPath(); ctx.ellipse(116, 98, 14, 8, 0, 0, Math.PI * 2); ctx.fill();
       }));
     }
   }
@@ -731,7 +677,7 @@ export class SVGAProceduralBank {
     cy: number
   ): void {
     const isPlayer = u.owner === 'player';
-    const cSkin = '#d49b6a';
+    const cSkin = '#dca275';
     const cBronze = isPlayer ? '#c9933b' : '#8c1919';
     const cBronzeBright = isPlayer ? '#ffd166' : '#ff5c5c';
 
@@ -779,7 +725,7 @@ export class SVGAProceduralBank {
       ctx.fillRect(-4, 4, 3, 8);
       ctx.fillRect(2, 4, 3, 8);
 
-      ctx.fillStyle = '#e8dfcf';
+      ctx.fillStyle = '#f5efe6';
       ctx.fillRect(-6, -6, 12, 11);
 
       ctx.fillStyle = cSkin;
