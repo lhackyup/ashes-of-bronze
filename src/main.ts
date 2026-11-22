@@ -268,13 +268,11 @@ class GameApp {
     this.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
     this.canvas.addEventListener('mousemove', (e) => {
-      if (this.isDraggingBox) {
-        const rect = this.canvas.getBoundingClientRect();
-        this.dragCurrent = {
-          x: e.clientX - rect.left,
-          y: e.clientY - rect.top
-        };
-      }
+      const rect = this.canvas.getBoundingClientRect();
+      this.dragCurrent = {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      };
     });
 
     window.addEventListener('mouseup', (e) => {
@@ -503,7 +501,38 @@ class GameApp {
     // 4. Fog of War
     this.fogRenderer.render(ctx, this.camera);
 
-    // 5. Box selection dragging
+    // 5. Anteprima posizionamento edificio in costruzione (Ghost preview)
+    if (this.buildingToPlace) {
+      const bDef = BUILDINGS[this.buildingToPlace];
+      const mouseWorld = this.camera.screenToWorld(this.dragCurrent.x, this.dragCurrent.y);
+      const ghostTx = Math.floor(mouseWorld.x / TILE_SIZE);
+      const ghostTy = Math.floor(mouseWorld.y / TILE_SIZE);
+      const ghostScreen = this.camera.worldToScreen(ghostTx * TILE_SIZE, ghostTy * TILE_SIZE);
+      const gw = bDef.width * TILE_SIZE * this.camera.zoom;
+      const gh = bDef.height * TILE_SIZE * this.camera.zoom;
+
+      let canPlace = true;
+      for (let dy = 0; dy < bDef.height; dy++) {
+        for (let dx = 0; dx < bDef.width; dx++) {
+          if (!this.gridGraph.isWalkable(ghostTx + dx, ghostTy + dy) && this.buildingToPlace !== 'cyclopean_slab') {
+            canPlace = false;
+          }
+        }
+      }
+
+      ctx.save();
+      ctx.globalAlpha = 0.65;
+      const ghostSprite = SVGAProceduralBank.getBuildingSprite(this.buildingToPlace, 'player');
+      if (ghostSprite) {
+        ctx.drawImage(ghostSprite, ghostScreen.x, ghostScreen.y, gw, gh);
+      }
+      ctx.strokeStyle = canPlace ? '#2de0a5' : '#ff4d4d';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(ghostScreen.x, ghostScreen.y, gw, gh);
+      ctx.restore();
+    }
+
+    // 6. Box selection dragging
     if (this.isDraggingBox) {
       ctx.strokeStyle = '#2de0a5';
       ctx.lineWidth = 1;
