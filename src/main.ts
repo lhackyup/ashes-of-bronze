@@ -979,7 +979,8 @@ class GameApp {
           if (cTx >= 6 && this.gridGraph.isInBounds(cTx, cTy) && this.gridGraph.isWalkable(cTx, cTy) && !assignedTiles.has(key)) {
             const isOccupiedByOther = this.units.some(
               un => un.id !== u.id && !this.selectedUnits.includes(un) && un.hp > 0 &&
-              Math.hypot(un.x - (cTx * TILE_SIZE + 24), un.y - (cTy * TILE_SIZE + 24)) < 28
+              (Math.floor(un.x / TILE_SIZE) === cTx && Math.floor(un.y / TILE_SIZE) === cTy ||
+               Math.hypot(un.x - (cTx * TILE_SIZE + 24), un.y - (cTy * TILE_SIZE + 24)) < 34)
             );
             if (!isOccupiedByOther) {
               unitTargetTx = cTx;

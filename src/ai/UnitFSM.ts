@@ -196,10 +196,10 @@ export class UnitFSM {
     const speedPx = u.def.speed * TILE_SIZE * dt;
 
     // Check if next waypoint is blocked by a stationary unit within collision reach
-    if (units && u.path.length === 1 && dist <= 34) {
+    if (units && u.path.length <= 1 && dist <= 44) {
       const blocker = units.find(
         other => other.id !== u.id && other.hp > 0 &&
-        Math.hypot(other.x - u.x, other.y - u.y) < 32
+        Math.hypot(other.x - u.x, other.y - u.y) < 42
       );
       if (blocker) {
         // Unit has reached the perimeter of the occupied space: stop gracefully
@@ -434,62 +434,40 @@ export class UnitFSM {
               ny = Math.sin(angle);
             }
 
-            // Weight displacement: moving units yield more to stationary units
+            // Clamped soft separation nudge: maximum 1.0 px per frame.
+            // Eliminates any spring-bounce, jitter, or teleportation!
+            const softPush = Math.min(overlap * 0.15, 1.0);
+
             const u1Moving = u1.state === 'MOVE_TO' || u1.state === 'HARVEST_SEEK' || u1.state === 'RETURN_CARGO';
             const u2Moving = u2.state === 'MOVE_TO' || u2.state === 'HARVEST_SEEK' || u2.state === 'RETURN_CARGO';
 
-            let w1 = 0.5;
-            let w2 = 0.5;
             if (u1Moving && !u2Moving) {
-              w1 = 0.85;
-              w2 = 0.15;
               if (u1.state === 'MOVE_TO' && u1.path.length <= 1) {
                 // Arrived at the occupant's perimeter: stop smoothly on this adjacent spot
                 u1.path = [];
                 u1.state = 'IDLE';
               }
+              u1.x -= nx * softPush;
+              u1.y -= ny * softPush;
             } else if (!u1Moving && u2Moving) {
-              w1 = 0.15;
-              w2 = 0.85;
               if (u2.state === 'MOVE_TO' && u2.path.length <= 1) {
                 u2.path = [];
                 u2.state = 'IDLE';
               }
+              u2.x += nx * softPush;
+              u2.y += ny * softPush;
+            } else {
+              u1.x -= nx * softPush * 0.5;
+              u1.y -= ny * softPush * 0.5;
+              u2.x += nx * softPush * 0.5;
+              u2.y += ny * softPush * 0.5;
             }
-
-            u1.x -= nx * overlap * w1;
-            u1.y -= ny * overlap * w1;
-            u2.x += nx * overlap * w2;
-            u2.y += ny * overlap * w2;
           }
         }
 
         // Clamp to water edge & eject from building interiors
         if (u1.x < waterEdgePx) u1.x = waterEdgePx;
         UnitFSM.resolveBuildingCollisions(u1, buildings);
-      }
-    }
-
-    // Strict Integer Tile Occupancy Check:
-    // If two stationary units end up with identical tile coords (Math.floor(x/48), Math.floor(y/48)),
-    // gently displace the secondary unit to the nearest tile edge/adjacent tile.
-    const occupiedTiles = new Map<string, UnitEntity>();
-    for (let i = 0; i < len; i++) {
-      const u = units[i];
-      const tx = Math.floor(u.x / TILE_SIZE);
-      const ty = Math.floor(u.y / TILE_SIZE);
-      const key = `${tx},${ty}`;
-
-      if (occupiedTiles.has(key)) {
-        const other = occupiedTiles.get(key)!;
-        const ndx = u.x >= other.x ? 1 : -1;
-        const ndy = u.y >= other.y ? 1 : -1;
-        u.x += ndx * 16;
-        u.y += ndy * 16;
-        if (u.x < waterEdgePx) u.x = waterEdgePx;
-        UnitFSM.resolveBuildingCollisions(u, buildings);
-      } else {
-        occupiedTiles.set(key, u);
       }
     }
   }
