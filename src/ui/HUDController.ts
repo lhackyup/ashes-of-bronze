@@ -12,6 +12,8 @@ import { ObjectiveProgress } from '../campaign/ObjectiveManager.ts';
 export class HUDController {
   private resCopperEl!: HTMLElement;
   private resTinEl!: HTMLElement;
+  private resStoneEl!: HTMLElement;
+  private resTimberEl!: HTMLElement;
   private resIronEl!: HTMLElement;
   private resGrainEl!: HTMLElement;
   private resSupplyEl!: HTMLElement;
@@ -42,6 +44,8 @@ export class HUDController {
   private cacheDOMElements(): void {
     this.resCopperEl = document.getElementById('val-copper')!;
     this.resTinEl = document.getElementById('val-tin')!;
+    this.resStoneEl = document.getElementById('val-stone')!;
+    this.resTimberEl = document.getElementById('val-timber')!;
     this.resIronEl = document.getElementById('val-iron')!;
     this.resGrainEl = document.getElementById('val-grain')!;
     this.resSupplyEl = document.getElementById('val-supply')!;
@@ -71,6 +75,8 @@ export class HUDController {
     bus.on('economy:changed', (res: ResourcePool) => {
       if (this.resCopperEl) this.resCopperEl.textContent = Math.floor(res.copper).toString();
       if (this.resTinEl) this.resTinEl.textContent = Math.floor(res.tin).toString();
+      if (this.resStoneEl) this.resStoneEl.textContent = Math.floor(res.stone).toString();
+      if (this.resTimberEl) this.resTimberEl.textContent = Math.floor(res.timber).toString();
       if (this.resIronEl) this.resIronEl.textContent = Math.floor(res.iron).toString();
       if (this.resGrainEl) this.resGrainEl.textContent = Math.floor(res.grain).toString();
     });
@@ -101,19 +107,32 @@ export class HUDController {
     });
   }
 
-  public populateBuildMenu(): void {
+  public populateBuildMenu(unlockedBuildings?: string[]): void {
     const container = document.getElementById('build-items-container');
     if (!container) return;
 
     container.innerHTML = '';
-    for (const [id, def] of Object.entries(BUILDINGS)) {
+    const entries = Object.entries(BUILDINGS).filter(([id]) => {
+      if (unlockedBuildings && unlockedBuildings.length > 0) {
+        return unlockedBuildings.includes(id);
+      }
+      return true;
+    });
+
+    for (const [id, def] of entries) {
       const btn = document.createElement('button');
       btn.className = 'svga-btn build-btn';
       btn.title = `${def.name} - ${def.description}`;
 
-      let costStr = `${def.cost.copper || 0} C`;
-      if (def.cost.tin) costStr += ` | ${def.cost.tin} T`;
-      if (def.cost.iron) costStr += ` | ${def.cost.iron} Fe`;
+      const costs: string[] = [];
+      if (def.cost.copper) costs.push(`${def.cost.copper} C`);
+      if (def.cost.tin) costs.push(`${def.cost.tin} T`);
+      if (def.cost.stone) costs.push(`${def.cost.stone} S`);
+      if (def.cost.timber) costs.push(`${def.cost.timber} W`);
+      if (def.cost.iron) costs.push(`${def.cost.iron} Fe`);
+      if (def.cost.grain) costs.push(`${def.cost.grain} G`);
+
+      const costStr = costs.join(' | ') || 'Free';
 
       btn.innerHTML = `
         <div style="font-weight: bold; font-size: 11px;">${def.name}</div>

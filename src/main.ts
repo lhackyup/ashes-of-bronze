@@ -135,6 +135,7 @@ class GameApp {
     this.updateFogOfWar();
 
     this.hud = new HUDController();
+    this.hud.populateBuildMenu(scenario.player.unlockedBuildings);
     this.hud.onSelectBuildItem = (defId: string) => {
       this.buildingToPlace = defId;
     };
@@ -566,11 +567,21 @@ class GameApp {
             this.spawnBuilding(this.buildingToPlace, 'player', tx, ty, false);
             this.buildingToPlace = null;
           } else {
+            const missing: string[] = [];
+            const r = this.economy.resources;
+            if (bDef.cost.copper && r.copper < bDef.cost.copper) missing.push(`${Math.ceil(bDef.cost.copper - r.copper)} Copper`);
+            if (bDef.cost.tin && r.tin < bDef.cost.tin) missing.push(`${Math.ceil(bDef.cost.tin - r.tin)} Tin`);
+            if (bDef.cost.stone && r.stone < bDef.cost.stone) missing.push(`${Math.ceil(bDef.cost.stone - r.stone)} Stone`);
+            if (bDef.cost.timber && r.timber < bDef.cost.timber) missing.push(`${Math.ceil(bDef.cost.timber - r.timber)} Timber`);
+            if (bDef.cost.iron && r.iron < bDef.cost.iron) missing.push(`${Math.ceil(bDef.cost.iron - r.iron)} Iron`);
+            if (bDef.cost.grain && r.grain < bDef.cost.grain) missing.push(`${Math.ceil(bDef.cost.grain - r.grain)} Grain`);
+
             EventBus.get().emit('advisor:message', {
               speaker: 'burna_khabir',
-              text: 'Insufficient resources to erect this structure!',
+              text: `Insufficient resources for ${bDef.name}! Missing: ${missing.join(', ')}.`,
               isAlert: true
             });
+            EventBus.get().emit('audio:combat_hit');
           }
           return;
         }
