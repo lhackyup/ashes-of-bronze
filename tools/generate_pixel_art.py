@@ -131,73 +131,118 @@ def generate_buildings():
     draw_bevel_box(draw, 29, 29, 6, 6, hex_to_rgb(PAL_BRONZE[1]), hex_to_rgb(PAL_BRONZE[0]), hex_to_rgb(PAL_BRONZE[3]))
     img.save("public/assets/buildings/bldg_foundation.png")
 
-    # 1. Acropolis / Construction Yard (4x4 tiles = 128x128)
+    # 1. Megaron / Royal Acropolis Palace of the Wanax (4x4 tiles = 128x128)
     for owner, team_pal in [("player", PAL_TEAM_PLAYER), ("sea_peoples", PAL_TEAM_ENEMY)]:
         img = Image.new("RGBA", (128, 128), (0, 0, 0, 0))
         draw = ImageDraw.Draw(img)
         # Drop shadow
         draw.rectangle([8, 12, 122, 124], fill=hex_to_rgb("#000000", 170))
-        # Outer heavy fortress perimeter
-        draw_bevel_box(draw, 4, 8, 120, 114, hex_to_rgb(PAL_CONCRETE[2]), hex_to_rgb(PAL_CONCRETE[0]), hex_to_rgb(PAL_CONCRETE[4]))
-        # Inner Megaron Citadel
-        draw_bevel_box(draw, 16, 20, 96, 90, hex_to_rgb(PAL_CONCRETE[1]), hex_to_rgb(PAL_CONCRETE[0]), hex_to_rgb(PAL_CONCRETE[3]))
-        # Terracotta tiled pitched roofs
-        draw_bevel_box(draw, 20, 16, 88, 20, hex_to_rgb("#992b1b"), hex_to_rgb("#d94834"), hex_to_rgb("#4d120a"))
-        for rx in range(24, 104, 6):
-            draw.line([rx, 18, rx, 34], fill=hex_to_rgb("#3b0c06"))
+        # Cyclopean terrace plinth
+        draw_bevel_box(draw, 4, 16, 120, 108, hex_to_rgb(PAL_CONCRETE[2]), hex_to_rgb(PAL_CONCRETE[0]), hex_to_rgb(PAL_CONCRETE[4]))
+        # Monumental staircase
+        for st in range(5):
+            sw = 50 + st * 6
+            sx = 64 - sw // 2
+            sy = 96 + st * 4
+            draw_bevel_box(draw, sx, sy, sw, 4, hex_to_rgb("#e0d7cd"), hex_to_rgb("#f5f0e8"), hex_to_rgb("#998d7e"))
 
-        # Central Command Dome / Visor
-        draw_bevel_box(draw, 46, 42, 36, 28, hex_to_rgb("#29221b"), hex_to_rgb("#4a3c2f"), hex_to_rgb("#120d09"))
-        draw.rectangle([50, 46, 78, 52], fill=hex_to_rgb(team_pal[1]), outline=hex_to_rgb("#000000"))
-        draw.rectangle([56, 56, 72, 64], fill=hex_to_rgb("#ffea00"), outline=hex_to_rgb("#000000"))
+        # Main Palace Hall
+        draw_bevel_box(draw, 14, 28, 100, 70, hex_to_rgb(PAL_CONCRETE[1]), hex_to_rgb(PAL_CONCRETE[0]), hex_to_rgb(PAL_CONCRETE[3]))
+        # Frieze band in lapis lazuli & gold
+        draw.rectangle([14, 48, 114, 54], fill=hex_to_rgb("#1e3a8a"))
+        draw.line([14, 48, 114, 48], fill=hex_to_rgb("#fbbf24"))
+        draw.line([14, 54, 114, 54], fill=hex_to_rgb("#fbbf24"))
 
-        # Heavy motorized blast door (bottom entrance)
-        draw_bevel_box(draw, 44, 76, 40, 32, hex_to_rgb("#1c1611"), hex_to_rgb("#382b20"), hex_to_rgb("#0d0a07"))
-        # Bronze studs & hazard teeth
-        for by in (84, 94):
-            for bx in range(48, 82, 8):
-                draw.rectangle([bx, by, bx + 2, by + 2], fill=hex_to_rgb(PAL_BRONZE[1]))
+        # Terracotta tiled pitched roof
+        roof_c = "#992b1b" if owner == "player" else "#1d4e89"
+        roof_hi = "#d94834" if owner == "player" else "#2b6cb0"
+        draw_bevel_box(draw, 10, 10, 108, 36, hex_to_rgb(roof_c), hex_to_rgb(roof_hi), hex_to_rgb("#3b100a"))
+        # Triangular pediment with golden Wanax solar disc
+        draw.polygon([(10, 48), (64, 18), (118, 48)], fill=hex_to_rgb("#e6dfd3"), outline=hex_to_rgb("#786e63"))
+        draw.ellipse([58, 30, 70, 42], fill=hex_to_rgb("#fbbf24"), outline=hex_to_rgb("#b45309"))
+        draw.ellipse([61, 33, 67, 39], fill=hex_to_rgb(roof_c))
 
-        # Fluted Cedar Colonnade (Frontal)
-        for cx in (22, 34, 90, 102):
-            draw.rectangle([cx, 74, cx + 4, 108], fill=hex_to_rgb("#8c1d18"), outline=hex_to_rgb("#000000"))
-            draw.rectangle([cx - 1, 72, cx + 5, 74], fill=hex_to_rgb(PAL_BRONZE[1])) # Capital
+        # Hearth chimney flue with smoke
+        draw.rectangle([58, 4, 70, 14], fill=hex_to_rgb("#4a3e33"), outline=hex_to_rgb("#241c15"))
+        draw.ellipse([60, -2, 68, 6], fill=hex_to_rgb("#f1f5f9", 140))
 
-        # Radar Flagstaff with animated banner
-        draw.line([110, 10, 110, 42], fill=hex_to_rgb("#000000"), width=2)
-        draw.polygon([(112, 12), (124, 17), (112, 22)], fill=hex_to_rgb(team_pal[1]), outline=hex_to_rgb("#000000"))
+        # Minoan inverted red cedar colonnade
+        for cx in (22, 36, 50, 76, 90, 104):
+            draw.polygon([(cx - 3, 56), (cx + 3, 56), (cx + 2, 94), (cx - 2, 94)], fill=hex_to_rgb("#991b1b"))
+            draw.rectangle([cx - 4, 54, cx + 4, 56], fill=hex_to_rgb("#fbbf24")) # Gold capital
+            draw.rectangle([cx - 4, 94, cx + 4, 96], fill=hex_to_rgb("#1c1917")) # Black base
+
+        # Bronze palace portal with lion relief studs
+        draw_bevel_box(draw, 54, 58, 20, 38, hex_to_rgb("#2b1b11"), hex_to_rgb("#452a16"), hex_to_rgb("#120b06"))
+        for by in (66, 76, 86):
+            draw.rectangle([56, by, 58, by + 2], fill=hex_to_rgb("#fbbf24"))
+            draw.rectangle([70, by, 72, by + 2], fill=hex_to_rgb("#fbbf24"))
+
+        # Royal brazier urns flanking stairs
+        for bx in (32, 96):
+            draw.rectangle([bx - 3, 94, bx + 3, 108], fill=hex_to_rgb("#5c4f42"), outline=hex_to_rgb("#1f1914"))
+            draw.ellipse([bx - 4, 90, bx + 4, 96], fill=hex_to_rgb("#b45309"))
+            draw.ellipse([bx - 3, 89, bx + 3, 93], fill=hex_to_rgb("#f97316"))
+            draw.rectangle([bx - 1, 88, bx + 1, 90], fill=hex_to_rgb("#fef08a"))
+
+        # Ceremonial Wanax Gonfalons
+        for fx in (16, 112):
+            draw.line([fx, 10, fx, 44], fill=hex_to_rgb("#451a03"), width=2)
+            draw.rectangle([fx + 2, 12, fx + 8, 30], fill=hex_to_rgb(team_pal[1]), outline=hex_to_rgb("#000000"))
         img.save(f"public/assets/buildings/bldg_acropolis_{owner}.png")
 
-    # 2. Bronze Foundry / Spice Refinery (3x3 tiles = 96x96)
+    # 2. Bronze Foundry & Refinery (3x3 tiles = 96x96)
     for owner, team_pal in [("player", PAL_TEAM_PLAYER), ("sea_peoples", PAL_TEAM_ENEMY)]:
         img = Image.new("RGBA", (96, 96), (0, 0, 0, 0))
         draw = ImageDraw.Draw(img)
         # Drop shadow
         draw.rectangle([6, 8, 92, 90], fill=hex_to_rgb("#000000", 170))
-        # Main hull
-        draw_bevel_box(draw, 4, 6, 88, 84, hex_to_rgb(PAL_CONCRETE[2]), hex_to_rgb(PAL_CONCRETE[0]), hex_to_rgb(PAL_CONCRETE[4]))
+        # Ash-stained industrial stone platform
+        draw_bevel_box(draw, 4, 6, 88, 84, hex_to_rgb("#3d3329"), hex_to_rgb("#594b3d"), hex_to_rgb("#1c1611"))
 
-        # THE ICONIC DUNE II VEHICLE UNLOAD RAMP (Left wing)
-        draw_bevel_box(draw, 8, 14, 34, 68, hex_to_rgb("#4a3e33"), hex_to_rgb("#6e5d4d"), hex_to_rgb("#292119"))
-        # Hazard caution chevron stripes
-        for ry in range(20, 74, 10):
-            draw.polygon([(10, ry), (24, ry + 6), (38, ry), (38, ry + 4), (24, ry + 10), (10, ry + 4)], fill=hex_to_rgb("#ffd166"))
+        # Central Stone Smelting Blast Furnace
+        draw.polygon([(36, 18), (60, 18), (70, 56), (26, 56)], fill=hex_to_rgb("#574a3c"), outline=hex_to_rgb("#1c1610"))
+        # Twin clay blast chimneys with smoke & sparks
+        for chx in (40, 52):
+            draw.rectangle([chx, 6, chx + 6, 18], fill=hex_to_rgb("#3b2e23"), outline=hex_to_rgb("#120d09"))
+            draw.rectangle([chx + 1, 4, chx + 5, 6], fill=hex_to_rgb("#000000"))
+            draw.rectangle([chx + 2, 1, chx + 4, 3], fill=hex_to_rgb("#fef08a")) # Spark
+            draw.ellipse([chx + 1, -2, chx + 7, 3], fill=hex_to_rgb("#64748b", 120)) # Smoke
 
-        # Ore Intake Hopper & Molten Bronze Vat (Right wing)
-        draw_bevel_box(draw, 46, 18, 42, 60, hex_to_rgb("#241c15"), hex_to_rgb("#423427"), hex_to_rgb("#0f0b08"))
-        # Molten core glow
-        draw.rectangle([52, 26, 82, 50], fill=hex_to_rgb("#ff5500"), outline=hex_to_rgb("#000000"))
-        draw.rectangle([56, 30, 78, 46], fill=hex_to_rgb("#ffea00"))
-        draw.rectangle([62, 34, 72, 42], fill=hex_to_rgb("#ffffff"))
+        # Incandescent blast hearth mouth
+        draw.rectangle([42, 42, 54, 54], fill=hex_to_rgb("#140a04"))
+        draw.rectangle([43, 44, 53, 53], fill=hex_to_rgb("#ff5500"))
+        draw.rectangle([45, 46, 51, 51], fill=hex_to_rgb("#fef08a"))
 
-        # Twin industrial chimneys
-        for chx in (50, 72):
-            draw_bevel_box(draw, chx, 4, 10, 16, hex_to_rgb("#3d332a"), hex_to_rgb("#5c4d3f"), hex_to_rgb("#1f1914"))
-            draw.rectangle([chx + 2, 2, chx + 8, 4], fill=hex_to_rgb("#000000"))
+        # Molten bronze casting stream into sand molds
+        draw.rectangle([46, 54, 50, 64], fill=hex_to_rgb("#f59e0b"))
+        draw.rectangle([32, 60, 50, 64], fill=hex_to_rgb("#f59e0b"))
 
-        # Stacked Oxhide Bronze Ingots on pallets
-        for iy, ix in [(58, 54), (58, 70), (66, 62)]:
-            draw.rectangle([ix, iy, ix + 12, iy + 6], fill=hex_to_rgb(PAL_BRONZE[1]), outline=hex_to_rgb("#000000"))
+        # Sand casting pit with molten and finished Oxhide Ingots
+        draw.rectangle([10, 60, 42, 84], fill=hex_to_rgb("#6e5233"), outline=hex_to_rgb("#2b1b0b"))
+        # Glowing casting ingot
+        draw.rectangle([14, 64, 24, 70], fill=hex_to_rgb("#f97316"), outline=hex_to_rgb("#fef08a"))
+        # Stacked finished bronze oxhide ingots on pallet
+        for iy, ix in [(74, 14), (74, 26), (71, 20)]:
+            draw.rectangle([ix, iy, ix + 8, iy + 4], fill=hex_to_rgb(PAL_BRONZE[1]), outline=hex_to_rgb("#451a03"))
+
+        # Raw ore hopper with green copper malachite & silver cassiterite tin
+        draw.rectangle([64, 26, 88, 56], fill=hex_to_rgb("#291c12"), outline=hex_to_rgb("#120a05"))
+        draw.rectangle([66, 32, 74, 44], fill=hex_to_rgb("#059669")) # Green copper
+        draw.rectangle([76, 32, 86, 44], fill=hex_to_rgb("#475569")) # Tin ore
+        draw.rectangle([78, 34, 82, 38], fill=hex_to_rgb("#cbd5e1")) # Tin shine
+
+        # Timber crane mast
+        draw.rectangle([62, 10, 65, 56], fill=hex_to_rgb("#5c3a21"))
+        draw.rectangle([54, 10, 82, 13], fill=hex_to_rgb("#5c3a21"))
+        draw.ellipse([56, 14, 62, 20], fill=hex_to_rgb("#1c1917")) # Pulley
+
+        # Blacksmith anvil & quenching water trough
+        draw.rectangle([64, 68, 74, 78], fill=hex_to_rgb("#452a16")) # Stump
+        draw.rectangle([62, 64, 76, 68], fill=hex_to_rgb(PAL_BRONZE[1]), outline=hex_to_rgb("#000000"))
+        # Quench water basin
+        draw.rectangle([78, 66, 90, 80], fill=hex_to_rgb("#3d3329"), outline=hex_to_rgb("#1a140e"))
+        draw.rectangle([80, 68, 88, 78], fill=hex_to_rgb("#0284c7"))
         img.save(f"public/assets/buildings/bldg_foundry_{owner}.png")
 
     # 3. Granary & Water Well (2x2 tiles = 96x96)
@@ -261,47 +306,136 @@ def generate_buildings():
         draw.rectangle([66, 80, 86, 86], fill=hex_to_rgb("#38bdf8"))
         img.save(f"public/assets/buildings/bldg_granary_{owner}.png")
 
-    # 4. Barracks / Infantry Depot (3x3 tiles = 96x96)
+    # 4. Barracks / Infantry Depot (3x3 tiles = 144x144)
+    for owner, team_pal in [("player", PAL_TEAM_PLAYER), ("sea_peoples", PAL_TEAM_ENEMY)]:
+        img = Image.new("RGBA", (144, 144), (0, 0, 0, 0))
+        draw = ImageDraw.Draw(img)
+        # Drop shadow
+        draw.rectangle([6, 16, 138, 138], fill=hex_to_rgb("#000000", 140))
+        # Dirt drill yard
+        draw_bevel_box(draw, 8, 20, 128, 116, hex_to_rgb("#694e30"), hex_to_rgb("#8c6b45"), hex_to_rgb("#2d1f11"))
+
+        # Flagstone perimeter
+        for fx in range(12, 132, 14):
+            draw_bevel_box(draw, fx, 124, 12, 10, hex_to_rgb("#706659"), hex_to_rgb("#948777"), hex_to_rgb("#383027"))
+
+        # Garrison quarters (rear-left)
+        draw_bevel_box(draw, 10, 30, 82, 48, hex_to_rgb("#aba092"), hex_to_rgb("#d1c4b4"), hex_to_rgb("#706659"))
+
+        # Roof
+        roof_c = "#992b1b" if owner == "player" else "#1d4e89"
+        roof_hi = "#d94834" if owner == "player" else "#2b6cb0"
+        draw_bevel_box(draw, 8, 14, 86, 26, hex_to_rgb(roof_c), hex_to_rgb(roof_hi), hex_to_rgb("#4d120a"))
+
+        # Pillared open portico recess
+        draw.rectangle([14, 42, 88, 76], fill=hex_to_rgb("#261f18"))
+        for px in (14, 38, 62, 84):
+            draw.rectangle([px, 42, px + 5, 76], fill=hex_to_rgb("#5c3a21"), outline=hex_to_rgb("#382212"))
+
+        # Double doorway
+        draw.rectangle([45, 46, 60, 76], fill=hex_to_rgb("#140d08"))
+        draw.rectangle([46, 48, 59, 76], fill=hex_to_rgb("#3d2515"))
+        draw.rectangle([48, 60, 50, 62], fill=hex_to_rgb("#fbbf24"))
+
+        # Weapons racks: shields and spears
+        # Figure-eight shield
+        draw.ellipse([21, 52, 28, 60], fill=hex_to_rgb("#78350f"), outline=hex_to_rgb("#fbbf24"))
+        draw.ellipse([21, 60, 28, 70], fill=hex_to_rgb("#78350f"), outline=hex_to_rgb("#fbbf24"))
+        # Tower shield
+        draw_bevel_box(draw, 29, 50, 7, 18, hex_to_rgb("#78350f"), hex_to_rgb("#fbbf24"), hex_to_rgb("#451a03"))
+
+        # Spear rack
+        draw.rectangle([68, 68, 83, 71], fill=hex_to_rgb("#452a16"))
+        for spx in range(70, 82, 3):
+            draw.line([spx, 46, spx, 70], fill=hex_to_rgb("#92400e"), width=1)
+            draw.polygon([(spx, 42), (spx + 1, 46), (spx - 1, 46)], fill=hex_to_rgb("#fbbf24"))
+
+        # Weaponsmith forge (right wing)
+        draw_bevel_box(draw, 94, 38, 40, 42, hex_to_rgb("#574e44"), hex_to_rgb("#756859"), hex_to_rgb("#332a22"))
+        # Chimney
+        draw.rectangle([118, 18, 130, 40], fill=hex_to_rgb("#4a3f34"), outline=hex_to_rgb("#1f1914"))
+        draw.ellipse([120, 8, 128, 18], fill=hex_to_rgb("#64748b", 160)) # Smoke
+
+        # Charcoal firebox
+        draw.rectangle([100, 52, 122, 68], fill=hex_to_rgb("#170c06"))
+        draw.rectangle([102, 55, 120, 66], fill=hex_to_rgb("#f97316"))
+        draw.rectangle([106, 58, 116, 63], fill=hex_to_rgb("#fef08a"))
+
+        # Anvil & Quench barrel
+        draw.rectangle([106, 92, 120, 106], fill=hex_to_rgb("#452a16"))
+        draw_bevel_box(draw, 104, 86, 18, 7, hex_to_rgb(PAL_BRONZE[2]), hex_to_rgb(PAL_BRONZE[0]), hex_to_rgb(PAL_BRONZE[4]))
+        draw.rectangle([110, 84, 118, 86], fill=hex_to_rgb("#f97316")) # Glowing spearhead
+
+        draw.rectangle([123, 88, 135, 104], fill=hex_to_rgb("#5c3a21"), outline=hex_to_rgb("#1c1917"))
+        draw.rectangle([124, 89, 134, 92], fill=hex_to_rgb("#0284c7"))
+
+        # Archery target & practice post
+        draw.line([22, 112, 26, 92], fill=hex_to_rgb("#5c3a21"), width=2)
+        draw.line([30, 112, 26, 92], fill=hex_to_rgb("#5c3a21"), width=2)
+        draw.ellipse([17, 85, 35, 103], fill=hex_to_rgb("#ca8a04"), outline=hex_to_rgb("#78350f"))
+        draw.ellipse([21, 89, 31, 99], fill=hex_to_rgb("#dc2626"))
+        draw.ellipse([24, 92, 28, 96], fill=hex_to_rgb("#ffffff"))
+
+        # Faction War Banner
+        draw.line([51, 4, 51, 16], fill=hex_to_rgb("#5c3a21"), width=2)
+        draw.polygon([(52, 4), (66, 8), (52, 12)], fill=hex_to_rgb(team_pal[1]), outline=hex_to_rgb(team_pal[0]))
+        img.save(f"public/assets/buildings/bldg_barracks_{owner}.png")
+
+    # 5. Watchtower / Turret (2x2 tiles = 96x96)
     for owner, team_pal in [("player", PAL_TEAM_PLAYER), ("sea_peoples", PAL_TEAM_ENEMY)]:
         img = Image.new("RGBA", (96, 96), (0, 0, 0, 0))
         draw = ImageDraw.Draw(img)
-        draw.rectangle([6, 8, 92, 90], fill=hex_to_rgb("#000000", 170))
-        draw_bevel_box(draw, 4, 6, 88, 84, hex_to_rgb(PAL_CONCRETE[2]), hex_to_rgb(PAL_CONCRETE[0]), hex_to_rgb(PAL_CONCRETE[4]))
+        # Drop shadow
+        draw.rectangle([16, 22, 80, 92], fill=hex_to_rgb("#000000", 140))
+        # Circular foundation apron
+        draw.ellipse([20, 68, 76, 92], fill=hex_to_rgb(PAL_CONCRETE[2]), outline=hex_to_rgb(PAL_CONCRETE[4]))
 
-        # Slanted roof barracks wings
-        draw_bevel_box(draw, 8, 10, 80, 22, hex_to_rgb("#992b1b"), hex_to_rgb("#d94834"), hex_to_rgb("#4d120a"))
+        # Tapered Polygonal Stone Shaft
+        draw.polygon([(31, 26), (65, 26), (72, 80), (24, 80)], fill=hex_to_rgb(PAL_CONCRETE[1]), outline=hex_to_rgb("#261f18"))
+        # Cyclopean masonry courses
+        for ly in range(36, 78, 10):
+            ratio = (ly - 26) / 54.0
+            lx = int(31 - ratio * 7)
+            rx = int(65 + ratio * 7)
+            draw.line([lx, ly, rx, ly], fill=hex_to_rgb("#4a3f34"), width=1)
 
-        # Internal courtyard (Packed dirt)
-        draw.rectangle([12, 36, 84, 82], fill=hex_to_rgb("#8f7149"), outline=hex_to_rgb("#000000"))
+        # Arrow slit embrasures
+        for ey in (38, 52, 66):
+            draw.rectangle([46, ey, 50, ey + 8], fill=hex_to_rgb("#0f0c08"))
+            draw.rectangle([47, ey + 2, 49, ey + 5], fill=hex_to_rgb("#fbbf24"))
 
-        # Sliding armored hangar gate
-        draw_bevel_box(draw, 32, 54, 32, 28, hex_to_rgb("#1f1914"), hex_to_rgb("#382e25"), hex_to_rgb("#0d0a08"))
-        draw.rectangle([36, 60, 60, 64], fill=hex_to_rgb(team_pal[1])) # Team stripe
+        # Heavy studded ground door
+        draw_bevel_box(draw, 42, 67, 12, 14, hex_to_rgb("#452a16"), hex_to_rgb("#78350f"), hex_to_rgb("#1c150e"))
+        draw.rectangle([44, 71, 46, 73], fill=hex_to_rgb("#fbbf24"))
+        draw.rectangle([48, 71, 50, 73], fill=hex_to_rgb("#fbbf24"))
 
-        # Weapon racks & shields
-        for wx in (16, 72):
-            draw.rectangle([wx, 42, wx + 8, 64], fill=hex_to_rgb(PAL_BRONZE[1]), outline=hex_to_rgb("#000000"))
-        img.save(f"public/assets/buildings/bldg_barracks_{owner}.png")
+        # Overhanging machicolations / corbels
+        for cx in range(27, 68, 8):
+            draw.rectangle([cx, 24, cx + 5, 29], fill=hex_to_rgb(PAL_CONCRETE[3]))
 
-    # 5. Watchtower / Turret (2x2 tiles = 64x64)
-    for owner, team_pal in [("player", PAL_TEAM_PLAYER), ("sea_peoples", PAL_TEAM_ENEMY)]:
-        img = Image.new("RGBA", (64, 64), (0, 0, 0, 0))
-        draw = ImageDraw.Draw(img)
-        draw.rectangle([4, 6, 60, 58], fill=hex_to_rgb("#000000", 160))
-        # High square turret
-        draw_bevel_box(draw, 10, 8, 44, 52, hex_to_rgb(PAL_CONCRETE[1]), hex_to_rgb(PAL_CONCRETE[0]), hex_to_rgb(PAL_CONCRETE[3]))
-        # Parapet battlements
-        draw_bevel_box(draw, 6, 4, 52, 14, hex_to_rgb(PAL_CONCRETE[2]), hex_to_rgb(PAL_CONCRETE[0]), hex_to_rgb(PAL_CONCRETE[4]))
-        draw.rectangle([18, 4, 24, 8], fill=hex_to_rgb("#000000"))
-        draw.rectangle([38, 4, 44, 8], fill=hex_to_rgb("#000000"))
+        # Battlements slab
+        draw_bevel_box(draw, 25, 21, 46, 4, hex_to_rgb(PAL_CONCRETE[1]), hex_to_rgb(PAL_CONCRETE[0]), hex_to_rgb(PAL_CONCRETE[4]))
 
-        # Arrow slits
-        draw.rectangle([24, 24, 28, 38], fill=hex_to_rgb("#000000"))
-        draw.rectangle([36, 24, 40, 38], fill=hex_to_rgb("#000000"))
+        # Crenels & Merlons
+        for mx in (25, 38, 51, 64):
+            draw_bevel_box(draw, mx, 13, 7, 9, hex_to_rgb(PAL_CONCRETE[1]), hex_to_rgb(PAL_CONCRETE[0]), hex_to_rgb(PAL_CONCRETE[3]))
 
-        # Signal beacon / Fire pot
-        draw.rectangle([28, 8, 36, 14], fill=hex_to_rgb("#ff5500"), outline=hex_to_rgb("#000000"))
-        draw.rectangle([30, 10, 34, 12], fill=hex_to_rgb("#ffea00"))
+        # Sentry lookout with bronze cap
+        draw.rectangle([45, 12, 51, 20], fill=hex_to_rgb(team_pal[1]))
+        draw.ellipse([45, 7, 51, 13], fill=hex_to_rgb("#cbd5e1"))
+        draw.line([52, 6, 52, 20], fill=hex_to_rgb("#fbbf24"), width=1)
+
+        # Signal fire basket & smoke
+        draw.rectangle([28, 4, 30, 16], fill=hex_to_rgb("#1c1917"))
+        draw.rectangle([25, 3, 33, 6], fill=hex_to_rgb("#1c1917"))
+        draw.ellipse([26, 0, 32, 6], fill=hex_to_rgb("#f97316"))
+        draw.ellipse([27, -1, 31, 3], fill=hex_to_rgb("#fef08a"))
+        draw.ellipse([24, -8, 32, 0], fill=hex_to_rgb("#64748b", 120))
+
+        # Cedar canopy hood
+        roof_c = "#992b1b" if owner == "player" else "#1d4e89"
+        roof_hi = "#d94834" if owner == "player" else "#2b6cb0"
+        draw_bevel_box(draw, 33, 2, 30, 8, hex_to_rgb(roof_c), hex_to_rgb(roof_hi), hex_to_rgb("#3b100a"))
         img.save(f"public/assets/buildings/bldg_watchtower_{owner}.png")
 
 # ============================================================================

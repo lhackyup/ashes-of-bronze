@@ -507,72 +507,379 @@ export class SVGAProceduralBank {
         });
       }));
 
-      // 1. Acropolis / Praetorium (4x4 tiles = 192x192, scalable or 96x96 scaled)
+      // 1. Megaron / Royal Acropolis Palace of the Wanax (4x4 tiles = 192x192)
       this.buildingSprites.set(`acropolis_${owner}`, this.makeBuildingSprite(192, (ctx) => {
-        ctx.fillStyle = '#d6cfc5';
-        ctx.fillRect(12, 24, 168, 152);
-        ctx.strokeStyle = '#5c5349';
+        // --- A. Cyclopean Citadel Terrace & Grand Staircase Base ---
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.fillRect(8, 20, 176, 164);
+
+        // Polygonal megalithic foundation platform
+        const platG = ctx.createLinearGradient(8, 24, 184, 180);
+        platG.addColorStop(0, '#d1c7bc');
+        platG.addColorStop(0.5, '#9e9182');
+        platG.addColorStop(1, '#574d42');
+        ctx.fillStyle = platG;
+        ctx.fillRect(10, 26, 172, 158);
+        ctx.strokeStyle = '#382f25';
         ctx.lineWidth = 2;
-        ctx.strokeRect(12, 24, 168, 152);
+        ctx.strokeRect(10, 26, 172, 158);
 
-        this.drawRoofTiles(ctx, 16, 20, 160, 60, cMain, cHi);
-
-        // Triangular Pediment
-        ctx.fillStyle = '#e6dfd3';
-        ctx.beginPath();
-        ctx.moveTo(28, 80); ctx.lineTo(96, 44); ctx.lineTo(164, 80);
-        ctx.closePath();
-        ctx.fill();
-        ctx.strokeStyle = '#786e63';
-        ctx.stroke();
-
-        // Gold center medallion
-        ctx.fillStyle = cTrim;
-        ctx.beginPath(); ctx.arc(96, 66, 12, 0, Math.PI * 2); ctx.fill();
-
-        // Classical fluted colonnade
-        for (let cx = 24; cx <= 156; cx += 26) {
-          const colG = ctx.createLinearGradient(cx, 0, cx + 12, 0);
-          colG.addColorStop(0, '#948b80');
-          colG.addColorStop(0.4, '#f5f0e6');
-          colG.addColorStop(1, '#6b635a');
-          ctx.fillStyle = colG;
-          ctx.fillRect(cx, 82, 12, 88);
+        // Massive ashlar stone courses across the plinth
+        ctx.strokeStyle = 'rgba(40, 32, 24, 0.45)';
+        ctx.lineWidth = 1;
+        for (let sy = 40; sy <= 180; sy += 18) {
+          ctx.beginPath(); ctx.moveTo(10, sy); ctx.lineTo(182, sy); ctx.stroke();
         }
 
-        // Entrance portal
-        ctx.fillStyle = '#1c1815';
-        ctx.fillRect(72, 108, 48, 64);
-        ctx.strokeStyle = cTrim;
+        // Monumental central staircase (stepped marble slabs)
+        for (let st = 0; st < 6; st++) {
+          const sw = 76 + st * 8;
+          const sx = 96 - sw / 2;
+          const sy = 148 + st * 5;
+          const stG = ctx.createLinearGradient(sx, sy, sx + sw, sy + 5);
+          stG.addColorStop(0, '#e5ded5');
+          stG.addColorStop(0.5, '#f5f0e8');
+          stG.addColorStop(1, '#b3a798');
+          ctx.fillStyle = stG;
+          ctx.fillRect(sx, sy, sw, 5);
+          ctx.strokeStyle = '#473c30';
+          ctx.strokeRect(sx, sy, sw, 5);
+        }
+
+        // Bronze sacrificial brazier urns on stone pedestals flanking the stairs
+        for (const bx of [44, 148]) {
+          // Stone pedestal
+          ctx.fillStyle = '#6b5f52';
+          ctx.fillRect(bx - 5, 142, 10, 22);
+          ctx.strokeStyle = '#29221b';
+          ctx.strokeRect(bx - 5, 142, 10, 22);
+          // Bronze cauldron / urn
+          ctx.fillStyle = '#b45309';
+          ctx.beginPath(); ctx.arc(bx, 140, 7, 0, Math.PI); ctx.fill();
+          // Glowing royal embers
+          ctx.fillStyle = '#f97316';
+          ctx.beginPath(); ctx.arc(bx, 137, 5, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = '#fef08a';
+          ctx.fillRect(bx - 2, 135, 4, 3);
+        }
+
+        // --- B. Central Megaron Great Hall & Royal Propylon ---
+        // Main Palace Walls
+        const wallG = ctx.createLinearGradient(20, 40, 172, 140);
+        wallG.addColorStop(0, '#e8e0d5');
+        wallG.addColorStop(0.6, '#cfc2b2');
+        wallG.addColorStop(1, '#948574');
+        ctx.fillStyle = wallG;
+        ctx.fillRect(20, 42, 152, 106);
+
+        // Aegean Lapis Lazuli & Gold Painted Frieze (Running rosettes and spirals)
+        ctx.fillStyle = '#1e3a8a';
+        ctx.fillRect(20, 74, 152, 9);
+        ctx.fillStyle = cTrim;
+        ctx.fillRect(20, 72, 152, 2);
+        ctx.fillRect(20, 83, 152, 2);
+        for (let fx = 24; fx < 170; fx += 10) {
+          ctx.fillStyle = '#fbbf24';
+          ctx.beginPath(); ctx.arc(fx, 78.5, 2.5, 0, Math.PI * 2); ctx.fill();
+        }
+
+        // Megaron Terracotta / Cedar Shake Pitched Roof
+        this.drawRoofTiles(ctx, 16, 18, 160, 56, cMain, cHi);
+
+        // Triangular Pediment with Royal Relief Medallion
+        ctx.fillStyle = '#f0ebe3';
+        ctx.beginPath();
+        ctx.moveTo(16, 74); ctx.lineTo(96, 28); ctx.lineTo(176, 74);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#635647';
         ctx.lineWidth = 2;
-        ctx.strokeRect(72, 108, 48, 64);
+        ctx.stroke();
+
+        // High relief golden Wanax disc / solar medallion
+        ctx.fillStyle = cTrim;
+        ctx.beginPath(); ctx.arc(96, 56, 15, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#b45309';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.fillStyle = cMain;
+        ctx.beginPath(); ctx.arc(96, 56, 7, 0, Math.PI * 2); ctx.fill();
+
+        // Rooftop Hearth Lantern & Holy Smoke Flue
+        ctx.fillStyle = '#5c4e40';
+        ctx.fillRect(86, 12, 20, 18);
+        ctx.strokeStyle = '#2b231b';
+        ctx.strokeRect(86, 12, 20, 18);
+        // Rising incense smoke puffs
+        ctx.fillStyle = 'rgba(241, 245, 249, 0.45)';
+        ctx.beginPath(); ctx.arc(94, 6, 6, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(98, -1, 8, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(92, -8, 10, 0, Math.PI * 2); ctx.fill();
+
+        // --- C. Minoan / Mycenaean Inverted Cedar Colonnade ---
+        // Authentic Bronze Age downward-tapering red pillars with black bases & gilded ring capitals
+        const cols = [32, 54, 76, 116, 138, 160];
+        for (const cx of cols) {
+          // Black stone stylobate base
+          ctx.fillStyle = '#1c1917';
+          ctx.fillRect(cx - 6, 142, 12, 6);
+          // Inverted tapering pillar (wider at top, narrower at bottom)
+          ctx.fillStyle = '#991b1b';
+          ctx.beginPath();
+          ctx.moveTo(cx - 5.5, 84);
+          ctx.lineTo(cx + 5.5, 84);
+          ctx.lineTo(cx + 4, 142);
+          ctx.lineTo(cx - 4, 142);
+          ctx.closePath();
+          ctx.fill();
+          // Highlight specular line down pillar
+          ctx.fillStyle = '#dc2626';
+          ctx.fillRect(cx - 1.5, 84, 2.5, 58);
+          // Cushion echinus capital with gold ring
+          ctx.fillStyle = cTrim;
+          ctx.fillRect(cx - 7, 82, 14, 4);
+          ctx.fillStyle = '#1c1917';
+          ctx.fillRect(cx - 8, 78, 16, 4);
+        }
+
+        // --- D. Palace Grand Entrance (Lion / Bull Corbel Portal) ---
+        ctx.fillStyle = '#140f0b';
+        ctx.fillRect(80, 88, 32, 60);
+        // Double studded bronze palace doors
+        ctx.fillStyle = '#3b2514';
+        ctx.fillRect(82, 90, 13, 58);
+        ctx.fillRect(97, 90, 13, 58);
+        // Heavy bronze boss rivets & royal lion ring handles
+        ctx.fillStyle = '#fbbf24';
+        for (let ry = 96; ry <= 140; ry += 11) {
+          ctx.fillRect(84, ry, 2.5, 2.5);
+          ctx.fillRect(92, ry, 2.5, 2.5);
+          ctx.fillRect(99, ry, 2.5, 2.5);
+          ctx.fillRect(107, ry, 2.5, 2.5);
+        }
+        ctx.beginPath(); ctx.arc(93, 118, 3.5, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(99, 118, 3.5, 0, Math.PI * 2); ctx.stroke();
+
+        // --- E. Royal Banners & Cuneiform Tablet Archive Windows ---
+        // Left Archive Window (showing rows of clay tablets)
+        ctx.fillStyle = '#1f1812';
+        ctx.fillRect(36, 96, 16, 22);
+        ctx.fillStyle = '#d97706'; // Terracotta cuneiform tablets on cedar shelves
+        ctx.fillRect(38, 102, 12, 3);
+        ctx.fillRect(38, 108, 12, 3);
+        ctx.fillRect(38, 114, 12, 3);
+
+        // Right Treasury Window (displaying gilded bronze armor & shields)
+        ctx.fillStyle = '#1f1812';
+        ctx.fillRect(140, 96, 16, 22);
+        ctx.fillStyle = '#fbbf24';
+        ctx.beginPath(); ctx.arc(148, 107, 6, 0, Math.PI * 2); ctx.fill();
+
+        // Tall Ceremonial Royal Gonfalons (Left & Right Facade)
+        for (const [fx, fy] of [[24, 60], [168, 60]]) {
+          ctx.fillStyle = '#451a03';
+          ctx.fillRect(fx - 1, fy - 22, 2.5, 50); // Tall cedar flagpole
+          // Gold spearhead finial
+          ctx.fillStyle = cTrim;
+          ctx.beginPath();
+          ctx.moveTo(fx, fy - 26); ctx.lineTo(fx + 3, fy - 22); ctx.lineTo(fx - 3, fy - 22);
+          ctx.closePath();
+          ctx.fill();
+          // Hanging ceremonial banner
+          ctx.fillStyle = cMain;
+          ctx.fillRect(fx + 2, fy - 18, 10, 28);
+          ctx.fillStyle = cTrim;
+          ctx.fillRect(fx + 2, fy + 10, 10, 3); // Fringe
+          ctx.beginPath(); ctx.arc(fx + 7, fy - 5, 2.5, 0, Math.PI * 2); ctx.fill();
+        }
       }));
 
-      // 2. Bronze Foundry / Refinery (3x3 tiles = 144x144)
+      // 2. Bronze Foundry & Refinery (3x3 tiles = 144x144)
       this.buildingSprites.set(`bronze_foundry_${owner}`, this.makeBuildingSprite(144, (ctx) => {
-        ctx.fillStyle = '#b8afa4';
-        ctx.fillRect(9, 21, 126, 114);
+        // --- A. Ash-Covered Industrial Smelting Yard & Cobblestone Apron ---
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.48)';
+        ctx.fillRect(6, 14, 132, 124);
 
-        this.drawRoofTiles(ctx, 12, 18, 64, 54, cMain, cHi);
-        ctx.fillStyle = '#7a7066';
-        ctx.fillRect(15, 72, 58, 58);
+        // Scorched stone floor with ash and soot stains
+        const floorG = ctx.createLinearGradient(6, 18, 138, 138);
+        floorG.addColorStop(0, '#574e44');
+        floorG.addColorStop(0.5, '#3b3229');
+        floorG.addColorStop(1, '#1c1611');
+        ctx.fillStyle = floorG;
+        ctx.fillRect(8, 20, 128, 118);
+        ctx.strokeStyle = '#211a13';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(8, 20, 128, 118);
 
-        // Ore hopper & golden ore ramp
-        ctx.fillStyle = '#26211c';
-        ctx.fillRect(78, 45, 50, 82);
-        const oreG = ctx.createLinearGradient(81, 51, 123, 75);
-        oreG.addColorStop(0, '#fde047');
-        oreG.addColorStop(1, '#b45309');
-        ctx.fillStyle = oreG;
-        ctx.fillRect(82, 52, 40, 22);
-
-        // Crane hoist with pulley wheel
-        ctx.fillStyle = '#5c3a21';
-        ctx.fillRect(68, 12, 9, 82);
-        ctx.fillRect(68, 12, 50, 9);
-        ctx.strokeStyle = '#d4a373';
+        // --- B. The Great Double Smelting Kiln (Center-Back) ---
+        // Conical Cyclopean Stone Blast Furnace
+        const kilnG = ctx.createLinearGradient(44, 20, 100, 84);
+        kilnG.addColorStop(0, '#8f7e6b');
+        kilnG.addColorStop(0.4, '#5c4e3f');
+        kilnG.addColorStop(0.8, '#2e251d');
+        kilnG.addColorStop(1, '#140f0a');
+        ctx.fillStyle = kilnG;
+        ctx.beginPath();
+        ctx.moveTo(56, 26);
+        ctx.lineTo(88, 26);
+        ctx.lineTo(102, 84);
+        ctx.lineTo(42, 84);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#1a130d';
         ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.arc(72, 42, 15, 0, Math.PI * 2); ctx.stroke();
+        ctx.stroke();
+
+        // Twin Industrial Clay Blast Chimneys (Billowing smoke & incandescent embers)
+        for (const chx of [58, 76]) {
+          ctx.fillStyle = '#42372d';
+          ctx.fillRect(chx, 10, 10, 18);
+          ctx.strokeStyle = '#1c1610';
+          ctx.strokeRect(chx, 10, 10, 18);
+          // Dark chimney opening
+          ctx.fillStyle = '#0a0806';
+          ctx.fillRect(chx + 1.5, 9, 7, 3);
+          // Golden sparks & heat haze
+          ctx.fillStyle = '#fef08a';
+          ctx.fillRect(chx + 2, 4, 2, 2);
+          ctx.fillRect(chx + 6, 2, 2.5, 2.5);
+          ctx.fillRect(chx + 3, -3, 3, 3);
+          // Smoke clouds
+          ctx.fillStyle = 'rgba(75, 85, 99, 0.4)';
+          ctx.beginPath(); ctx.arc(chx + 5, 0, 6, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.arc(chx + 10, -6, 8, 0, Math.PI * 2); ctx.fill();
+        }
+
+        // Tuyere Nozzles & Twin Goatskin Bellows on Timber Platform
+        for (const [bx, by] of [[28, 62], [104, 62]]) {
+          // Bellows wooden platform
+          ctx.fillStyle = '#452b17';
+          ctx.fillRect(bx - 8, by + 4, 18, 14);
+          // Leather bellows bladder
+          ctx.fillStyle = '#92400e';
+          ctx.beginPath(); ctx.ellipse(bx + 1, by + 10, 7, 5, 0, 0, Math.PI * 2); ctx.fill();
+          // Operating lever
+          ctx.strokeStyle = '#b45309';
+          ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.moveTo(bx - 5, by + 4); ctx.lineTo(bx + 6, by + 14); ctx.stroke();
+          // Clay tuyere pipe entering the furnace
+          ctx.fillStyle = '#ca8a04';
+          ctx.fillRect(bx > 50 ? bx - 10 : bx + 8, by + 8, 10, 3.5);
+        }
+
+        // Furnace Arched Hearth Mouth (Blazing White-Hot Liquid Core)
+        ctx.fillStyle = '#1a0d05';
+        ctx.fillRect(60, 66, 24, 18);
+        const hearthG = ctx.createRadialGradient(72, 75, 2, 72, 75, 12);
+        hearthG.addColorStop(0, '#ffffff'); // White-hot core
+        hearthG.addColorStop(0.3, '#fde047'); // Yellow flame
+        hearthG.addColorStop(0.7, '#f97316'); // Fiery orange
+        hearthG.addColorStop(1, '#991b1b'); // Deep molten red
+        ctx.fillStyle = hearthG;
+        ctx.fillRect(62, 68, 20, 16);
+
+        // --- C. Molten Casting Run & Oxhide Ingot Molds (Front-Left) ---
+        // Incandescent molten bronze stream running into molds
+        const streamG = ctx.createLinearGradient(72, 84, 52, 116);
+        streamG.addColorStop(0, '#fef08a');
+        streamG.addColorStop(0.5, '#f59e0b');
+        streamG.addColorStop(1, '#b45309');
+        ctx.fillStyle = streamG;
+        ctx.fillRect(68, 84, 8, 14);
+        ctx.fillRect(48, 94, 28, 6);
+
+        // Sand casting pit with molten "Oxhide Ingots" (4-handled iconic Bronze Age shape)
+        ctx.fillStyle = '#785b3a';
+        ctx.fillRect(16, 92, 46, 38);
+        ctx.strokeStyle = '#382512';
+        ctx.strokeRect(16, 92, 46, 38);
+
+        // Active glowing ingot in mold
+        ctx.fillStyle = '#f97316';
+        ctx.fillRect(22, 98, 14, 10);
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(24, 100, 10, 6);
+
+        // Stacked finished Oxhide Bronze Ingots on cedar pallet
+        ctx.fillStyle = '#452a16';
+        ctx.fillRect(18, 114, 26, 4); // Pallet
+        for (const [ix, iy] of [[20, 110], [30, 110], [25, 105]]) {
+          // Authentic oxhide shape with flared ear handles
+          ctx.fillStyle = '#d97706';
+          ctx.fillRect(ix, iy, 10, 5);
+          ctx.fillStyle = '#fbbf24'; // Metallic highlight edge
+          ctx.fillRect(ix + 1, iy, 8, 1.5);
+          ctx.fillStyle = '#92400e';
+          ctx.fillRect(ix - 1, iy - 1, 2, 2);
+          ctx.fillRect(ix + 9, iy - 1, 2, 2);
+          ctx.fillRect(ix - 1, iy + 4, 2, 2);
+          ctx.fillRect(ix + 9, iy + 4, 2, 2);
+        }
+
+        // --- D. Raw Ore Hoppers & Timber Derrick Crane (Rear-Right) ---
+        // Sloped wooden ore hopper
+        ctx.fillStyle = '#3d2514';
+        ctx.fillRect(96, 40, 36, 46);
+        ctx.strokeStyle = '#1f1107';
+        ctx.strokeRect(96, 40, 36, 46);
+
+        // Raw Green Malachite (Copper Ore) and Silver-Black Cassiterite (Tin Ore)
+        ctx.fillStyle = '#059669'; // Malachite green
+        ctx.fillRect(100, 48, 14, 16);
+        ctx.fillStyle = '#34d399';
+        ctx.fillRect(102, 50, 4, 4);
+        ctx.fillRect(108, 54, 4, 4);
+
+        ctx.fillStyle = '#334155'; // Cassiterite tin ore
+        ctx.fillRect(116, 48, 12, 16);
+        ctx.fillStyle = '#94a3b8'; // Silver glint on tin
+        ctx.fillRect(118, 50, 3, 3);
+        ctx.fillRect(122, 55, 3, 3);
+
+        // Sturdy Timber Derrick Crane with Pulley
+        ctx.fillStyle = '#5c3a21';
+        ctx.fillRect(94, 16, 5, 76); // Vertical mast
+        ctx.fillRect(80, 16, 46, 5); // Horizontal boom
+        ctx.strokeStyle = '#3b2210';
+        ctx.strokeRect(94, 16, 5, 76);
+        ctx.strokeRect(80, 16, 46, 5);
+
+        // Crane pulley wheel & haul cable
+        ctx.fillStyle = '#1c1917';
+        ctx.beginPath(); ctx.arc(84, 26, 5, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#d4b996';
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(84, 26); ctx.lineTo(84, 48); ctx.stroke();
+        // Heavy ore basket suspended on cable
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(80, 48, 8, 8);
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(81, 48, 6, 2);
+
+        // --- E. Blacksmith Anvil & Quenching Water Trough (Front-Right) ---
+        // Tree stump anvil base
+        ctx.fillStyle = '#4a2f19';
+        ctx.fillRect(96, 102, 12, 14);
+        // Heavy Bronze Anvil
+        ctx.fillStyle = '#92400e';
+        ctx.fillRect(94, 96, 16, 7);
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillRect(94, 96, 16, 1.5);
+        ctx.fillStyle = '#d97706';
+        ctx.fillRect(90, 97, 4, 4); // Horn
+
+        // Stone Water Quenching Trough (with rising steam)
+        ctx.fillStyle = '#52473d';
+        ctx.fillRect(114, 98, 20, 20);
+        ctx.strokeStyle = '#29221b';
+        ctx.strokeRect(114, 98, 20, 20);
+        // Quench water pool
+        ctx.fillStyle = '#0284c7';
+        ctx.fillRect(116, 101, 16, 14);
+        // Rising steam wisps
+        ctx.fillStyle = 'rgba(224, 242, 254, 0.45)';
+        ctx.beginPath(); ctx.arc(122, 95, 4, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(126, 91, 5, 0, Math.PI * 2); ctx.fill();
       }));
 
       // 3. Granary & Freshwater Well (2x2 tiles = 96x96)
@@ -924,43 +1231,347 @@ export class SVGAProceduralBank {
         ctx.fillRect(76.5, 71, 1.5, 2.5);
       }));
 
-      // 4. Barracks (3x3 tiles = 144x144)
+      // 4. Militia Barracks & Weaponsmith Forge (3x3 tiles = 144x144)
       this.buildingSprites.set(`barracks_${owner}`, this.makeBuildingSprite(144, (ctx) => {
-        ctx.fillStyle = '#c4bbb0';
-        ctx.fillRect(9, 18, 126, 116);
+        // --- A. Compacted Dirt Drill Ground & Flagstone Base ---
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.48)';
+        ctx.fillRect(6, 16, 132, 122);
 
-        this.drawRoofTiles(ctx, 9, 15, 126, 34, cMain, cHi);
-        ctx.fillStyle = cTrim;
-        ctx.fillRect(18, 42, 108, 5);
+        // Compacted earthen drill courtyard
+        const yardG = ctx.createLinearGradient(6, 18, 138, 138);
+        yardG.addColorStop(0, '#8c6b45');
+        yardG.addColorStop(0.5, '#694e30');
+        yardG.addColorStop(1, '#47331d');
+        ctx.fillStyle = yardG;
+        ctx.fillRect(8, 20, 128, 116);
+        ctx.strokeStyle = '#2d1f11';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(8, 20, 128, 116);
 
-        ctx.fillStyle = '#8c7355';
-        ctx.fillRect(21, 54, 102, 70);
-        ctx.strokeStyle = '#4a3d2f';
-        ctx.strokeRect(21, 54, 102, 70);
-
-        for (let sx = 30; sx <= 104; sx += 32) {
-          ctx.fillStyle = cMain;
-          ctx.fillRect(sx, 68, 16, 24);
-          ctx.strokeStyle = cTrim;
-          ctx.strokeRect(sx, 68, 16, 24);
+        // Flagstone perimeter pathways
+        ctx.fillStyle = '#948777';
+        for (let fx = 12; fx < 132; fx += 14) {
+          ctx.fillRect(fx, 124, 12, 10);
+          ctx.strokeStyle = '#4a4136';
+          ctx.strokeRect(fx, 124, 12, 10);
         }
+
+        // --- B. Garrison Barracks & Bunk Quarters (Rear-Left: x: 8..92, y: 16..78) ---
+        const bldgG = ctx.createLinearGradient(8, 26, 92, 78);
+        bldgG.addColorStop(0, '#d1c4b4');
+        bldgG.addColorStop(0.5, '#aba092');
+        bldgG.addColorStop(1, '#706659');
+        ctx.fillStyle = bldgG;
+        ctx.fillRect(10, 30, 82, 48);
+        ctx.strokeStyle = '#383027';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(10, 30, 82, 48);
+
+        // Slanted Terracotta Cedar Roof over Quarters
+        this.drawRoofTiles(ctx, 8, 14, 86, 26, cMain, cHi);
+        // Cedar fascia board & faction trim
+        ctx.fillStyle = cTrim;
+        ctx.fillRect(8, 38, 86, 3);
+
+        // Pillared Open Portico / Veranda
+        ctx.fillStyle = '#261f18';
+        ctx.fillRect(14, 42, 74, 34); // Shaded portico recess
+        for (const px of [14, 38, 62, 84]) {
+          ctx.fillStyle = '#5c3a21';
+          ctx.fillRect(px, 42, 5, 34); // Cedar square posts
+          ctx.fillStyle = '#85532f';
+          ctx.fillRect(px, 42, 1.5, 34);
+        }
+
+        // Double Barracks Doorway
+        ctx.fillStyle = '#140d08';
+        ctx.fillRect(45, 46, 15, 30);
+        ctx.fillStyle = '#3d2515';
+        ctx.fillRect(46, 48, 13, 28);
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(48, 60, 2.5, 2.5); // Bronze ring handle
+
+        // --- C. Weapon Racks: Tower Shields & Bronze-Tipped Spears ---
+        // Armory Rack 1 (Left bay: x: 20..36)
+        ctx.fillStyle = '#452a16';
+        ctx.fillRect(20, 68, 17, 3); // Horizontal rack rail
+        // 2 Massive Figure-Eight & Tower Shields (Oxhide on wicker with bronze boss)
+        const shields: Array<{ sx: number; sy: number; isEight: boolean }> = [
+          { sx: 21, sy: 52, isEight: true },
+          { sx: 29, sy: 50, isEight: false }
+        ];
+        for (const { sx, sy, isEight } of shields) {
+          ctx.fillStyle = '#78350f';
+          if (isEight) {
+            // Figure-eight shield
+            ctx.beginPath();
+            ctx.arc(sx + 3.5, sy + 4, 4, 0, Math.PI * 2);
+            ctx.arc(sx + 3.5, sy + 13, 4.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#fbbf24';
+            ctx.beginPath(); ctx.arc(sx + 3.5, sy + 8.5, 2, 0, Math.PI * 2); ctx.fill();
+          } else {
+            // Arched Tower shield
+            ctx.fillRect(sx, sy, 7, 18);
+            ctx.strokeStyle = '#fbbf24';
+            ctx.strokeRect(sx, sy, 7, 18);
+            ctx.fillStyle = '#f59e0b';
+            ctx.beginPath(); ctx.arc(sx + 3.5, sy + 9, 2.5, 0, Math.PI * 2); ctx.fill();
+          }
+        }
+
+        // Armory Rack 2 (Right bay: x: 68..82) - Upright Spear Rack
+        ctx.fillStyle = '#452a16';
+        ctx.fillRect(68, 68, 15, 3);
+        for (let spx = 70; spx <= 80; spx += 3) {
+          ctx.strokeStyle = '#92400e';
+          ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(spx, 70); ctx.lineTo(spx, 46); ctx.stroke();
+          // Shining Bronze Spearpoint
+          ctx.fillStyle = '#fbbf24';
+          ctx.beginPath();
+          ctx.moveTo(spx, 42); ctx.lineTo(spx + 1.5, 46); ctx.lineTo(spx - 1.5, 46);
+          ctx.closePath();
+          ctx.fill();
+        }
+
+        // --- D. Weaponsmith Forge & Armor Workshop (Right Wing: x: 92..136, y: 22..82) ---
+        // Stone Forge Hearth Block
+        const forgeG = ctx.createLinearGradient(92, 34, 136, 80);
+        forgeG.addColorStop(0, '#756859');
+        forgeG.addColorStop(1, '#332a22');
+        ctx.fillStyle = forgeG;
+        ctx.fillRect(94, 38, 40, 42);
+        ctx.strokeStyle = '#1f1914';
+        ctx.strokeRect(94, 38, 40, 42);
+
+        // Forge Chimney (billowing smoke)
+        ctx.fillStyle = '#4a3f34';
+        ctx.fillRect(118, 18, 12, 22);
+        ctx.fillStyle = '#0f0c09';
+        ctx.fillRect(119.5, 17, 9, 3);
+        ctx.fillStyle = 'rgba(100, 116, 139, 0.45)';
+        ctx.beginPath(); ctx.arc(124, 10, 6, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(128, 4, 8, 0, Math.PI * 2); ctx.fill();
+
+        // Glowing Charcoal Firebox
+        ctx.fillStyle = '#170c06';
+        ctx.fillRect(100, 52, 22, 16);
+        const fireG = ctx.createRadialGradient(111, 60, 2, 111, 60, 10);
+        fireG.addColorStop(0, '#ffffff');
+        fireG.addColorStop(0.3, '#fde047');
+        fireG.addColorStop(0.7, '#f97316');
+        fireG.addColorStop(1, '#b91c1c');
+        ctx.fillStyle = fireG;
+        ctx.fillRect(101, 54, 20, 14);
+
+        // Heavy Bronze Anvil on cedar stump
+        ctx.fillStyle = '#452a16';
+        ctx.fillRect(106, 92, 14, 14);
+        ctx.fillStyle = '#92400e';
+        ctx.fillRect(104, 86, 18, 7);
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillRect(104, 86, 18, 1.5);
+        // Red-hot spearhead on anvil
+        ctx.fillStyle = '#f97316';
+        ctx.fillRect(110, 84, 8, 2.5);
+        ctx.fillStyle = '#fde047';
+        ctx.fillRect(112, 84, 4, 2.5);
+
+        // Water Quenching Barrel
+        ctx.fillStyle = '#5c3a21';
+        ctx.fillRect(123, 88, 12, 16);
+        ctx.strokeStyle = '#1c1917';
+        ctx.strokeRect(123, 88, 12, 16);
+        ctx.fillStyle = '#0284c7';
+        ctx.fillRect(124, 89, 10, 3);
+        ctx.fillStyle = '#fbbf24'; // Bronze barrel hoops
+        ctx.fillRect(123, 93, 12, 1.5);
+        ctx.fillRect(123, 100, 12, 1.5);
+
+        // --- E. Military Drill Ground & Archery / Slinger Targets (Front-Left: x: 14..56, y: 84..122) ---
+        // Archery Straw Target on Tripod
+        ctx.strokeStyle = '#5c3a21';
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(22, 112); ctx.lineTo(26, 92); ctx.lineTo(30, 112); ctx.stroke();
+        // Round straw target with bullseye
+        ctx.fillStyle = '#ca8a04';
+        ctx.beginPath(); ctx.arc(26, 94, 9, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#78350f';
+        ctx.stroke();
+        ctx.fillStyle = '#dc2626'; // Red bullseye
+        ctx.beginPath(); ctx.arc(26, 94, 5, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath(); ctx.arc(26, 94, 2, 0, Math.PI * 2); ctx.fill();
+        // Embedded practice arrows
+        ctx.strokeStyle = '#451a03';
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(26, 94); ctx.lineTo(33, 90); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(28, 97); ctx.lineTo(35, 99); ctx.stroke();
+
+        // Slinger Training Post (Wooden practice quintain with hung shield)
+        ctx.fillStyle = '#5c3a21';
+        ctx.fillRect(44, 90, 4, 22);
+        ctx.fillStyle = '#b45309';
+        ctx.beginPath(); ctx.arc(46, 96, 6, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#78350f';
+        ctx.beginPath(); ctx.arc(46, 96, 2, 0, Math.PI * 2); ctx.fill();
+
+        // Faction War Banner on Barracks Peak
+        ctx.fillStyle = '#5c3a21';
+        ctx.fillRect(50, 4, 2.5, 12);
+        ctx.fillStyle = cMain;
+        ctx.beginPath();
+        ctx.moveTo(52.5, 4); ctx.lineTo(66, 8); ctx.lineTo(52.5, 12);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = cTrim;
+        ctx.fillRect(52.5, 6, 3, 4);
       }));
 
-      // 5. Watchtower (2x2 tiles = 96x96, footprint 48x48)
+      // 5. Cyclopean Watchtower & Lookout Bastion (2x2 tiles = 96x96)
       this.buildingSprites.set(`watchtower_${owner}`, this.makeBuildingSprite(96, (ctx) => {
-        const towerG = ctx.createLinearGradient(22, 0, 74, 0);
-        towerG.addColorStop(0, '#948b80');
-        towerG.addColorStop(0.4, '#e6dfd3');
-        towerG.addColorStop(1, '#5c5349');
-        ctx.fillStyle = towerG;
-        ctx.fillRect(22, 20, 52, 68);
+        // --- A. Drop Shadow & Megalithic Foundation Apron ---
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+        ctx.fillRect(16, 22, 64, 70);
 
-        this.drawRoofTiles(ctx, 14, 8, 68, 20, cMain, cHi);
+        // Circular stone footing apron
+        const footG = ctx.createLinearGradient(18, 70, 78, 92);
+        footG.addColorStop(0, '#9e9182');
+        footG.addColorStop(0.5, '#6e6355');
+        footG.addColorStop(1, '#3b3329');
+        ctx.fillStyle = footG;
+        ctx.beginPath();
+        ctx.ellipse(48, 80, 28, 12, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#261f18';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // --- B. Tapering Polygonal Cyclopean Tower Shaft ---
+        // Tower masonry gradient (sunlight from top-left, deep shadow on right)
+        const shaftG = ctx.createLinearGradient(26, 28, 70, 80);
+        shaftG.addColorStop(0, '#e3ded8');
+        shaftG.addColorStop(0.25, '#b8aca0');
+        shaftG.addColorStop(0.7, '#6b6053');
+        shaftG.addColorStop(1, '#362f27');
+        ctx.fillStyle = shaftG;
+
+        ctx.beginPath();
+        ctx.moveTo(31, 26); // Top left
+        ctx.lineTo(65, 26); // Top right
+        ctx.lineTo(72, 80); // Bottom right (tapered base)
+        ctx.lineTo(24, 80); // Bottom left
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#261f18';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Interlocking Cyclopean Polygonal Stone Courses
+        ctx.strokeStyle = 'rgba(35, 28, 22, 0.45)';
+        ctx.lineWidth = 1;
+        // Horizontal courses
+        for (let ly = 36; ly <= 76; ly += 9) {
+          const ratio = (ly - 26) / 54;
+          const leftX = 31 - ratio * 7;
+          const rightX = 65 + ratio * 7;
+          ctx.beginPath(); ctx.moveTo(leftX, ly); ctx.lineTo(rightX, ly); ctx.stroke();
+        }
+        // Vertical polygonal stone joints
+        const joints = [
+          [38, 26, 36], [54, 26, 36],
+          [32, 36, 45], [48, 36, 45], [62, 36, 45],
+          [36, 45, 54], [52, 45, 54], [66, 45, 54],
+          [30, 54, 63], [46, 54, 63], [60, 54, 63],
+          [35, 63, 72], [54, 63, 72], [68, 63, 72]
+        ];
+        for (const [jx, jy1, jy2] of joints) {
+          ctx.beginPath(); ctx.moveTo(jx, jy1); ctx.lineTo(jx, jy2); ctx.stroke();
+        }
+
+        // Defensive Arrow Loop Embrasures (Narrow slit windows)
+        for (const [ey, ex] of [[38, 48], [52, 48], [66, 48]]) {
+          ctx.fillStyle = '#0f0c08';
+          ctx.fillRect(ex - 2, ey, 4, 8);
+          // Glistening bronze arrow tip peering out
+          ctx.fillStyle = '#fbbf24';
+          ctx.fillRect(ex - 0.5, ey + 2, 1, 3);
+        }
+
+        // Heavy Reinforced Ground Door (Bronze-studded cedar with stone arch)
+        ctx.fillStyle = '#1c150e';
+        ctx.fillRect(42, 67, 12, 14);
+        ctx.fillStyle = '#452a16';
+        ctx.fillRect(43, 68, 10, 13);
+        ctx.fillStyle = '#fbbf24'; // Bronze boss studs
+        ctx.fillRect(44, 71, 2, 2);
+        ctx.fillRect(50, 71, 2, 2);
+        ctx.fillRect(44, 77, 2, 2);
+        ctx.fillRect(50, 77, 2, 2);
+        // Stone Corbel Header
+        ctx.fillStyle = '#7a6f62';
+        ctx.fillRect(40, 65, 16, 3);
+
+        // --- C. Overhanging Corbels & Stepped Machicolations ---
+        for (let cx = 27; cx <= 67; cx += 8) {
+          ctx.fillStyle = '#8f8375';
+          ctx.fillRect(cx, 24, 5, 5);
+          ctx.fillStyle = '#42382e';
+          ctx.fillRect(cx, 26, 5, 3);
+        }
+
+        // Battlements Floor Slab
+        ctx.fillStyle = '#b3a89a';
+        ctx.fillRect(25, 21, 46, 4);
+        ctx.strokeStyle = '#29221a';
+        ctx.strokeRect(25, 21, 46, 4);
+
+        // Crenellated Parapet (Merlons and Crenels)
+        const merlons = [25, 38, 51, 64];
+        for (const mx of merlons) {
+          ctx.fillStyle = '#d1c7ba';
+          ctx.fillRect(mx, 13, 7, 9);
+          ctx.strokeStyle = '#382f25';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(mx, 13, 7, 9);
+        }
+
+        // --- D. Lookout Sentry & Signal Beacon Brazier ---
+        // Sentry archer standing at battlements
+        ctx.fillStyle = cMain; // Tunic
+        ctx.fillRect(45, 12, 6, 8);
+        ctx.fillStyle = '#cbd5e1'; // Bronze cap
+        ctx.beginPath(); ctx.arc(48, 10, 3, 0, Math.PI * 2); ctx.fill();
+        // Sentry spear & shield
+        ctx.strokeStyle = '#fbbf24';
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(52, 6); ctx.lineTo(52, 20); ctx.stroke();
         ctx.fillStyle = cTrim;
-        ctx.fillRect(38, 12, 16, 10);
+        ctx.beginPath(); ctx.arc(44, 16, 3.5, 0, Math.PI * 2); ctx.fill();
 
-        ctx.fillStyle = '#1c1815';
-        ctx.fillRect(40, 40, 12, 32);
+        // Signal Alarm Beacon Brazier (Iron basket on pole)
+        ctx.fillStyle = '#1c1917';
+        ctx.fillRect(28, 4, 2, 12);
+        ctx.fillRect(25, 3, 8, 3);
+        // Blazing signal fire & pitch smoke
+        ctx.fillStyle = '#f97316';
+        ctx.beginPath(); ctx.arc(29, 2, 3.5, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(28, 0, 2, 3);
+        // Smoke plume alerting the citadel
+        ctx.fillStyle = 'rgba(75, 85, 99, 0.4)';
+        ctx.beginPath(); ctx.arc(28, -4, 4, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(25, -9, 5, 0, Math.PI * 2); ctx.fill();
+
+        // Cedar Lookout Canopy Hood in Faction Colors
+        ctx.fillStyle = '#5c3a21';
+        ctx.fillRect(36, 6, 2, 14);
+        ctx.fillRect(58, 6, 2, 14);
+        // Canopy Roof
+        this.drawRoofTiles(ctx, 33, 2, 30, 8, cMain, cHi);
+        ctx.fillStyle = cTrim;
+        ctx.fillRect(47, -1, 2, 3); // Roof peak finial
       }));
 
       // 6. Chariot Stable / Factory (3x3 tiles = 144x144)
