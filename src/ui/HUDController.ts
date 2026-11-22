@@ -1,5 +1,5 @@
 import { EventBus } from '../core/EventBus.ts';
-import { ResourcePool } from '../data/types.ts';
+import { ResourcePool, Cost } from '../data/types.ts';
 import { BUILDINGS } from '../data/buildings.ts';
 import { UNITS } from '../data/units.ts';
 import { UnitEntity } from '../entities/UnitEntity.ts';
@@ -107,6 +107,28 @@ export class HUDController {
     });
   }
 
+  public formatCostHtml(cost: Cost): string {
+    const parts: string[] = [];
+    if (cost.copper) parts.push(`<span style="color: #2de0a5;">${cost.copper} Cop</span>`);
+    if (cost.tin) parts.push(`<span style="color: #c0c6cc;">${cost.tin} Tin</span>`);
+    if (cost.stone) parts.push(`<span style="color: #e2e8f0;">${cost.stone} Stn</span>`);
+    if (cost.timber) parts.push(`<span style="color: #f59e0b;">${cost.timber} Tmb</span>`);
+    if (cost.iron) parts.push(`<span style="color: #e07a5f;">${cost.iron} Irn</span>`);
+    if (cost.grain) parts.push(`<span style="color: #ffd166;">${cost.grain} Grn</span>`);
+    return parts.join(' · ') || '<span style="color: #a3e635;">Free</span>';
+  }
+
+  public formatCostTooltip(cost: Cost): string {
+    const parts: string[] = [];
+    if (cost.copper) parts.push(`${cost.copper} Copper`);
+    if (cost.tin) parts.push(`${cost.tin} Tin`);
+    if (cost.stone) parts.push(`${cost.stone} Stone`);
+    if (cost.timber) parts.push(`${cost.timber} Timber`);
+    if (cost.iron) parts.push(`${cost.iron} Iron`);
+    if (cost.grain) parts.push(`${cost.grain} Grain`);
+    return parts.join(', ') || 'Free';
+  }
+
   public populateBuildMenu(unlockedBuildings?: string[]): void {
     const container = document.getElementById('build-items-container');
     if (!container) return;
@@ -122,21 +144,13 @@ export class HUDController {
     for (const [id, def] of entries) {
       const btn = document.createElement('button');
       btn.className = 'svga-btn build-btn';
-      btn.title = `${def.name} - ${def.description}`;
-
-      const costs: string[] = [];
-      if (def.cost.copper) costs.push(`${def.cost.copper} C`);
-      if (def.cost.tin) costs.push(`${def.cost.tin} T`);
-      if (def.cost.stone) costs.push(`${def.cost.stone} S`);
-      if (def.cost.timber) costs.push(`${def.cost.timber} W`);
-      if (def.cost.iron) costs.push(`${def.cost.iron} Fe`);
-      if (def.cost.grain) costs.push(`${def.cost.grain} G`);
-
-      const costStr = costs.join(' | ') || 'Free';
+      const costHtml = this.formatCostHtml(def.cost);
+      const costText = this.formatCostTooltip(def.cost);
+      btn.title = `${def.name} (${costText}) - ${def.description}`;
 
       btn.innerHTML = `
         <div style="font-weight: bold; font-size: 11px;">${def.name}</div>
-        <div style="font-size: 10px; color: #ffdf73;">${costStr}</div>
+        <div style="font-size: 10px; margin-top: 2px;">${costHtml}</div>
       `;
 
       btn.addEventListener('click', () => {
@@ -185,9 +199,15 @@ export class HUDController {
         for (const uId of selectedBuilding.def.producesUnits) {
           const uDef = UNITS[uId];
           if (!uDef) continue;
+          const uCostHtml = this.formatCostHtml(uDef.cost);
+          const uCostText = this.formatCostTooltip(uDef.cost);
           const trainBtn = document.createElement('button');
           trainBtn.className = 'svga-btn';
-          trainBtn.textContent = `Train ${uDef.name.split(' ')[0]}`;
+          trainBtn.title = `Train ${uDef.name} (${uCostText}, Supply: ${uDef.supplyCost}) - ${uDef.description}`;
+          trainBtn.innerHTML = `
+            <div style="font-weight: bold; font-size: 11px;">Train ${uDef.name.split(' ')[0]}</div>
+            <div style="font-size: 9px; margin-top: 2px;">${uCostHtml}</div>
+          `;
           trainBtn.onclick = () => {
             if (this.onTrainUnit) this.onTrainUnit(uId);
           };

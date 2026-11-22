@@ -466,9 +466,17 @@ class GameApp {
     if (!def) return;
 
     if (!this.economy.canAfford(def.cost)) {
+      const r = this.economy.resources;
+      const missing: string[] = [];
+      if (def.cost.copper && r.copper < def.cost.copper) missing.push(`${Math.ceil(def.cost.copper - r.copper)} Copper [Cop]`);
+      if (def.cost.tin && r.tin < def.cost.tin) missing.push(`${Math.ceil(def.cost.tin - r.tin)} Tin [Tin]`);
+      if (def.cost.stone && r.stone < def.cost.stone) missing.push(`${Math.ceil(def.cost.stone - r.stone)} Stone [Stn]`);
+      if (def.cost.timber && r.timber < def.cost.timber) missing.push(`${Math.ceil(def.cost.timber - r.timber)} Timber [Tmb]`);
+      if (def.cost.iron && r.iron < def.cost.iron) missing.push(`${Math.ceil(def.cost.iron - r.iron)} Iron [Irn]`);
+      if (def.cost.grain && r.grain < def.cost.grain) missing.push(`${Math.ceil(def.cost.grain - r.grain)} Grain [Grn]`);
       EventBus.get().emit('advisor:message', {
         speaker: 'burna_khabir',
-        text: 'Insufficient resources to train this unit!',
+        text: `Tarkhunta denies us! Lacking: ${missing.join(', ')} to train ${def.name}.`,
         isAlert: true
       });
       return;
@@ -569,12 +577,12 @@ class GameApp {
           } else {
             const missing: string[] = [];
             const r = this.economy.resources;
-            if (bDef.cost.copper && r.copper < bDef.cost.copper) missing.push(`${Math.ceil(bDef.cost.copper - r.copper)} Copper`);
-            if (bDef.cost.tin && r.tin < bDef.cost.tin) missing.push(`${Math.ceil(bDef.cost.tin - r.tin)} Tin`);
-            if (bDef.cost.stone && r.stone < bDef.cost.stone) missing.push(`${Math.ceil(bDef.cost.stone - r.stone)} Stone`);
-            if (bDef.cost.timber && r.timber < bDef.cost.timber) missing.push(`${Math.ceil(bDef.cost.timber - r.timber)} Timber`);
-            if (bDef.cost.iron && r.iron < bDef.cost.iron) missing.push(`${Math.ceil(bDef.cost.iron - r.iron)} Iron`);
-            if (bDef.cost.grain && r.grain < bDef.cost.grain) missing.push(`${Math.ceil(bDef.cost.grain - r.grain)} Grain`);
+            if (bDef.cost.copper && r.copper < bDef.cost.copper) missing.push(`${Math.ceil(bDef.cost.copper - r.copper)} Copper [Cop]`);
+            if (bDef.cost.tin && r.tin < bDef.cost.tin) missing.push(`${Math.ceil(bDef.cost.tin - r.tin)} Tin [Tin]`);
+            if (bDef.cost.stone && r.stone < bDef.cost.stone) missing.push(`${Math.ceil(bDef.cost.stone - r.stone)} Stone [Stn]`);
+            if (bDef.cost.timber && r.timber < bDef.cost.timber) missing.push(`${Math.ceil(bDef.cost.timber - r.timber)} Timber [Tmb]`);
+            if (bDef.cost.iron && r.iron < bDef.cost.iron) missing.push(`${Math.ceil(bDef.cost.iron - r.iron)} Iron [Irn]`);
+            if (bDef.cost.grain && r.grain < bDef.cost.grain) missing.push(`${Math.ceil(bDef.cost.grain - r.grain)} Grain [Grn]`);
 
             EventBus.get().emit('advisor:message', {
               speaker: 'burna_khabir',
