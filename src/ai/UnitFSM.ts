@@ -86,8 +86,8 @@ export class UnitFSM {
   }
 
   private static handleMove(u: UnitEntity, dt: number, graph: GridGraph, units?: UnitEntity[]): void {
-    // If military unit moving, continuously scan for encroaching enemies within aggro sight (4 tiles)
-    if (units && (u.def.category === 'infantry' || u.def.category === 'skirmisher' || u.def.category === 'chariot')) {
+    // If military unit on a manual move order, scan for encroaching enemies within aggro sight (4 tiles)
+    if (u.state === 'MOVE_TO' && units && (u.def.category === 'infantry' || u.def.category === 'skirmisher' || u.def.category === 'chariot')) {
       const aggroRange = (u.def.attackRange || 1.5) * TILE_SIZE + 80;
       for (const other of units) {
         if (other.owner !== u.owner && other.hp > 0) {
@@ -134,12 +134,14 @@ export class UnitFSM {
     const nextTx = Math.floor(nextWp.x / TILE_SIZE);
     const nextTy = Math.floor(nextWp.y / TILE_SIZE);
 
-    // Check if the next waypoint tile is blocked (unwalkable terrain, building, or occupied by another unit)
+    // Check if the next waypoint tile is blocked (unwalkable terrain, building, or occupied by another stationary unit)
+    // NOTE: u.targetEntityId is EXCLUDED so attacking units never treat their attack target as an impassable obstacle!
     const isTerrainBlocked = !graph.isInBounds(nextTx, nextTy) || !graph.isWalkable(nextTx, nextTy) || nextTx < 6;
     const isOccupiedByOtherUnit = units ? units.some(other =>
-      other.id !== u.id && other.hp > 0 &&
+      other.id !== u.id && other.id !== u.targetEntityId && other.hp > 0 &&
+      (other.state === 'IDLE' || other.state === 'WAITING_STORAGE' || other.path.length === 0) &&
       (Math.floor(other.x / TILE_SIZE) === nextTx && Math.floor(other.y / TILE_SIZE) === nextTy ||
-       Math.hypot(other.x - (nextTx * TILE_SIZE + 24), other.y - (nextTy * TILE_SIZE + 24)) < 32)
+       Math.hypot(other.x - (nextTx * TILE_SIZE + 24), other.y - (nextTy * TILE_SIZE + 24)) < 28)
     ) : false;
 
     if (isTerrainBlocked || isOccupiedByOtherUnit) {
@@ -296,7 +298,11 @@ export class UnitFSM {
     let dist = 0;
     let attackDx = 0;
     let attackDy = 0;
-    const attackRangePx = (u.def.attackRange || 1.2) * TILE_SIZE;
+    const isRanged = u.def.category === 'skirmisher' || u.def.category === 'chariot';
+    // Melee attack range must reach diagonal tile centers (67.88px) without trying to take an impossible half-step!
+    const attackRangePx = isRanged
+      ? (u.def.attackRange || 4.2) * TILE_SIZE
+      : Math.max((u.def.attackRange || 1.3) * TILE_SIZE, 76);
 
     const targetUnit = units.find(unit => unit.id === u.targetEntityId);
     if (targetUnit) {
@@ -331,13 +337,17 @@ export class UnitFSM {
       }
     }
 
-    if (dist <= attackRangePx) {
+    const curTx = Math.floor(u.x / TILE_SIZE);
+    const curTy = Math.floor(u.y / TILE_SIZE);
+    const destTx = Math.floor(targetX / TILE_SIZE);
+    const destTy = Math.floor(targetY / TILE_SIZE);
+    const isAdjacentTile = Math.abs(curTx - destTx) <= 1 && Math.abs(curTy - destTy) <= 1;
+
+    if (dist <= attackRangePx || (!isRanged && isAdjacentTile)) {
       // In gittata: ferma il movimento, centra sulla casella e attacca
       u.path = [];
-      const atkTx = Math.floor(u.x / TILE_SIZE);
-      const atkTy = Math.floor(u.y / TILE_SIZE);
-      u.x = Math.max(6 * TILE_SIZE + 24, atkTx * TILE_SIZE + 24);
-      u.y = atkTy * TILE_SIZE + 24;
+      u.x = Math.max(6 * TILE_SIZE + 24, curTx * TILE_SIZE + 24);
+      u.y = curTy * TILE_SIZE + 24;
 
       if (u.attackCooldown <= 0) {
         u.attackCooldown = u.def.attackCooldown || 1.0;
@@ -413,34 +423,31 @@ export class UnitFSM {
       }
     } else {
       // Out of attack range: close distance towards target using pathfinding along the grid
-      const curTx = Math.floor(u.x / TILE_SIZE);
-      const curTy = Math.floor(u.y / TILE_SIZE);
-      const destTx = Math.floor(targetX / TILE_SIZE);
-      const destTy = Math.floor(targetY / TILE_SIZE);
-
-      // Recompute path towards target if we have no path or if target is distant
-      if (u.path.length === 0 || (dist > TILE_SIZE * 2 && u.path.length <= 1)) {
-        const pathCoords = AStar.findPath(_graph, { tx: curTx, ty: curTy }, { tx: destTx, ty: destTy }, 2000);
-        if (pathCoords.length > 0) {
-          const finalCoords = (pathCoords.length > 1 && pathCoords[0].tx === curTx && pathCoords[0].ty === curTy)
-            ? pathCoords.slice(1)
-            : pathCoords;
-          u.path = finalCoords.map(c => ({
-            x: Math.max(6 * TILE_SIZE + 24, c.tx * TILE_SIZE + 24),
-            y: c.ty * TILE_SIZE + 24
-          }));
+      if (dist > attackRangePx + 12 && (!isAdjacentTile || isRanged)) {
+        // Recompute path towards target if we have no path
+        if (u.path.length === 0) {
+          const pathCoords = AStar.findPath(_graph, { tx: curTx, ty: curTy }, { tx: destTx, ty: destTy }, 2000);
+          if (pathCoords.length > 0) {
+            const finalCoords = (pathCoords.length > 1 && pathCoords[0].tx === curTx && pathCoords[0].ty === curTy)
+              ? pathCoords.slice(1)
+              : pathCoords;
+            u.path = finalCoords.map(c => ({
+              x: Math.max(6 * TILE_SIZE + 24, c.tx * TILE_SIZE + 24),
+              y: c.ty * TILE_SIZE + 24
+            }));
+          }
         }
-      }
 
-      if (u.path.length > 0) {
-        this.handleMove(u, dt, _graph, units);
-      } else {
-        const step = u.def.speed * TILE_SIZE * dt;
-        const moveDist = isBuilding ? Math.min(step, Math.max(0, dist - attackRangePx * 0.4)) : step;
-        if (dist > 0) {
-          u.x += (attackDx / dist) * moveDist;
-          u.y += (attackDy / dist) * moveDist;
-          if (u.x < 6 * TILE_SIZE + 24) u.x = 6 * TILE_SIZE + 24;
+        if (u.path.length > 0) {
+          this.handleMove(u, dt, _graph, units);
+        } else {
+          const step = u.def.speed * TILE_SIZE * dt;
+          const moveDist = isBuilding ? Math.min(step, Math.max(0, dist - attackRangePx * 0.4)) : step;
+          if (dist > 0) {
+            u.x += (attackDx / dist) * moveDist;
+            u.y += (attackDy / dist) * moveDist;
+            if (u.x < 6 * TILE_SIZE + 24) u.x = 6 * TILE_SIZE + 24;
+          }
         }
       }
     }

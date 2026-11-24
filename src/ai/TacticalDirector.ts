@@ -70,26 +70,38 @@ export class TacticalDirector {
       if (u.owner === 'sea_peoples' && u.state === 'IDLE') {
         const tx = Math.floor(u.x / TILE_SIZE);
         const ty = Math.floor(u.y / TILE_SIZE);
-        const dir = this.flowField.getVectorAt(tx, ty);
+        // Trace flow field forward up to 8 tiles to create a smooth, continuous march
+        const path: Array<{ x: number; y: number }> = [];
+        let currTx = tx;
+        let currTy = ty;
 
-        if (dir.x !== 0 || dir.y !== 0) {
+        for (let step = 0; step < 8; step++) {
+          const dir = this.flowField.getVectorAt(currTx, currTy);
+          if (dir.x === 0 && dir.y === 0) break;
           const stepX = Math.round(dir.x);
           const stepTy = Math.round(dir.y);
-          const nextTx = tx + stepX;
-          const nextTy = ty + stepTy;
+          const nextTx = currTx + stepX;
+          const nextTy = currTy + stepTy;
 
-          if (graph.isInBounds(nextTx, nextTy) && graph.isWalkable(nextTx, nextTy) && nextTx >= 6) {
-            u.path = [{
-              x: nextTx * TILE_SIZE + 24,
-              y: nextTy * TILE_SIZE + 24
-            }];
-            u.state = 'MOVE_TO';
-          }
+          if (nextTx < 6 || !graph.isInBounds(nextTx, nextTy) || !graph.isWalkable(nextTx, nextTy)) break;
+          if (nextTx === currTx && nextTy === currTy) break;
+
+          path.push({
+            x: nextTx * TILE_SIZE + 24,
+            y: nextTy * TILE_SIZE + 24
+          });
+          currTx = nextTx;
+          currTy = nextTy;
+        }
+
+        if (path.length > 0) {
+          u.path = path;
+          u.state = 'MOVE_TO';
         } else {
           // Flow field neutral or stalled: plan direct march towards player target
           const pathCoords = AStar.findPath(graph, { tx, ty }, { tx: targetTx, ty: targetTy }, 2000);
           if (pathCoords.length > 1) {
-            u.path = pathCoords.slice(1, 6).map((c: GridCoord) => ({
+            u.path = pathCoords.slice(1, 10).map((c: GridCoord) => ({
               x: Math.max(6 * TILE_SIZE + 24, c.tx * TILE_SIZE + 24),
               y: c.ty * TILE_SIZE + 24
             }));
