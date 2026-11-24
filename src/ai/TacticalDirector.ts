@@ -80,7 +80,7 @@ export class TacticalDirector {
     for (let i = this.waves.length - 1; i >= 0; i--) {
       const wave = this.waves[i];
       if (this.elapsedTime >= wave.triggerTimeSeconds) {
-        this.spawnWave(wave, graph, units);
+        this.spawnWave(wave, graph, units, buildings);
         this.waves.splice(i, 1);
       }
     }
@@ -208,7 +208,12 @@ export class TacticalDirector {
     }
   }
 
-  private spawnWave(wave: WaveDefinition, graph: GridGraph, units: UnitEntity[]): void {
+  private spawnWave(
+    wave: WaveDefinition,
+    graph: GridGraph,
+    units: UnitEntity[],
+    buildings?: BuildingEntity[]
+  ): void {
     EventBus.get().emit('audio:horn_alert');
     if (wave.advisorWarning) {
       EventBus.get().emit('advisor:message', {
@@ -218,7 +223,50 @@ export class TacticalDirector {
       });
     }
 
-    const midTy = Math.floor(graph.height / 2);
+    // Calcola il punto di sbarco Y lungo la costa ovest:
+    // Varia l'approdo mantenendosi nella zona delle costruzioni del giocatore
+    let targetTy = Math.floor(graph.height / 2);
+
+    if (buildings && buildings.length > 0) {
+      let playerBuildings = buildings.filter(b => b.owner === 'player' && b.defId !== 'cyclopean_slab');
+      if (playerBuildings.length === 0) {
+        playerBuildings = buildings.filter(b => b.owner === 'player');
+      }
+
+      if (playerBuildings.length > 0) {
+        const yCoords = playerBuildings.map(b => b.ty + Math.floor(b.def.height / 2));
+        const minY = Math.min(...yCoords);
+        const maxY = Math.max(...yCoords);
+        const span = maxY - minY;
+
+        // Alterna l'incursione tra settore nord, settore sud e centro della base
+        const waveIndex = this.totalShipsLanded;
+        let chosenY: number;
+        if (waveIndex % 3 === 0) {
+          chosenY = minY + (span > 0 ? Math.random() * 0.3 * span : 0) - Math.floor(Math.random() * 3);
+        } else if (waveIndex % 3 === 1) {
+          chosenY = maxY - (span > 0 ? Math.random() * 0.3 * span : 0) + Math.floor(Math.random() * 3);
+        } else {
+          chosenY = minY + Math.random() * Math.max(1, span) + (Math.random() - 0.5) * 4;
+        }
+
+        targetTy = Math.round(chosenY);
+      }
+    }
+
+    // Assicura che la nave resti entro i limiti di mappa navigabili
+    targetTy = Math.max(4, Math.min(graph.height - 5, targetTy));
+
+    // Se un'altra nave da sbarco è già ancorata in quella specifica casella, applica offset
+    for (const existingShip of this.landingShips) {
+      if (Math.abs(existingShip.ty - targetTy) < 4) {
+        if (targetTy + 5 <= graph.height - 5) {
+          targetTy += 5;
+        } else if (targetTy - 5 >= 4) {
+          targetTy -= 5;
+        }
+      }
+    }
 
     if (wave.spawnEdge === 'west' || !wave.spawnEdge) {
       // Approccio navale: la galea da guerra Shardana arriva gradualmente via mare da ovest
@@ -229,9 +277,9 @@ export class TacticalDirector {
       const ship: LandingShip = {
         id: this.nextEntityId++,
         x: startX,
-        y: midTy * TILE_SIZE + 24,
+        y: targetTy * TILE_SIZE + 24,
         tx: startX / TILE_SIZE,
-        ty: midTy,
+        ty: targetTy,
         targetDockX,
         speed: 75,
         waveNum: this.totalShipsLanded + 1,
@@ -250,14 +298,14 @@ export class TacticalDirector {
         text: 'SHARDANA SHIP SPOTTED!',
         color: '#f59e0b',
         x: 2 * TILE_SIZE,
-        y: midTy * TILE_SIZE - 20
+        y: targetTy * TILE_SIZE - 20
       });
     } else {
       // Incursione terrestre da altro bordo mappa
       for (const unitReq of wave.units) {
         for (let c = 0; c < unitReq.count; c++) {
           let spawnTx = 7;
-          let spawnTy = Math.floor(midTy + (c - unitReq.count / 2) * 2);
+          let spawnTy = Math.floor(targetTy + (c - unitReq.count / 2) * 2);
 
           if (wave.spawnEdge === 'east') spawnTx = graph.width - 3;
           if (wave.spawnEdge === 'north') {

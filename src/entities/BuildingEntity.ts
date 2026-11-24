@@ -2,6 +2,12 @@ import { BuildingDef, FactionId } from '../data/types.ts';
 import { BUILDINGS } from '../data/buildings.ts';
 import { TILE_SIZE } from '../data/terrain.ts';
 
+export interface TrainingQueueItem {
+  unitDefId: string;
+  totalTime: number;
+  remainingTime: number;
+}
+
 export class BuildingEntity {
   public id: number;
   public defId: string;
@@ -16,6 +22,7 @@ export class BuildingEntity {
   public attackCooldown: number = 0;
   public isSelected: boolean = false;
   public constructionParticleTimer: number = 0;
+  public trainingQueue: TrainingQueueItem[] = [];
 
   constructor(
     id: number,
@@ -55,6 +62,19 @@ export class BuildingEntity {
     this.buildProgress = Math.min(1.0, this.buildProgress + dt / duration);
     this.hp = Math.max(this.hp, Math.floor(this.maxHp * Math.max(0.15, this.buildProgress)));
     return this.buildProgress >= 1.0;
+  }
+
+  public updateTraining(dt: number): string | null {
+    if (this.buildProgress < 1.0) return null;
+    if (this.trainingQueue.length === 0) return null;
+
+    const current = this.trainingQueue[0];
+    current.remainingTime -= dt;
+    if (current.remainingTime <= 0) {
+      this.trainingQueue.shift();
+      return current.unitDefId;
+    }
+    return null;
   }
 
   public get centerX(): number {

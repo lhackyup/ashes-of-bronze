@@ -526,6 +526,29 @@ class GameApp {
     const def = UNITS[unitDefId];
     if (!def) return;
 
+    // Individua la struttura di addestramento
+    const trainer = (this.selectedBuilding && this.selectedBuilding.owner === 'player' && this.selectedBuilding.buildProgress >= 1.0 && this.selectedBuilding.def.producesUnits?.includes(unitDefId))
+      ? this.selectedBuilding
+      : this.buildings.find(b => b.owner === 'player' && b.buildProgress >= 1.0 && b.def.producesUnits?.includes(unitDefId));
+
+    if (!trainer) {
+      EventBus.get().emit('advisor:message', {
+        speaker: 'burna_khabir',
+        text: `Construct and select a completed military structure to train ${def.name}.`,
+        isAlert: true
+      });
+      return;
+    }
+
+    if (trainer.trainingQueue.length >= 5) {
+      EventBus.get().emit('advisor:message', {
+        speaker: 'tarkhunta',
+        text: `Training ground full! Maximum 5 recruits in queue.`,
+        isAlert: true
+      });
+      return;
+    }
+
     if (!this.economy.canAfford(def.cost)) {
       const r = this.economy.resources;
       const missing: string[] = [];
@@ -543,7 +566,17 @@ class GameApp {
       return;
     }
 
-    if (!this.economy.hasAvailableSupply(def.supplyCost)) {
+    // Includi nel conteggio supply anche le unità già in coda di addestramento
+    let queuedSupply = 0;
+    for (const b of this.buildings) {
+      if (b.owner === 'player') {
+        for (const item of b.trainingQueue) {
+          queuedSupply += UNITS[item.unitDefId]?.supplyCost || 0;
+        }
+      }
+    }
+
+    if (!this.economy.hasAvailableSupply(def.supplyCost + queuedSupply)) {
       EventBus.get().emit('advisor:message', {
         speaker: 'burna_khabir',
         text: 'Maximum supply capacity reached! Construct additional granaries.',
@@ -553,38 +586,24 @@ class GameApp {
     }
 
     this.economy.spend(def.cost);
-    let spawnTx = 14;
-    let spawnTy = 33;
-    if (this.selectedBuilding && this.selectedBuilding.owner === 'player') {
-      spawnTx = this.selectedBuilding.tx + Math.floor(this.selectedBuilding.def.width / 2);
-      spawnTy = this.selectedBuilding.ty + this.selectedBuilding.def.height;
-    }
-
-    // Ensure spawn tile is not occupied; if occupied, find nearest free adjacent tile
-    if (this.units.some(un => un.hp > 0 && Math.floor(un.x / TILE_SIZE) === spawnTx && Math.floor(un.y / TILE_SIZE) === spawnTy)) {
-      for (let dy = 0; dy <= 2; dy++) {
-        for (let dx = -1; dx <= 1; dx++) {
-          const cx = spawnTx + dx;
-          const cy = spawnTy + dy;
-          if (cx >= 6 && this.gridGraph.isInBounds(cx, cy) && this.gridGraph.isWalkable(cx, cy)) {
-            if (!this.units.some(un => un.hp > 0 && Math.floor(un.x / TILE_SIZE) === cx && Math.floor(un.y / TILE_SIZE) === cy)) {
-              spawnTx = cx;
-              spawnTy = cy;
-              break;
-            }
-          }
-        }
-      }
-    }
-
-    this.spawnUnit(unitDefId, 'player', spawnTx * TILE_SIZE + 24, spawnTy * TILE_SIZE + 24);
-    EventBus.get().emit('audio:command');
-    EventBus.get().emit('fx:floating_text', {
-      text: `${def.name.split(' ')[0].toUpperCase()} READY`,
-      color: '#4ade80',
-      x: spawnTx * TILE_SIZE + 24,
-      y: spawnTy * TILE_SIZE - 12
+    const trainSeconds = def.trainTime || 5.0;
+    trainer.trainingQueue.push({
+      unitDefId,
+      totalTime: trainSeconds,
+      remainingTime: trainSeconds
     });
+
+    EventBus.get().emit('audio:click');
+    EventBus.get().emit('fx:floating_text', {
+      text: `TRAINING ${def.name.split(' ')[0].toUpperCase()} (${trainSeconds}s)`,
+      color: '#38bdf8',
+      x: trainer.centerX,
+      y: trainer.centerY - 24
+    });
+
+    if (this.selectedBuilding === trainer) {
+      this.hud.updateInspector(null, trainer);
+    }
   }
 
   private closeAllModals(): void {
@@ -1261,15 +1280,61 @@ class GameApp {
         } else if (b === this.selectedBuilding) {
           this.hud.updateInspector(null, b);
         }
+      } else if (b.trainingQueue.length > 0) {
+        // Progress active unit training queue in completed military structures
+        const trainedId = b.updateTraining(dt);
+        if (trainedId) {
+          const uDef = UNITS[trainedId];
+          let spawnTx = b.tx + Math.floor(b.def.width / 2);
+          let spawnTy = b.ty + b.def.height;
+
+          // Ensure spawn tile is not occupied; if occupied, find nearest free adjacent tile
+          if (this.units.some(un => un.hp > 0 && Math.floor(un.x / TILE_SIZE) === spawnTx && Math.floor(un.y / TILE_SIZE) === spawnTy)) {
+            findFreeTile: for (let r = 1; r <= 3; r++) {
+              for (let dy = -r; dy <= b.def.height + r; dy++) {
+                for (let dx = -r; dx <= b.def.width + r; dx++) {
+                  const cx = b.tx + dx;
+                  const cy = b.ty + dy;
+                  if (cx >= 6 && this.gridGraph.isInBounds(cx, cy) && this.gridGraph.isWalkable(cx, cy)) {
+                    if (!this.units.some(un => un.hp > 0 && Math.floor(un.x / TILE_SIZE) === cx && Math.floor(un.y / TILE_SIZE) === cy)) {
+                      spawnTx = cx;
+                      spawnTy = cy;
+                      break findFreeTile;
+                    }
+                  }
+                }
+              }
+            }
+          }
+
+          this.spawnUnit(trainedId, b.owner, spawnTx * TILE_SIZE + 24, spawnTy * TILE_SIZE + 24);
+          EventBus.get().emit('audio:command');
+          EventBus.get().emit('fx:floating_text', {
+            text: `${uDef?.name.split(' ')[0].toUpperCase() || 'UNIT'} READY`,
+            color: '#4ade80',
+            x: spawnTx * TILE_SIZE + 24,
+            y: spawnTy * TILE_SIZE - 12
+          });
+          if (b === this.selectedBuilding) {
+            this.hud.updateInspector(null, b);
+          }
+        } else if (b === this.selectedBuilding) {
+          this.hud.updateInspector(null, b);
+        }
       }
     }
 
-    // Calculate supply headroom (only from fully completed structures)
+    // Calculate supply headroom (only from fully completed structures, plus queued units)
     let totalCap = 10;
     let used = 0;
     for (const b of this.buildings) {
       if (b.owner === 'player' && b.buildProgress >= 1.0 && b.def.supplyProvided) {
         totalCap += b.def.supplyProvided;
+      }
+      if (b.owner === 'player') {
+        for (const item of b.trainingQueue) {
+          used += UNITS[item.unitDefId]?.supplyCost || 0;
+        }
       }
     }
     for (const u of this.units) {
@@ -1831,6 +1896,20 @@ class GameApp {
       ctx.strokeRect(drawX, drawY - 7, bw, 5);
       ctx.fillStyle = hpPct > 0.5 ? '#2b9348' : (hpPct > 0.25 ? '#eab308' : '#ef4444');
       ctx.fillRect(drawX + 1, drawY - 6, Math.max(0, (bw - 2) * hpPct), 3);
+    }
+
+    // Live training progress bar over building
+    if (b.buildProgress >= 1.0 && b.trainingQueue && b.trainingQueue.length > 0) {
+      const current = b.trainingQueue[0];
+      const trainPct = Math.max(0, Math.min(1, 1 - current.remainingTime / current.totalTime));
+      const barY = (b.isSelected || b.hp < b.maxHp) ? drawY - 14 : drawY - 7;
+      ctx.fillStyle = '#111827';
+      ctx.fillRect(drawX, barY, bw, 4);
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 0.8;
+      ctx.strokeRect(drawX, barY, bw, 4);
+      ctx.fillStyle = '#0284c7';
+      ctx.fillRect(drawX + 1, barY + 1, Math.max(0, (bw - 2) * trainPct), 2);
     }
   }
 

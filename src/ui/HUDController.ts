@@ -318,15 +318,16 @@ export class HUDController {
 
           const trainBtn = document.createElement('button');
           trainBtn.className = 'svga-btn';
+          const trainSeconds = uDef.trainTime || 5;
           trainBtn.title = isUnderConstruction ?
             `Cannot train during construction (${Math.floor(selectedBuilding.buildProgress * 100)}%)` :
-            `Train ${uDef.name} (${uCostText}, Supply: ${uDef.supplyCost}) - ${uDef.description}`;
+            `Train ${uDef.name} (${uCostText}, Supply: ${uDef.supplyCost}, Time: ${trainSeconds}s) - ${uDef.description}`;
           if (isUnderConstruction) {
             trainBtn.style.opacity = '0.5';
             trainBtn.style.cursor = 'not-allowed';
           }
           trainBtn.innerHTML = `
-            <div style="font-weight: bold; font-size: 11px;">Train ${shortName}</div>
+            <div style="font-weight: bold; font-size: 11px;">Train ${shortName} <span style="font-size: 9px; color: #fbbf24;">(${trainSeconds}s)</span></div>
             <div style="font-size: 9px; margin-top: 2px;">${uCostHtml}</div>
           `;
           trainBtn.onclick = () => {
@@ -341,6 +342,31 @@ export class HUDController {
             if (this.onTrainUnit) this.onTrainUnit(uId);
           };
           actionsBox.appendChild(trainBtn);
+        }
+
+        // Live Training Queue & Progress Display in Inspector
+        if (selectedBuilding.trainingQueue && selectedBuilding.trainingQueue.length > 0) {
+          const queueBox = document.createElement('div');
+          queueBox.style.cssText = 'margin-top: 6px; padding: 4px; background: #1c140e; border: 1px solid #78350f; border-radius: 2px; width: 100%; box-sizing: border-box;';
+          const current = selectedBuilding.trainingQueue[0];
+          const curDef = UNITS[current.unitDefId];
+          const curShortName = curDef ? curDef.name.split(' ')[0] : current.unitDefId;
+          const progressPct = Math.max(0, Math.min(100, Math.floor((1 - current.remainingTime / current.totalTime) * 100)));
+          queueBox.innerHTML = `
+            <div style="display: flex; justify-content: space-between; font-size: 10px; color: #fbbf24; font-weight: bold;">
+              <span>Training: ${curShortName}</span>
+              <span>${Math.ceil(current.remainingTime)}s (${progressPct}%)</span>
+            </div>
+            <div style="width: 100%; height: 5px; background: #332211; margin-top: 3px; border: 1px solid #553311; border-radius: 1px; overflow: hidden;">
+              <div style="width: ${progressPct}%; height: 100%; background: #38bdf8;"></div>
+            </div>
+            ${selectedBuilding.trainingQueue.length > 1 ? `
+              <div style="font-size: 9px; color: #94a3b8; margin-top: 3px;">
+                Queued (+${selectedBuilding.trainingQueue.length - 1}): ${selectedBuilding.trainingQueue.slice(1).map(q => UNITS[q.unitDefId]?.name.split(' ')[0] || q.unitDefId).join(', ')}
+              </div>
+            ` : ''}
+          `;
+          actionsBox.appendChild(queueBox);
         }
       }
     } else if (selectedVein) {
