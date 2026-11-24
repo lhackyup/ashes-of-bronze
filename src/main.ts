@@ -1393,14 +1393,17 @@ class GameApp {
       ctx.restore();
     }
 
-    // 1c. Sea Peoples Landing War Galleys (anchored at western water/surf edge)
-    const shipAnim = Date.now() / 320;
+    // 1c. Sea Peoples Landing War Galleys (sailing across western water, anchored at surf, or retreating)
+    const shipAnim = Date.now() / 280;
     for (const ship of this.tacticalDirector.landingShips) {
       SVGAProceduralBank.drawSeaPeoplesShip(
         ctx,
-        ship.tx * TILE_SIZE + 24,
-        ship.ty * TILE_SIZE + 24,
-        shipAnim + ship.waveNum * 2
+        ship.x,
+        ship.y,
+        shipAnim + ship.waveNum * 2,
+        ship.state,
+        ship.facing,
+        ship.gangplankDown
       );
     }
 

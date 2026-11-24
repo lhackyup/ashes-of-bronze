@@ -156,11 +156,12 @@ export class ObjectiveManager {
       } else if (obj.id === 'survive_sea_peoples') {
         const remainingWaves = tactical.getRemainingWavesCount();
         const activeRaiders = units.filter(u => u.owner === 'sea_peoples');
-        const shipsLanded = tactical.landingShips.length;
+        const shipsLanded = tactical.totalShipsLanded;
         obj.currentAmount = shipsLanded;
 
-        // Objective completes when all 3 waves have landed and all hostile raiders are defeated
-        if (shipsLanded >= 3 && remainingWaves === 0 && activeRaiders.length === 0) {
+        // Objective completes when all 3 waves have landed, ships emptied, and all hostile raiders defeated
+        const allHoldsEmpty = tactical.landingShips.every(s => s.pendingUnits.every(p => p.count === 0));
+        if (shipsLanded >= 3 && remainingWaves === 0 && activeRaiders.length === 0 && allHoldsEmpty) {
           this.completeObjective(obj);
         } else {
           allPrimariesDone = false;

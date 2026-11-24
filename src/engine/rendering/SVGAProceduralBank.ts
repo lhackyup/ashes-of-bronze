@@ -2345,22 +2345,63 @@ export class SVGAProceduralBank {
     ctx: CanvasRenderingContext2D,
     wx: number,
     wy: number,
-    animPhase: number
+    animPhase: number,
+    state: 'ARRIVING' | 'UNLOADING' | 'DEPARTING' | 'COMPLETED' = 'UNLOADING',
+    facing: number = 1,
+    gangplankDown: boolean = true
   ): void {
+    const isSailing = state === 'ARRIVING' || state === 'DEPARTING';
     const bob = Math.sin(animPhase) * 1.5;
     ctx.save();
     ctx.translate(wx, wy);
 
-    // 1. Foaming Water Ripples around Keel
-    ctx.fillStyle = 'rgba(224, 242, 254, 0.4)';
-    ctx.beginPath();
-    ctx.ellipse(0, 10 + bob * 0.3, 36, 12, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(56, 189, 248, 0.6)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.ellipse(-2, 11 + bob * 0.3, 39, 13, 0, 0, Math.PI * 2);
-    ctx.stroke();
+    // Inverti orizzontalmente se rivolto a ovest (ritirata verso il mare aperto)
+    if (facing < 0) {
+      ctx.scale(-1, 1);
+    }
+
+    // Beccheggio dinamico della nave durante la navigazione
+    if (isSailing) {
+      ctx.rotate(Math.sin(animPhase * 2) * 0.035);
+    }
+
+    // 1. Onde e scia d'acqua
+    if (isSailing) {
+      // Scia spumeggiante a V che si allarga a poppa (-32)
+      ctx.save();
+      for (let w = 1; w <= 3; w++) {
+        const wakeDist = w * 22 + ((animPhase * 14) % 22);
+        const wakeSpread = w * 9;
+        const wakeAlpha = Math.max(0, 0.7 - w * 0.2);
+        ctx.strokeStyle = `rgba(224, 242, 254, ${wakeAlpha})`;
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.moveTo(-32, 10 + bob * 0.3);
+        ctx.lineTo(-32 - wakeDist, 10 + bob * 0.3 - wakeSpread);
+        ctx.moveTo(-32, 12 + bob * 0.3);
+        ctx.lineTo(-32 - wakeDist, 12 + bob * 0.3 + wakeSpread);
+        ctx.stroke();
+      }
+
+      // Spruzzo di prua (+32) che fende le onde marine
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.75)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(32, 8 + bob * 0.3, 8, -Math.PI * 0.45, Math.PI * 0.45);
+      ctx.stroke();
+      ctx.restore();
+    } else {
+      // Cerchi d'acqua e spuma attorno alla chiglia all'ancora sulla battigia
+      ctx.fillStyle = 'rgba(224, 242, 254, 0.4)';
+      ctx.beginPath();
+      ctx.ellipse(0, 10 + bob * 0.3, 36, 12, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.6)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.ellipse(-2, 11 + bob * 0.3, 39, 13, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    }
 
     // 2. Clinker-Built Wooden Hull (Cedar / Pine planks)
     ctx.fillStyle = '#451a03'; // Keel / bottom
@@ -2477,26 +2518,61 @@ export class SVGAProceduralBank {
       ctx.beginPath(); ctx.arc(sx, 1 + bob, 1.2, 0, Math.PI * 2); ctx.fill();
     }
 
-    // 7. Heavy Wooden Gangplank / Landing Ramp onto the Dunes
-    // Extends forward and rightwards from the bow (x=24) onto the sandy beach (x=52)
-    ctx.fillStyle = '#583c1d';
-    ctx.beginPath();
-    ctx.moveTo(22, 2 + bob);
-    ctx.lineTo(48, 14);
-    ctx.lineTo(46, 20);
-    ctx.lineTo(20, 8 + bob);
-    ctx.closePath();
-    ctx.fill();
-    // Plank cross-slats
-    ctx.strokeStyle = '#92400e';
-    ctx.lineWidth = 1;
-    for (let p = 0; p <= 1; p += 0.2) {
-      const px1 = 22 + (48 - 22) * p;
-      const py1 = (2 + bob) + (14 - (2 + bob)) * p;
+    // 7. Banchi di remi animati durante la navigazione
+    if (isSailing) {
+      const oarCycle = animPhase * 3.5;
+      const oarSwing = Math.sin(oarCycle) * 0.4;
+      const oarDip = Math.cos(oarCycle) * 3;
+      ctx.strokeStyle = '#583c1d';
+      ctx.lineWidth = 1.8;
+      for (let ox = -18; ox <= 14; ox += 8) {
+        const tipX = ox - 14 + oarSwing * 12;
+        const tipY = 18 + oarDip + bob * 0.5;
+        ctx.beginPath();
+        ctx.moveTo(ox, 5 + bob);
+        ctx.lineTo(tipX, tipY);
+        ctx.stroke();
+        // Pala del remo
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(tipX - 2, tipY - 2, 4, 3);
+        // Piccolo schizzo d'acqua
+        if (oarDip > 1) {
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+          ctx.beginPath();
+          ctx.arc(tipX, tipY + 1, 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    }
+
+    // 8. Passerella di sbarco in legno (calata solo durante lo scarico truppe, altrimenti stivata)
+    if (gangplankDown) {
+      ctx.fillStyle = '#583c1d';
       ctx.beginPath();
-      ctx.moveTo(px1, py1);
-      ctx.lineTo(px1 - 2, py1 + 6);
-      ctx.stroke();
+      ctx.moveTo(22, 2 + bob);
+      ctx.lineTo(48, 14);
+      ctx.lineTo(46, 20);
+      ctx.lineTo(20, 8 + bob);
+      ctx.closePath();
+      ctx.fill();
+      // Plank cross-slats
+      ctx.strokeStyle = '#92400e';
+      ctx.lineWidth = 1;
+      for (let p = 0; p <= 1; p += 0.2) {
+        const px1 = 22 + (48 - 22) * p;
+        const py1 = (2 + bob) + (14 - (2 + bob)) * p;
+        ctx.beginPath();
+        ctx.moveTo(px1, py1);
+        ctx.lineTo(px1 - 2, py1 + 6);
+        ctx.stroke();
+      }
+    } else {
+      // Passerella sollevata e stivata verticalmente vicino a prua
+      ctx.fillStyle = '#583c1d';
+      ctx.fillRect(20, -12 + bob, 4, 18);
+      ctx.strokeStyle = '#92400e';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(20, -12 + bob, 4, 18);
     }
 
     ctx.restore();

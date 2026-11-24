@@ -7,12 +7,32 @@ import { AStar } from '../engine/pathfinding/AStar.ts';
 import { EventBus } from '../core/EventBus.ts';
 import { TILE_SIZE } from '../data/terrain.ts';
 
+export interface LandingShip {
+  id: number;
+  x: number;
+  y: number;
+  tx: number;
+  ty: number;
+  targetDockX: number;
+  speed: number;
+  waveNum: number;
+  state: 'ARRIVING' | 'UNLOADING' | 'DEPARTING' | 'COMPLETED';
+  pendingUnits: Array<{ type: string; count: number }>;
+  totalUnitsCount: number;
+  unitsSpawned: number;
+  disembarkTimer: number;
+  departWaitTimer: number;
+  facing: number;
+  gangplankDown: boolean;
+}
+
 export class TacticalDirector {
   private waves: WaveDefinition[] = [];
   private elapsedTime: number = 0;
   private flowField: FlowField;
   private nextEntityId: number = 10000;
-  public landingShips: Array<{ tx: number; ty: number; waveNum: number; count: number }> = [];
+  public landingShips: LandingShip[] = [];
+  public totalShipsLanded: number = 0;
 
   constructor(scenario: ScenarioData, width: number, height: number) {
     this.flowField = new FlowField(width, height);
@@ -62,6 +82,82 @@ export class TacticalDirector {
       if (this.elapsedTime >= wave.triggerTimeSeconds) {
         this.spawnWave(wave, graph, units);
         this.waves.splice(i, 1);
+      }
+    }
+
+    // Aggiorna lo stato e il movimento delle navi da sbarco (arrivo dal mare, sbarco, ritirata)
+    for (let i = this.landingShips.length - 1; i >= 0; i--) {
+      const ship = this.landingShips[i];
+      if (ship.state === 'ARRIVING') {
+        ship.x += ship.speed * dt;
+        ship.tx = ship.x / TILE_SIZE;
+        if (ship.x >= ship.targetDockX) {
+          ship.x = ship.targetDockX;
+          ship.tx = ship.x / TILE_SIZE;
+          ship.state = 'UNLOADING';
+          ship.gangplankDown = true;
+          ship.disembarkTimer = 0.6;
+          this.totalShipsLanded++;
+          EventBus.get().emit('combat:ship_landed', ship);
+          EventBus.get().emit('fx:floating_text', {
+            text: 'SHARDANA GALLEY ANCHORED!',
+            color: '#ef4444',
+            x: ship.x + 40,
+            y: ship.y - 30
+          });
+        }
+      } else if (ship.state === 'UNLOADING') {
+        ship.disembarkTimer -= dt;
+        if (ship.disembarkTimer <= 0) {
+          const req = ship.pendingUnits.find(u => u.count > 0);
+          if (req) {
+            req.count--;
+            ship.unitsSpawned++;
+
+            const spawnTx = 7;
+            const yOffset = (ship.unitsSpawned - (ship.totalUnitsCount + 1) / 2) * 1.6;
+            const spawnTy = Math.max(2, Math.min(graph.height - 3, Math.round(ship.ty + yOffset)));
+
+            const spawned = new UnitEntity(
+              this.nextEntityId++,
+              req.type,
+              'sea_peoples',
+              spawnTx * TILE_SIZE + 24,
+              spawnTy * TILE_SIZE + 24
+            );
+            units.push(spawned);
+
+            EventBus.get().emit('fx:floating_text', {
+              text: 'RAIDER DISEMBARKS!',
+              color: '#f97316',
+              x: spawnTx * TILE_SIZE + 24,
+              y: spawnTy * TILE_SIZE - 12
+            });
+
+            ship.disembarkTimer = 0.75;
+          } else {
+            // Tutte le unità sono sbarcate: attesa e poi ritirata verso il mare aperto
+            ship.departWaitTimer -= dt;
+            if (ship.departWaitTimer <= 0) {
+              ship.state = 'DEPARTING';
+              ship.gangplankDown = false;
+              ship.facing = -1; // prua girata a ovest verso il mare aperto
+              EventBus.get().emit('fx:floating_text', {
+                text: 'GALLEY RETREATS TO SEA!',
+                color: '#38bdf8',
+                x: ship.x,
+                y: ship.y - 30
+              });
+            }
+          }
+        }
+      } else if (ship.state === 'DEPARTING') {
+        ship.x -= ship.speed * dt;
+        ship.tx = ship.x / TILE_SIZE;
+        if (ship.x <= -200) {
+          ship.state = 'COMPLETED';
+          this.landingShips.splice(i, 1);
+        }
       }
     }
 
@@ -124,42 +220,64 @@ export class TacticalDirector {
 
     const midTy = Math.floor(graph.height / 2);
 
-    // Register landing skiff anchored at the surf line (x = 5.5, y = midTy)
-    const shipRecord = { tx: 5.5, ty: midTy, waveNum: this.landingShips.length + 1, count: wave.units[0]?.count || 3 };
-    this.landingShips.push(shipRecord);
-    EventBus.get().emit('combat:ship_landed', shipRecord);
+    if (wave.spawnEdge === 'west' || !wave.spawnEdge) {
+      // Approccio navale: la galea da guerra Shardana arriva gradualmente via mare da ovest
+      const startX = -150;
+      const targetDockX = 5.3 * TILE_SIZE + 24;
+      const totalUnits = wave.units.reduce((sum, u) => sum + u.count, 0);
 
-    EventBus.get().emit('fx:floating_text', {
-      text: 'SHARDANA LANDING FLEET!',
-      color: '#ef4444',
-      x: 7 * TILE_SIZE + 24,
-      y: midTy * TILE_SIZE - 20
-    });
+      const ship: LandingShip = {
+        id: this.nextEntityId++,
+        x: startX,
+        y: midTy * TILE_SIZE + 24,
+        tx: startX / TILE_SIZE,
+        ty: midTy,
+        targetDockX,
+        speed: 75,
+        waveNum: this.totalShipsLanded + 1,
+        state: 'ARRIVING',
+        pendingUnits: wave.units.map(u => ({ type: u.type, count: u.count })),
+        totalUnitsCount: totalUnits,
+        unitsSpawned: 0,
+        disembarkTimer: 0.6,
+        departWaitTimer: 1.2,
+        facing: 1, // prua a est verso la terraferma
+        gangplankDown: false
+      };
+      this.landingShips.push(ship);
 
-    for (const unitReq of wave.units) {
-      for (let c = 0; c < unitReq.count; c++) {
-        // Disembark directly onto the beach dunes (tx = 7) at exact tile centers
-        let spawnTx = 7;
-        let spawnTy = Math.floor(midTy + (c - unitReq.count / 2) * 2);
+      EventBus.get().emit('fx:floating_text', {
+        text: 'SHARDANA SHIP SPOTTED!',
+        color: '#f59e0b',
+        x: 2 * TILE_SIZE,
+        y: midTy * TILE_SIZE - 20
+      });
+    } else {
+      // Incursione terrestre da altro bordo mappa
+      for (const unitReq of wave.units) {
+        for (let c = 0; c < unitReq.count; c++) {
+          let spawnTx = 7;
+          let spawnTy = Math.floor(midTy + (c - unitReq.count / 2) * 2);
 
-        if (wave.spawnEdge === 'east') spawnTx = graph.width - 3;
-        if (wave.spawnEdge === 'north') {
-          spawnTx = Math.floor(graph.width / 2) + c * 2;
-          spawnTy = 2;
+          if (wave.spawnEdge === 'east') spawnTx = graph.width - 3;
+          if (wave.spawnEdge === 'north') {
+            spawnTx = Math.floor(graph.width / 2) + c * 2;
+            spawnTy = 2;
+          }
+          if (wave.spawnEdge === 'south') {
+            spawnTx = Math.floor(graph.width / 2) + c * 2;
+            spawnTy = graph.height - 3;
+          }
+
+          const spawned = new UnitEntity(
+            this.nextEntityId++,
+            unitReq.type,
+            'sea_peoples',
+            spawnTx * TILE_SIZE + 24,
+            spawnTy * TILE_SIZE + 24
+          );
+          units.push(spawned);
         }
-        if (wave.spawnEdge === 'south') {
-          spawnTx = Math.floor(graph.width / 2) + c * 2;
-          spawnTy = graph.height - 3;
-        }
-
-        const spawned = new UnitEntity(
-          this.nextEntityId++,
-          unitReq.type,
-          'sea_peoples',
-          spawnTx * TILE_SIZE + 24,
-          spawnTy * TILE_SIZE + 24
-        );
-        units.push(spawned);
       }
     }
   }
