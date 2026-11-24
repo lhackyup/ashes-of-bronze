@@ -352,7 +352,10 @@ export class UnitFSM {
       if (u.attackCooldown <= 0) {
         u.attackCooldown = u.def.attackCooldown || 1.0;
 
-        if (u.def.category === 'skirmisher') {
+        if (u.defId === 'composite_bowman') {
+          combat.fireProjectile(u.x, u.y, u.targetEntityId, isBuilding, u.def.damage || 20, 'arrow', dist);
+          EventBus.get().emit('audio:arrow');
+        } else if (u.def.category === 'skirmisher') {
           combat.fireProjectile(u.x, u.y, u.targetEntityId, isBuilding, u.def.damage || 12, 'sling_stone', dist);
           EventBus.get().emit('audio:arrow');
         } else if (u.def.category === 'chariot') {

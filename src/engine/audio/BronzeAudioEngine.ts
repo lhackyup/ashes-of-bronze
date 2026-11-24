@@ -86,6 +86,7 @@ export class BronzeAudioEngine {
     bus.on('audio:objective_complete', () => this.playObjectiveComplete());
     bus.on('audio:victory', () => this.playVictoryFanfare());
     bus.on('audio:defeat', () => this.playDefeatSound());
+    bus.on('audio:lion_roar', () => this.playLionRoar());
   }
 
   public setMuted(muted: boolean): void {
@@ -206,6 +207,72 @@ export class BronzeAudioEngine {
     gain.connect(this.ctx.destination);
     osc.start(now);
     osc.stop(now + 0.95);
+  }
+
+  public playLionRoar(): void {
+    // Powerful synthesized feline roar: guttural low-frequency sawtooth growl with resonant noise breath
+    if (this.isMuted || !this.initContext() || !this.ctx) return;
+    try {
+      const now = this.ctx.currentTime;
+      const duration = 1.35;
+
+      // 1. Low guttural growling oscillator (pitch sweeps 110Hz -> 175Hz -> 65Hz)
+      const osc = this.ctx.createOscillator();
+      const oscGain = this.ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(110, now);
+      osc.frequency.linearRampToValueAtTime(175, now + 0.35);
+      osc.frequency.exponentialRampToValueAtTime(65, now + duration);
+
+      // Tremolo LFO for guttural throat rasp
+      const lfo = this.ctx.createOscillator();
+      const lfoGain = this.ctx.createGain();
+      lfo.frequency.setValueAtTime(32, now); // 32 Hz rasp
+      lfoGain.gain.setValueAtTime(25, now);
+      lfo.connect(osc.frequency);
+      lfo.start(now);
+      lfo.stop(now + duration);
+
+      oscGain.gain.setValueAtTime(0.01, now);
+      oscGain.gain.linearRampToValueAtTime(0.32, now + 0.2);
+      oscGain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+      osc.connect(oscGain);
+      oscGain.connect(this.sfxGain || this.masterGain || this.ctx.destination);
+      osc.start(now);
+      osc.stop(now + duration);
+
+      // 2. Resonant breath roar noise
+      const bufferSize = Math.floor(this.ctx.sampleRate * duration);
+      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+      const noise = this.ctx.createBufferSource();
+      noise.buffer = buffer;
+
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(380, now);
+      filter.frequency.linearRampToValueAtTime(620, now + 0.3);
+      filter.frequency.linearRampToValueAtTime(280, now + duration);
+      filter.Q.setValueAtTime(3.0, now);
+
+      const noiseGain = this.ctx.createGain();
+      noiseGain.gain.setValueAtTime(0.01, now);
+      noiseGain.gain.linearRampToValueAtTime(0.24, now + 0.25);
+      noiseGain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+      noise.connect(filter);
+      filter.connect(noiseGain);
+      noiseGain.connect(this.sfxGain || this.masterGain || this.ctx.destination);
+
+      noise.start(now);
+      noise.stop(now + duration);
+    } catch {
+      // Audio policy safe
+    }
   }
 
   public playCombatHit(): void {

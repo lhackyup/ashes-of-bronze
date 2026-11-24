@@ -50,6 +50,23 @@ export const UNITS: Record<string, UnitDef> = {
     damageType: 'pierce'
   },
 
+  composite_bowman: {
+    id: 'composite_bowman',
+    name: 'Cypriot Composite Bowman',
+    category: 'skirmisher',
+    maxHp: 130,
+    speed: 1.20,
+    cost: { copper: 50, timber: 40, tin: 10 },
+    trainTime: 5.0,
+    description: 'Disciplined archer equipped with a laminated horn-and-wood composite bow. Outranges slingers and decimates unarmored raiders from safe distance.',
+    supplyCost: 1,
+    attackRange: 6.0,
+    damage: 20,
+    attackCooldown: 1.15,
+    armor: 1,
+    damageType: 'pierce'
+  },
+
   bronze_swordsman: {
     id: 'bronze_swordsman',
     name: 'Khopesh Bronze Warrior',
@@ -116,6 +133,23 @@ export const UNITS: Record<string, UnitDef> = {
     damage: 26,
     attackCooldown: 0.95,
     armor: 2,
+    damageType: 'slash'
+  },
+
+  levantine_lion: {
+    id: 'levantine_lion',
+    name: 'Levantine Lion',
+    category: 'wildlife',
+    maxHp: 160,
+    speed: 1.45,
+    cost: {},
+    trainTime: 0,
+    description: 'Fierce apex predator of the Bronze Age Levant. Swift, territorial, and deadly with slashing claws.',
+    supplyCost: 0,
+    attackRange: 1.1,
+    damage: 22,
+    attackCooldown: 0.85,
+    armor: 1,
     damageType: 'slash'
   }
 };

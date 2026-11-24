@@ -91,10 +91,10 @@ export const BUILDINGS: Record<string, BuildingDef> = {
     maxHp: 1000,
     cost: { copper: 150, timber: 100 },
     buildTime: 12,
-    description: 'Trains tower-shield spearmen, Levantine slingers, and assault infantry.',
+    description: 'Trains tower-shield spearmen, Levantine slingers, Cypriot composite bowmen, and assault infantry.',
     requiresFoundation: true,
     foundationPenaltyHpRatio: 0.5,
-    producesUnits: ['spear_militia', 'skirmisher', 'bronze_swordsman', 'iron_infantry']
+    producesUnits: ['spear_militia', 'skirmisher', 'composite_bowman', 'bronze_swordsman', 'iron_infantry']
   },
 
   watchtower: {
@@ -128,5 +128,18 @@ export const BUILDINGS: Record<string, BuildingDef> = {
     requiresFoundation: true,
     foundationPenaltyHpRatio: 0.5,
     producesUnits: ['war_chariot']
+  },
+
+  lion_den: {
+    id: 'lion_den',
+    name: "Lion's Rocky Den",
+    category: 'defense',
+    width: 2,
+    height: 2,
+    maxHp: 2000,
+    cost: {},
+    buildTime: 0,
+    description: 'A shadowy natural cavern in the rugged crags. The lair of a fierce Levantine Lion.',
+    requiresFoundation: false
   }
 };

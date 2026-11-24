@@ -10,6 +10,7 @@ export interface ObjectiveProgress {
   type: string;
   description: string;
   isPrimary: boolean;
+  targetId?: string;
   targetAmount?: number;
   currentAmount?: number;
   isCompleted: boolean;
@@ -52,6 +53,7 @@ export class ObjectiveManager {
           type: obj.type,
           description: obj.description,
           isPrimary: true,
+          targetId: obj.targetId,
           targetAmount: obj.targetAmount || obj.targetSeconds || 1,
           currentAmount: 0,
           isCompleted: false,
@@ -67,6 +69,7 @@ export class ObjectiveManager {
           type: obj.type,
           description: obj.description,
           isPrimary: false,
+          targetId: obj.targetId,
           targetAmount: 1,
           currentAmount: 1,
           isCompleted: false,
@@ -115,7 +118,7 @@ export class ObjectiveManager {
       return;
     }
 
-    // 2. Check Secondary Objective: keep_foundry_alive
+    // 2. Check Secondary Objectives (protect_entity)
     const foundryObj = this.objectives.find(o => o.id === 'keep_foundry_alive');
     if (foundryObj && !foundryObj.isFailed) {
       const playerFoundry = buildings.find(b => b.owner === 'player' && b.defId === 'bronze_foundry');
@@ -127,8 +130,22 @@ export class ObjectiveManager {
           isAlert: true
         });
       } else if (playerFoundry && playerFoundry.hp > 0) {
-        // Keeps Foundry alive
         foundryObj.currentAmount = 1;
+      }
+    }
+
+    const barracksObj = this.objectives.find(o => o.id === 'keep_barracks_alive');
+    if (barracksObj && !barracksObj.isFailed) {
+      const playerBarracks = buildings.find(b => b.owner === 'player' && b.defId === 'barracks');
+      if (!playerBarracks || playerBarracks.hp <= 0) {
+        barracksObj.isFailed = true;
+        EventBus.get().emit('advisor:message', {
+          speaker: 'tarkhunta',
+          text: 'The Militia Barracks has been razed! Our arms training is broken!',
+          isAlert: true
+        });
+      } else if (playerBarracks && playerBarracks.hp > 0) {
+        barracksObj.currentAmount = 1;
       }
     }
 
@@ -146,7 +163,15 @@ export class ObjectiveManager {
         } else {
           allPrimariesDone = false;
         }
-      } else if (obj.id === 'gather_tin') {
+      } else if (obj.id === 'train_bowmen' || (obj.type === 'train_units' && obj.targetId === 'composite_bowman')) {
+        const bowmen = units.filter(u => u.owner === 'player' && u.defId === 'composite_bowman');
+        obj.currentAmount = bowmen.length;
+        if (bowmen.length >= (obj.targetAmount || 3)) {
+          this.completeObjective(obj);
+        } else {
+          allPrimariesDone = false;
+        }
+      } else if (obj.id === 'gather_tin' || obj.id === 'gather_cargo' || obj.type === 'gather_resource') {
         obj.currentAmount = Math.floor(resources.tin);
         if (resources.tin >= (obj.targetAmount || 200)) {
           this.completeObjective(obj);
@@ -159,9 +184,9 @@ export class ObjectiveManager {
         const shipsLanded = tactical.totalShipsLanded;
         obj.currentAmount = shipsLanded;
 
-        // Objective completes when all 3 waves have landed, ships emptied, and all hostile raiders defeated
+        // Objective completes when all waves have landed, ships emptied, and all hostile raiders defeated
         const allHoldsEmpty = tactical.landingShips.every(s => s.pendingUnits.every(p => p.count === 0));
-        if (shipsLanded >= 3 && remainingWaves === 0 && activeRaiders.length === 0 && allHoldsEmpty) {
+        if (shipsLanded >= this.totalWaves && remainingWaves === 0 && activeRaiders.length === 0 && allHoldsEmpty) {
           this.completeObjective(obj);
         } else {
           allPrimariesDone = false;

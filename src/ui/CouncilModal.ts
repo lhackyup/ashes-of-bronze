@@ -1,12 +1,20 @@
 import { EventBus } from '../core/EventBus.ts';
 import { SVGAProceduralBank } from '../engine/rendering/SVGAProceduralBank.ts';
+import { ScenarioData } from '../data/types.ts';
+import { CAMPAIGN_SCENARIOS } from '../data/campaignActs.ts';
 
 export class CouncilModal {
   private overlayEl: HTMLElement | null = null;
   private onDeployCallback?: () => void;
+  private currentScenario?: ScenarioData;
 
   constructor(onDeploy?: () => void) {
     this.onDeployCallback = onDeploy;
+    this.createDOM();
+  }
+
+  public setScenario(scenario: ScenarioData): void {
+    this.currentScenario = scenario;
     this.createDOM();
   }
 
@@ -14,6 +22,75 @@ export class CouncilModal {
     // Remove if existing
     const existing = document.getElementById('council-modal-overlay');
     if (existing) existing.remove();
+
+    const scenario = this.currentScenario;
+    const scenarioMeta = scenario ? CAMPAIGN_SCENARIOS.find(s => s.id === scenario.id) : CAMPAIGN_SCENARIOS[0];
+
+    const title = scenario?.id === 'scenario_02_last_cargo_alashiya'
+      ? 'THE WAR COUNCIL: THE SHALLOWS OF UGARIT'
+      : 'THE WAR COUNCIL OF KADESH-ON-SEA';
+
+    const subtitle = scenarioMeta
+      ? `Scenario ${scenarioMeta.scenarioIndex}: ${scenarioMeta.title} — ${scenarioMeta.yearBC} BC, ${scenarioMeta.region}`
+      : 'Scenario I: The Horned Sails — 1182 BC, Levantine Coastline';
+
+    const briefing = scenario?.narrative?.briefing ||
+      'Clay tablets from Hattusa and Ugarit have ceased to arrive. From the Great Green, marauding fleets strike coastal outposts without warning. Establish our redoubt, extract Cassiterite Tin, and repel the sea raiders.';
+
+    let burnaText = "The kings of the Earth are weeping into the dust. Guard our Megaron with stone and blood.";
+    let tarkhuntaText = "Copper is as soft as river mud without Cassiterite! Send Donkey Caravans to gather pure Tin for the armory.";
+    let zalpaText = "Bird prows have been spotted off the coast. Deploy our forces to intercept the landing craft!";
+
+    if (scenario?.id === 'scenario_02_last_cargo_alashiya') {
+      burnaText = "The last merchant galleys of Alashiya have run aground upon the reefs. If we secure their copper and tin, our foundries will supply the army for an entire campaign!";
+      tarkhuntaText = "The stranded oxhide ingots are pure Cypriot bronze bullion! Dispatch our donkey caravans onto the sandbars immediately before the Shardana torch the hulks!";
+      zalpaText = "Our new Cypriot Composite Bowmen outrange the raiders' broadswords! Train at least 3 bowmen squads to control the tidal flats and screen our salvagers!";
+    }
+
+    let objectivesListHtml = '';
+    if (scenario?.objectives?.primary) {
+      for (const obj of scenario.objectives.primary) {
+        objectivesListHtml += `
+          <div style="display: flex; align-items: center; gap: 8px; font-size: 14px;">
+            <span style="color: #ffd166; font-weight: bold;">[PRIMARY]</span>
+            <span>${obj.description}</span>
+          </div>
+        `;
+      }
+    } else {
+      objectivesListHtml += `
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 14px;">
+          <span style="color: #ffd166; font-weight: bold;">[PRIMARY]</span>
+          <span>Erect a Cyclopean Watchtower to secure the coastal approaches (0 / 1)</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 14px;">
+          <span style="color: #ffd166; font-weight: bold;">[PRIMARY]</span>
+          <span>Stockpile at least 200 bars of Cassiterite Tin to forge weapons of war</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 14px;">
+          <span style="color: #ffd166; font-weight: bold;">[PRIMARY]</span>
+          <span>Withstand and repel 3 Sea Peoples landing waves without losing your Acropolis</span>
+        </div>
+      `;
+    }
+
+    if (scenario?.objectives?.secondary) {
+      for (const obj of scenario.objectives.secondary) {
+        objectivesListHtml += `
+          <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: #b0a390;">
+            <span style="color: #a0a8b0; font-weight: bold;">[SECONDARY]</span>
+            <span>${obj.description}</span>
+          </div>
+        `;
+      }
+    } else {
+      objectivesListHtml += `
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: #b0a390;">
+          <span style="color: #a0a8b0; font-weight: bold;">[SECONDARY]</span>
+          <span>Protect the Bronze Foundry from coastal raiding parties</span>
+        </div>
+      `;
+    }
 
     const overlay = document.createElement('div');
     overlay.id = 'council-modal-overlay';
@@ -59,10 +136,10 @@ export class CouncilModal {
         ">
           <div>
             <div style="font-family: 'Cinzel', serif; font-size: 20px; font-weight: 900; color: #ffd166; letter-spacing: 1px;">
-              THE WAR COUNCIL OF KADESH-ON-SEA
+              ${title}
             </div>
             <div style="font-family: 'Crimson Pro', Georgia, serif; font-size: 14px; color: #a89f91; font-style: italic;">
-              Scenario I: The Horned Sails — 1182 BC, Levantine Coastline
+              ${subtitle}
             </div>
           </div>
           <button id="council-close-btn" class="svga-btn" style="padding: 4px 10px; font-size: 13px;">✕</button>
@@ -79,7 +156,7 @@ export class CouncilModal {
             line-height: 1.45;
             color: #f7efe1;
           ">
-            <strong>The Great Collapse:</strong> Clay tablets from Hattusa and Ugarit have ceased to arrive. From the Great Green, marauding fleets crowned with horned helmets strike coastal outposts without warning. You have been granted command of this rocky promontory: lay cyclopean foundation slabs, extract the scarce Cassiterite Tin veins, and shield our artisans from the sea raiders.
+            <strong>Mandate of the Wanax:</strong> ${briefing}
           </div>
 
           <!-- ADVISORS CARDS -->
@@ -94,7 +171,7 @@ export class CouncilModal {
                 </div>
               </div>
               <div style="font-size: 13px; color: #e8dccb; line-height: 1.4; font-style: italic;">
-                "The kings of the Earth are weeping into the dust. If our Acropolis falls, our memory is extinguished forever. Guard our central Megaron with stone and blood."
+                "${burnaText}"
               </div>
             </div>
 
@@ -108,7 +185,7 @@ export class CouncilModal {
                 </div>
               </div>
               <div style="font-size: 13px; color: #e8dccb; line-height: 1.4; font-style: italic;">
-                "Copper is as soft as river mud without Cassiterite! Send Donkey Caravans to the northeast sand dunes immediately. We need 200 bars of pure Tin for the armory."
+                "${tarkhuntaText}"
               </div>
             </div>
 
@@ -122,7 +199,7 @@ export class CouncilModal {
                 </div>
               </div>
               <div style="font-size: 13px; color: #e8dccb; line-height: 1.4; font-style: italic;">
-                "Bird prows have been spotted off the western dunes. Erect a Cyclopean Watchtower on the coastal approach to detect landing craft before they overrun our workshops!"
+                "${zalpaText}"
               </div>
             </div>
           </div>
@@ -141,22 +218,7 @@ export class CouncilModal {
               TABLET OF MANDATES & OBJECTIVES
             </div>
             <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 4px;">
-              <div style="display: flex; align-items: center; gap: 8px; font-size: 14px;">
-                <span style="color: #ffd166; font-weight: bold;">[PRIMARY]</span>
-                <span>Erect a Cyclopean Watchtower to secure the coastal approaches (0 / 1)</span>
-              </div>
-              <div style="display: flex; align-items: center; gap: 8px; font-size: 14px;">
-                <span style="color: #ffd166; font-weight: bold;">[PRIMARY]</span>
-                <span>Stockpile at least 200 bars of Cassiterite Tin to forge weapons of war</span>
-              </div>
-              <div style="display: flex; align-items: center; gap: 8px; font-size: 14px;">
-                <span style="color: #ffd166; font-weight: bold;">[PRIMARY]</span>
-                <span>Withstand and repel 3 Sea Peoples landing waves without losing your Acropolis</span>
-              </div>
-              <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: #b0a390;">
-                <span style="color: #a0a8b0; font-weight: bold;">[SECONDARY]</span>
-                <span>Protect the Bronze Foundry from coastal raiding parties</span>
-              </div>
+              ${objectivesListHtml}
             </div>
           </div>
         </div>
@@ -178,8 +240,9 @@ export class CouncilModal {
             background: linear-gradient(180deg, #8a6234 0%, #573c1c 100%);
             border-color: #ffd166;
             color: #fff9e6;
+            cursor: pointer;
           ">
-            ⚔ MARCH TO BATTLE
+            COMMENCE MISSION ➔
           </button>
         </div>
       </div>
@@ -188,18 +251,17 @@ export class CouncilModal {
     document.body.appendChild(overlay);
     this.overlayEl = overlay;
 
-    const closeBtn = document.getElementById('council-close-btn');
-    const deployBtn = document.getElementById('council-deploy-btn');
-
-    closeBtn?.addEventListener('click', () => {
+    document.getElementById('council-close-btn')?.addEventListener('click', () => {
       EventBus.get().emit('audio:click');
       this.hide();
     });
 
-    deployBtn?.addEventListener('click', () => {
-      EventBus.get().emit('audio:command');
+    document.getElementById('council-deploy-btn')?.addEventListener('click', () => {
+      EventBus.get().emit('audio:click');
       this.hide();
-      if (this.onDeployCallback) this.onDeployCallback();
+      if (this.onDeployCallback) {
+        this.onDeployCallback();
+      }
     });
   }
 

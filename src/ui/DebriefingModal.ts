@@ -2,6 +2,7 @@ import { EventBus } from '../core/EventBus.ts';
 import { SVGAProceduralBank } from '../engine/rendering/SVGAProceduralBank.ts';
 import { MissionStats, ObjectiveProgress } from '../campaign/ObjectiveManager.ts';
 import { SaveManager } from '../services/SaveManager.ts';
+import { CAMPAIGN_SCENARIOS } from '../data/campaignActs.ts';
 
 export class DebriefingModal {
   private overlayEl: HTMLElement | null = null;
@@ -13,20 +14,26 @@ export class DebriefingModal {
     this.onNextCallback = onNext;
   }
 
-  public showVictory(stats: MissionStats, objectives: ObjectiveProgress[]): void {
-    this.renderModal(true, stats, objectives);
+  public showVictory(stats: MissionStats, objectives: ObjectiveProgress[], scenarioId?: string): void {
+    this.renderModal(true, stats, objectives, undefined, scenarioId);
   }
 
-  public showDefeat(reason: string, stats: MissionStats, objectives: ObjectiveProgress[]): void {
-    this.renderModal(false, stats, objectives, reason);
+  public showDefeat(reason: string, stats: MissionStats, objectives: ObjectiveProgress[], scenarioId?: string): void {
+    this.renderModal(false, stats, objectives, reason, scenarioId);
   }
 
   private renderModal(
     isVictory: boolean,
     stats: MissionStats,
     objectives: ObjectiveProgress[],
-    defeatReason?: string
+    defeatReason?: string,
+    scenarioId?: string
   ): void {
+    const curScenarioId = scenarioId || SaveManager.get().getCurrentScenarioId();
+    const curMeta = CAMPAIGN_SCENARIOS.find(s => s.id === curScenarioId) || CAMPAIGN_SCENARIOS[0];
+    const curIndex = CAMPAIGN_SCENARIOS.findIndex(s => s.id === curScenarioId);
+    const nextScenario = curIndex >= 0 && curIndex + 1 < CAMPAIGN_SCENARIOS.length ? CAMPAIGN_SCENARIOS[curIndex + 1] : null;
+
     const existing = document.getElementById('debriefing-modal-overlay');
     if (existing) existing.remove();
 
@@ -48,17 +55,19 @@ export class DebriefingModal {
 
     const bkPortrait = SVGAProceduralBank.advisorPortraits.get('burna_khabir')?.toDataURL() || '';
     const titleColor = isVictory ? '#2de0a5' : '#ef4444';
-    const titleText = isVictory ? 'VICTORY: THE SHORE IS SECURED' : 'DEFEAT: ASHES AND RUIN';
+    const titleText = isVictory ? `VICTORY: ${curMeta.title.toUpperCase()}` : 'DEFEAT: ASHES AND RUIN';
 
     const chronicleText = isVictory
-      ? 'The sea churns red with the blood of the horned raiders. By blade, bow, and the unyielding strength of our cyclopean foundations, Kadesh-on-Sea has held fast! The cassiterite is secured in our storehouses, and the fires of our foundries will keep our people armed through the collapsing age.'
-      : 'The walls of our acropolis have crumbled into dust. The sea raiders have overrun our hearths, and our people scatter into the wilderness. The memory of our colony dissolves into the ashes of bronze...';
+      ? (curScenarioId === 'scenario_02_last_cargo_alashiya'
+          ? 'The reefs of Ugarit run quiet. By the lethal range of our Cypriot bowmen and the courage of our donkey teams, the precious oxhide ingots of Alashiya have been hauled to safety! The Shardana raiding skiffs drift burning on the tide. Our foundries have secured the tin to forge our destiny!'
+          : 'The sea churns red with the blood of the horned raiders. By blade, bow, and the unyielding strength of our cyclopean foundations, Kadesh-on-Sea has held fast! The cassiterite is secured in our storehouses, and the fires of our foundries will keep our people armed through the collapsing age.')
+      : 'The walls of our settlement have crumbled into dust. The sea raiders have overrun our hearths, and our people scatter into the wilderness. The memory of our colony dissolves into the ashes of bronze...';
 
     if (isVictory) {
-      SaveManager.get().markScenarioCompleted('scenario_01_horned_sails', 'scenario_02_last_cargo_alashiya', {
-        scenarioId: 'scenario_01_horned_sails',
-        title: 'Scenario I: The Horned Sails',
-        act: 1,
+      SaveManager.get().markScenarioCompleted(curScenarioId, nextScenario?.id || null, {
+        scenarioId: curScenarioId,
+        title: curMeta.title,
+        act: curMeta.act,
         entry: chronicleText,
         bestTimeSeconds: stats.elapsedSeconds
       });
@@ -170,7 +179,7 @@ export class DebriefingModal {
               color: #f7efe1;
               font-weight: bold;
             ">
-              Next Scenario: Sacking of Ugarit's Outposts ➔
+              ${nextScenario ? `Next Scenario: ${nextScenario.title} ➔` : 'Strategic Map ➔'}
             </button>
           ` : `
             <button id="debrief-retry-btn" class="svga-btn" style="

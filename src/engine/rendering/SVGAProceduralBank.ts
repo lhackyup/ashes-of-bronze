@@ -1617,6 +1617,80 @@ export class SVGAProceduralBank {
         ctx.fillRect(48, 60, 48, 48);
       }));
     }
+
+    // 8. Natural Wildlife Lair: Lion's Rocky Den (2x2 tiles = 96x96)
+    const denCanvas = this.makeBuildingSprite(96, (ctx) => {
+      // Natural rugged crags & shadow base
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+      ctx.beginPath();
+      ctx.ellipse(48, 70, 42, 20, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Giant weathered boulders forming the natural cave
+      const rocks = [
+        { x: 14, y: 35, w: 32, h: 42, color: '#443a32', hi: '#6e6053' },
+        { x: 50, y: 32, w: 34, h: 46, color: '#3d342d', hi: '#635548' },
+        { x: 26, y: 16, w: 46, h: 28, color: '#52463d', hi: '#7a6a5d' },
+        { x: 8, y: 52, w: 22, h: 28, color: '#362e28', hi: '#574b41' },
+        { x: 68, y: 50, w: 22, h: 30, color: '#362e28', hi: '#574b41' },
+      ];
+
+      for (const r of rocks) {
+        ctx.fillStyle = r.color;
+        ctx.beginPath();
+        ctx.roundRect(r.x, r.y, r.w, r.h, 8);
+        ctx.fill();
+        // Highlight crag edge
+        ctx.strokeStyle = r.hi;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+
+      // Dark, yawning cavern maw (the lion's den entrance)
+      ctx.fillStyle = '#0a0806';
+      ctx.beginPath();
+      ctx.ellipse(48, 62, 18, 16, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Deep abyss interior gradient
+      const darkG = ctx.createRadialGradient(48, 64, 2, 48, 64, 18);
+      darkG.addColorStop(0, '#000000');
+      darkG.addColorStop(0.7, '#140f0b');
+      darkG.addColorStop(1, 'rgba(20, 15, 11, 0)');
+      ctx.fillStyle = darkG;
+      ctx.beginPath();
+      ctx.ellipse(48, 62, 18, 16, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Subtle glowing predator eyes deep within the dark cave
+      ctx.fillStyle = '#fef08a';
+      ctx.beginPath();
+      ctx.arc(44, 60, 1.2, 0, Math.PI * 2);
+      ctx.arc(52, 60, 1.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Bleached animal bones & skulls scattered outside
+      ctx.fillStyle = '#e2e8f0';
+      // Horned skull fragment
+      ctx.fillRect(28, 74, 4, 3);
+      ctx.fillRect(31, 72, 2, 2);
+      ctx.fillRect(26, 73, 2, 2);
+      // Leg bones
+      ctx.fillRect(62, 75, 7, 2);
+      ctx.fillRect(68, 74, 2, 4);
+
+      // Desert steppe shrubs & thorn roots clinging to stone
+      ctx.fillStyle = '#716041';
+      ctx.fillRect(16, 30, 8, 3);
+      ctx.fillRect(72, 34, 6, 3);
+      ctx.fillStyle = '#854d0e';
+      ctx.fillRect(20, 24, 2, 8);
+    });
+
+    for (const owner of ['player', 'sea_peoples', 'neutral']) {
+      this.buildingSprites.set(`lion_den_${owner}`, denCanvas);
+    }
+    this.buildingSprites.set('lion_den', denCanvas);
   }
 
   public static getBuildingSprite(defId: string, owner: string): HTMLCanvasElement | null {
@@ -2056,6 +2130,124 @@ export class SVGAProceduralBank {
       ctx.fillStyle = '#cbd5e1'; // River stone in hand
       ctx.beginPath(); ctx.arc(-6, 2 + bob * 0.5, 1.8, 0, Math.PI * 2); ctx.fill();
 
+    } else if (u.defId === 'composite_bowman') {
+      // --- CYPRIOT COMPOSITE BOWMAN (Laminated Horn/Wood Bow, Quiver with bronze-tipped arrows, leather jerkin) ---
+      const isAttacking = u.state === 'ATTACK_TARGET' && u.attackCooldown > 0;
+      const drawPhase = isAttacking ? Math.min(1.0, (1.0 - (u.attackCooldown / (u.def.attackCooldown || 1.15))) * 1.5) : 0;
+
+      // Leather Sandals & Ankle Wraps
+      ctx.fillStyle = '#bfa58d';
+      ctx.fillRect(-4, 3, 3, 9 + bob);
+      ctx.fillRect(2, 3, 3, 9 - bob);
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(-4, 11 + bob, 4, 2);
+      ctx.fillRect(2, 11 - bob, 4, 2);
+
+      // Back Quiver (Visible over shoulder with red-feathered arrows)
+      ctx.save();
+      ctx.translate(3, -9 + bob * 0.5);
+      ctx.rotate(-0.35);
+      ctx.fillStyle = '#583101'; // Dark leather quiver cylinder
+      ctx.fillRect(0, 0, 5, 14);
+      ctx.strokeStyle = '#c9933b';
+      ctx.lineWidth = 0.8;
+      ctx.strokeRect(0, 0, 5, 14);
+      // Fletchings / feathers protruding from top
+      ctx.fillStyle = '#dc2626'; // Red fletching
+      ctx.fillRect(-1, -4, 2, 4);
+      ctx.fillRect(2, -5, 2, 5);
+      ctx.fillRect(4, -3, 2, 3);
+      ctx.fillStyle = '#fbbf24'; // Gold feather tips
+      ctx.fillRect(-1, -5, 2, 1);
+      ctx.fillRect(2, -6, 2, 1);
+      ctx.fillRect(4, -4, 2, 1);
+      ctx.restore();
+
+      // Studded Leather Jerkin over Linen Kilt
+      ctx.fillStyle = '#e2e8f0'; // Light linen undershirt
+      ctx.fillRect(-5, -6 + bob * 0.5, 10, 10);
+      ctx.fillStyle = '#713f12'; // Cuirass leather
+      ctx.fillRect(-5, -6 + bob * 0.5, 10, 6);
+      ctx.fillStyle = cMain; // Faction trim
+      ctx.fillRect(-5, 0 + bob * 0.5, 10, 2);
+      // Bronze rivets on cuirass
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillRect(-3, -4 + bob * 0.5, 1.5, 1.5);
+      ctx.fillRect(2, -4 + bob * 0.5, 1.5, 1.5);
+
+      // Head & Cypriot Conical Helm / Headband
+      ctx.fillStyle = '#bfa58d';
+      ctx.fillRect(-3, -12 + bob * 0.5, 6, 6);
+      ctx.fillStyle = '#312e81'; // Cypriot indigo cap or faction helm
+      ctx.fillStyle = cMain;
+      ctx.beginPath();
+      ctx.moveTo(-4, -12 + bob * 0.5);
+      ctx.lineTo(0, -16 + bob * 0.5);
+      ctx.lineTo(4, -12 + bob * 0.5);
+      ctx.closePath();
+      ctx.fill();
+
+      // COMPOSITE RECURVE HORN BOW & ARROW
+      ctx.save();
+      const bowX = -7;
+      const bowY = -4 + bob * 0.5;
+      ctx.translate(bowX, bowY);
+
+      if (isAttacking) {
+        // Aiming forward with bow fully drawn
+        ctx.strokeStyle = '#451a03'; // Dark horn limb
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        // Recurve shape
+        ctx.moveTo(3, -12);
+        ctx.quadraticCurveTo(-6 - drawPhase * 3, 0, 3, 12);
+        ctx.stroke();
+
+        // Bowstring pulled taut
+        ctx.strokeStyle = '#f8fafc';
+        ctx.lineWidth = 0.9;
+        ctx.beginPath();
+        ctx.moveTo(3, -12);
+        ctx.lineTo(-4 - drawPhase * 5, 0);
+        ctx.lineTo(3, 12);
+        ctx.stroke();
+
+        // Arrow nocked and ready
+        ctx.strokeStyle = '#d97706'; // Wooden arrow shaft
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(-4 - drawPhase * 5, 0);
+        ctx.lineTo(12, 0);
+        ctx.stroke();
+        // Bronze arrowhead
+        ctx.fillStyle = '#fbbf24';
+        ctx.beginPath();
+        ctx.moveTo(12, -2);
+        ctx.lineTo(15, 0);
+        ctx.lineTo(12, 2);
+        ctx.closePath();
+        ctx.fill();
+      } else {
+        // Idle / Moving carry: bow held vertically in left fist
+        const swing = isMoving ? Math.sin(animPhase) * 0.3 : 0;
+        ctx.rotate(swing);
+        ctx.strokeStyle = '#451a03'; // Recurve horn
+        ctx.lineWidth = 2.0;
+        ctx.beginPath();
+        ctx.moveTo(1, -11);
+        ctx.quadraticCurveTo(-4, 0, 1, 11);
+        ctx.stroke();
+        // Bowstring
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        ctx.moveTo(1, -11);
+        ctx.lineTo(0, 0);
+        ctx.lineTo(1, 11);
+        ctx.stroke();
+      }
+      ctx.restore();
+
     } else if (u.defId === 'bronze_swordsman') {
       // --- KHOPESH BRONZE WARRIOR (Royal Elite, gleaming bronze cuirass, crested helm, golden sickle-sword) ---
       const isAttacking = u.state === 'ATTACK_TARGET' && u.attackCooldown > 0;
@@ -2265,6 +2457,106 @@ export class SVGAProceduralBank {
       ctx.lineTo(2, -20 - thrust);
       ctx.lineTo(8, -20 - thrust);
       ctx.fill();
+
+    } else if (u.def.category === 'wildlife' || u.defId === 'levantine_lion') {
+      // --- FEROCIOUS LEVANTINE LION (Panthera leo persica) ---
+      const isAttacking = u.state === 'ATTACK_TARGET';
+      const leap = isAttacking ? Math.sin(animPhase * 3) * 6 : 0;
+      const legStride = isMoving ? Math.sin(animPhase * 2.2) * 6 : 0;
+      const tailWag = Math.sin(animPhase * 2) * 5;
+
+      // 1. Long Sinuous Lion Tail with dark bushy tassel
+      ctx.strokeStyle = '#b45309';
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.moveTo(-14, -2 + bob * 0.4);
+      ctx.quadraticCurveTo(-22, -10 + tailWag, -26, 2 + tailWag);
+      ctx.stroke();
+      // Black tassel at tail tip
+      ctx.fillStyle = '#1c1917';
+      ctx.beginPath();
+      ctx.arc(-26, 2 + tailWag, 3, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 2. Muscular Hindquarters & Back Legs
+      ctx.fillStyle = '#92400e';
+      // Left back leg
+      ctx.fillRect(-12 - legStride * 0.5, 4 + bob * 0.3, 3.5, 8 - legStride * 0.4);
+      // Right back leg
+      ctx.fillRect(-7 + legStride * 0.5, 4 + bob * 0.3, 3.5, 8 + legStride * 0.4);
+      // Paws with unsheathed claws
+      ctx.fillStyle = '#451a03';
+      ctx.fillRect(-13 - legStride * 0.5, 11, 4.5, 2.5);
+      ctx.fillRect(-8 + legStride * 0.5, 11, 4.5, 2.5);
+
+      // 3. Tawny Golden Lion Torso & Flank
+      ctx.fillStyle = '#d97706';
+      ctx.beginPath();
+      ctx.ellipse(-2 + leap * 0.3, -1 + bob * 0.5, 14, 7.5, 0.05, 0, Math.PI * 2);
+      ctx.fill();
+      // Cream lighter underbelly
+      ctx.fillStyle = '#fef3c7';
+      ctx.beginPath();
+      ctx.ellipse(-1 + leap * 0.3, 2 + bob * 0.5, 10, 3.5, 0, 0, Math.PI);
+      ctx.fill();
+
+      // 4. Forequarters & Front Pouncing Legs
+      ctx.fillStyle = '#b45309';
+      // Left front leg
+      ctx.fillRect(4 + legStride * 0.6 + leap, 3 + bob * 0.3, 3.8, 9 + legStride * 0.4);
+      // Right front leg (raised higher in pouncing strike during attack)
+      const strikeLift = isAttacking ? -4 : 0;
+      ctx.fillRect(9 - legStride * 0.6 + leap * 1.2, 3 + bob * 0.3 + strikeLift, 3.8, 9 - legStride * 0.4);
+      // Sharp lethal unsheathed claws
+      ctx.fillStyle = '#fef08a';
+      ctx.fillRect(5 + legStride * 0.6 + leap, 11, 4.5, 2);
+      ctx.fillRect(10 - legStride * 0.6 + leap * 1.2, 11 + strikeLift, 4.5, 2);
+
+      // 5. Majestic Dark Lion Mane covering shoulders & neck
+      ctx.fillStyle = '#451a03';
+      ctx.beginPath();
+      ctx.ellipse(6 + leap * 0.5, -4 + bob * 0.6, 9.5, 10, -0.2, 0, Math.PI * 2);
+      ctx.fill();
+      // Streaks of reddish-gold fur in mane
+      ctx.fillStyle = '#78350f';
+      ctx.beginPath();
+      ctx.ellipse(7 + leap * 0.5, -4 + bob * 0.6, 7.5, 8, -0.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 6. Snarling Lion Head & Jaws
+      ctx.fillStyle = '#d97706';
+      ctx.beginPath();
+      ctx.ellipse(13 + leap * 0.7, -6 + bob * 0.7, 6, 5, 0.1, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Rounded predator ears
+      ctx.fillStyle = '#451a03';
+      ctx.beginPath();
+      ctx.arc(10 + leap * 0.7, -11 + bob * 0.7, 2.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Broad Muzzle & Snarl
+      ctx.fillStyle = '#fef3c7';
+      ctx.fillRect(15 + leap * 0.7, -7 + bob * 0.7, 4.5, 4);
+      // Dark nose leather
+      ctx.fillStyle = '#1c1917';
+      ctx.fillRect(18 + leap * 0.7, -7 + bob * 0.7, 2, 2);
+
+      // Glowing predatory amber eye
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillRect(14 + leap * 0.7, -8 + bob * 0.7, 2, 2);
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(15 + leap * 0.7, -8 + bob * 0.7, 1, 2); // Cat slit pupil
+
+      // Gaping fangs during attack / roar
+      if (isAttacking) {
+        ctx.fillStyle = '#dc2626'; // Open red mouth maw
+        ctx.fillRect(16 + leap * 0.7, -4 + bob * 0.7, 4, 3);
+        ctx.fillStyle = '#ffffff'; // White razor fangs
+        ctx.fillRect(16 + leap * 0.7, -5 + bob * 0.7, 1.2, 2);
+        ctx.fillRect(18.5 + leap * 0.7, -5 + bob * 0.7, 1.2, 2);
+        ctx.fillRect(17 + leap * 0.7, -2 + bob * 0.7, 1.2, 1.5);
+      }
 
     } else {
       // --- TOWER-SHIELD SPEARMAN (`spear_militia` and default infantry) ---

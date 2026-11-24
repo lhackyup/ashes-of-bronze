@@ -73,7 +73,7 @@ export interface BuildingDef {
   attackRate?: number; // hits per sec
 }
 
-export type UnitCategory = 'worker' | 'infantry' | 'skirmisher' | 'chariot' | 'siege';
+export type UnitCategory = 'worker' | 'infantry' | 'skirmisher' | 'chariot' | 'siege' | 'wildlife';
 
 export interface UnitDef {
   id: string;
@@ -145,7 +145,7 @@ export interface ScenarioData {
   map: {
     width: number;
     height: number;
-    biome: 'levantine_coast' | 'river_valley' | 'taurus_mountains' | 'cyclopean_ruins';
+    biome: 'levantine_coast' | 'shallows_of_ugarit' | 'river_valley' | 'taurus_mountains' | 'cyclopean_ruins';
     seed?: number;
     tiles?: number[];
   };

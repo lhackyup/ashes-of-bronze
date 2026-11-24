@@ -1,0 +1,135 @@
+{
+  "id": "scenario_02_last_cargo_alashiya",
+  "title": "Scenario II: The Last Cargo of Alashiya",
+  "act": 1,
+  "era": "late_bronze",
+  "map": {
+    "width": 56,
+    "height": 56,
+    "biome": "shallows_of_ugarit",
+    "seed": 1180
+  },
+  "player": {
+    "faction": "player",
+    "startPosition": { "tx": 36, "ty": 26 },
+    "initialResources": {
+      "copper": 450,
+      "tin": 80,
+      "iron": 0,
+      "grain": 300,
+      "stone": 240,
+      "timber": 220
+    },
+    "unlockedBuildings": [
+      "cyclopean_slab",
+      "acropolis",
+      "granary",
+      "bronze_foundry",
+      "barracks",
+      "watchtower"
+    ],
+    "unlockedUnits": [
+      "donkey_caravan",
+      "spear_militia",
+      "skirmisher",
+      "composite_bowman",
+      "bronze_swordsman"
+    ]
+  },
+  "opponents": [
+    {
+      "id": "shardana_salvage_raiders",
+      "faction": "sea_peoples",
+      "aiProfile": "aggressive_raider",
+      "waves": [
+        {
+          "triggerTimeSeconds": 180,
+          "spawnEdge": "west",
+          "units": [
+            { "type": "sea_raider", "count": 3 }
+          ],
+          "advisorWarning": "Zalpa: Shardana longboats spotted navigating the outer shallows! They are making directly for the stranded merchant hulks!"
+        },
+        {
+          "triggerTimeSeconds": 330,
+          "spawnEdge": "west",
+          "units": [
+            { "type": "sea_raider", "count": 4 }
+          ],
+          "advisorWarning": "Burna-Khabir: Horned warriors have beached on the sandbars! Form an archer screen and hold the tidal crossing!"
+        },
+        {
+          "triggerTimeSeconds": 480,
+          "spawnEdge": "north",
+          "units": [
+            { "type": "sea_raider", "count": 5 }
+          ],
+          "advisorWarning": "Tarkhunta: Enemy skirmishers emerging from the northern reefs with burning pitch! Do not let them burn our recovered oxhide ingots!"
+        },
+        {
+          "triggerTimeSeconds": 660,
+          "spawnEdge": "west",
+          "units": [
+            { "type": "sea_raider", "count": 7 }
+          ],
+          "advisorWarning": "Burna-Khabir: The supreme warlord of the coastal raiders leads their final assault! Stand resolute in the name of the Wanax!"
+        }
+      ]
+    }
+  ],
+  "objectives": {
+    "primary": [
+      {
+        "id": "train_bowmen",
+        "type": "train_units",
+        "description": "Train at least 3 Cypriot Composite Bowmen to control the open tidal sandbars.",
+        "targetId": "composite_bowman",
+        "targetAmount": 3,
+        "isPrimary": true
+      },
+      {
+        "id": "gather_cargo",
+        "type": "gather_resource",
+        "description": "Salvage and stockpile at least 250 units of Tin from the stranded merchant hulks.",
+        "targetAmount": 250,
+        "isPrimary": true
+      },
+      {
+        "id": "survive_sea_peoples",
+        "type": "survive_time",
+        "description": "Repel all 4 waves of Shardana salvage raiders.",
+        "targetAmount": 4,
+        "isPrimary": true
+      }
+    ],
+    "secondary": [
+      {
+        "id": "keep_barracks_alive",
+        "type": "protect_entity",
+        "description": "Ensure the Militia Barracks & Forge remains standing throughout the battle.",
+        "isPrimary": false
+      }
+    ]
+  },
+  "narrative": {
+    "briefing": "Year 1180 BC. Word reaches our citadel: the last royal merchant fleet from Alashiya (Cyprus) has foundered upon the treacherous reefs off Ugarit. Its holds are laden with precious oxhide ingots of pure copper and scarce cassiterite tin. Shardana raiders already scour the coast to pillage and incinerate the hulks. Deploy our new Cypriot Composite Bowmen across the tidal sandbars, secure the shallows, and recover the cargo before it sinks beneath the Aegean ashes.",
+    "advisorPortrait": "burna_khabir",
+    "dialogues": [
+      {
+        "condition": "start",
+        "speaker": "burna_khabir",
+        "message": "My Wanax, the sea is unforgiving. Three heavy merchant galleys lie battered on the shoals. If we secure their cargo, our foundries will have enough tin to cast weapons for an entire campaign!"
+      },
+      {
+        "condition": "bowmen_trained",
+        "speaker": "zalpa",
+        "message": "The Cypriot bowmen have taken their stations. Their horn bows shoot far true across water and dunes—the sea raiders will bleed before they even touch our lines!"
+      },
+      {
+        "condition": "salvage_progress",
+        "speaker": "tarkhunta",
+        "message": "The donkey teams are hauling the oxhide ingots ashore! Keep the defensive line tight; the raiders smell the bronze and hunger for plunder!"
+      }
+    ]
+  }
+}

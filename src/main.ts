@@ -7,6 +7,7 @@ import { AStar } from './engine/pathfinding/AStar.ts';
 import { EconomySystem } from './systems/EconomySystem.ts';
 import { CombatSystem } from './systems/CombatSystem.ts';
 import { TacticalDirector } from './ai/TacticalDirector.ts';
+import { WildlifeDirector } from './ai/WildlifeDirector.ts';
 import { UnitFSM } from './ai/UnitFSM.ts';
 import { ScenarioLoader } from './campaign/ScenarioLoader.ts';
 import { HUDController } from './ui/HUDController.ts';
@@ -39,6 +40,7 @@ class GameApp {
   private economy!: EconomySystem;
   private combat!: CombatSystem;
   private tacticalDirector!: TacticalDirector;
+  private wildlifeDirector!: WildlifeDirector;
   private hud!: HUDController;
 
   private titleScreen!: TitleScreen;
@@ -113,8 +115,9 @@ class GameApp {
     SVGAProceduralBank.init();
     await AssetLoader.init();
 
-    // Load Scenario 1
-    const scenario = await ScenarioLoader.loadScenario('scenario_01_horned_sails');
+    // Load Current Scenario (persisted via SaveManager)
+    const currentScenarioId = SaveManager.get().getCurrentScenarioId() || 'scenario_01_horned_sails';
+    const scenario = await ScenarioLoader.loadScenario(currentScenarioId);
 
     const mapW = scenario.map.width;
     const mapH = scenario.map.height;
@@ -134,23 +137,71 @@ class GameApp {
       mapH * TILE_SIZE
     );
 
-    // Setup map terrain for Levantine biome (western sea for Sea Peoples, sandy shore, copper and tin veins)
-    this.setupLevantineMap(mapW, mapH);
+    // Setup map terrain depending on scenario biome
+    if (scenario.id === 'scenario_02_last_cargo_alashiya' || scenario.map.biome === 'shallows_of_ugarit') {
+      this.setupUgaritShallowsMap(mapW, mapH);
+    } else {
+      this.setupLevantineMap(mapW, mapH);
+    }
 
-    // Position starting Acropolis, Foundry, and foundation slabs
+    // Position starting buildings and units
     const pStart = scenario.player.startPosition;
-    this.gridGraph.setFoundation(pStart.tx, pStart.ty, 4, 4, true);
-    this.gridGraph.setFoundation(pStart.tx + 5, pStart.ty, 3, 3, true);
-    this.spawnBuilding('cyclopean_slab', 'player', pStart.tx - 2, pStart.ty, true);
-    this.spawnBuilding('cyclopean_slab', 'player', pStart.tx - 2, pStart.ty + 2, true);
-    this.spawnBuilding('acropolis', 'player', pStart.tx, pStart.ty, true);
-    this.spawnBuilding('bronze_foundry', 'player', pStart.tx + 5, pStart.ty, true);
+    if (scenario.id === 'scenario_02_last_cargo_alashiya') {
+      // Scenario 2: Established beachhead outpost facing the reefs
+      this.gridGraph.setFoundation(pStart.tx, pStart.ty, 4, 4, true);
+      this.gridGraph.setFoundation(pStart.tx + 5, pStart.ty, 3, 3, true);
+      this.gridGraph.setFoundation(pStart.tx, pStart.ty + 5, 3, 3, true);
+      this.gridGraph.setFoundation(pStart.tx - 5, pStart.ty - 2, 2, 2, true);
+      this.gridGraph.setFoundation(pStart.tx - 5, pStart.ty + 5, 2, 2, true);
 
-    // Spawn starting units at exact tile centers
-    this.spawnUnit('donkey_caravan', 'player', (pStart.tx + 2) * TILE_SIZE + 24, (pStart.ty + 5) * TILE_SIZE + 24);
-    this.spawnUnit('spear_militia', 'player', (pStart.tx - 2) * TILE_SIZE + 24, (pStart.ty + 3) * TILE_SIZE + 24);
-    this.spawnUnit('spear_militia', 'player', (pStart.tx - 2) * TILE_SIZE + 24, (pStart.ty + 5) * TILE_SIZE + 24);
-    this.spawnUnit('skirmisher', 'player', (pStart.tx - 4) * TILE_SIZE + 24, (pStart.ty + 4) * TILE_SIZE + 24);
+      this.spawnBuilding('cyclopean_slab', 'player', pStart.tx - 2, pStart.ty, true);
+      this.spawnBuilding('cyclopean_slab', 'player', pStart.tx - 2, pStart.ty + 2, true);
+      this.spawnBuilding('acropolis', 'player', pStart.tx, pStart.ty, true);
+      this.spawnBuilding('bronze_foundry', 'player', pStart.tx + 5, pStart.ty, true);
+      this.spawnBuilding('barracks', 'player', pStart.tx, pStart.ty + 5, true);
+      this.spawnBuilding('watchtower', 'player', pStart.tx - 5, pStart.ty - 2, true);
+      this.spawnBuilding('watchtower', 'player', pStart.tx - 5, pStart.ty + 5, true);
+
+      // Starting units including the new Cypriot Composite Bowmen!
+      this.spawnUnit('donkey_caravan', 'player', (pStart.tx + 2) * TILE_SIZE + 24, (pStart.ty + 4) * TILE_SIZE + 24);
+      this.spawnUnit('donkey_caravan', 'player', (pStart.tx + 3) * TILE_SIZE + 24, (pStart.ty + 4) * TILE_SIZE + 24);
+      this.spawnUnit('spear_militia', 'player', (pStart.tx - 3) * TILE_SIZE + 24, (pStart.ty) * TILE_SIZE + 24);
+      this.spawnUnit('spear_militia', 'player', (pStart.tx - 3) * TILE_SIZE + 24, (pStart.ty + 4) * TILE_SIZE + 24);
+      this.spawnUnit('composite_bowman', 'player', (pStart.tx - 4) * TILE_SIZE + 24, (pStart.ty - 1) * TILE_SIZE + 24);
+      this.spawnUnit('composite_bowman', 'player', (pStart.tx - 4) * TILE_SIZE + 24, (pStart.ty + 5) * TILE_SIZE + 24);
+    } else {
+      // Scenario 1: Initial coastal redoubt
+      this.gridGraph.setFoundation(pStart.tx, pStart.ty, 4, 4, true);
+      this.gridGraph.setFoundation(pStart.tx + 5, pStart.ty, 3, 3, true);
+      this.spawnBuilding('cyclopean_slab', 'player', pStart.tx - 2, pStart.ty, true);
+      this.spawnBuilding('cyclopean_slab', 'player', pStart.tx - 2, pStart.ty + 2, true);
+      this.spawnBuilding('acropolis', 'player', pStart.tx, pStart.ty, true);
+      this.spawnBuilding('bronze_foundry', 'player', pStart.tx + 5, pStart.ty, true);
+
+      // Spawn starting units at exact tile centers
+      this.spawnUnit('donkey_caravan', 'player', (pStart.tx + 2) * TILE_SIZE + 24, (pStart.ty + 5) * TILE_SIZE + 24);
+      this.spawnUnit('spear_militia', 'player', (pStart.tx - 2) * TILE_SIZE + 24, (pStart.ty + 3) * TILE_SIZE + 24);
+      this.spawnUnit('spear_militia', 'player', (pStart.tx - 2) * TILE_SIZE + 24, (pStart.ty + 5) * TILE_SIZE + 24);
+      this.spawnUnit('skirmisher', 'player', (pStart.tx - 4) * TILE_SIZE + 24, (pStart.ty + 4) * TILE_SIZE + 24);
+    }
+
+    // Initialize Wildlife Director & Lion's Rocky Den (placed in rugged periphery)
+    const denTx = scenario.id === 'scenario_02_last_cargo_alashiya' ? 36 : 38;
+    const denTy = scenario.id === 'scenario_02_last_cargo_alashiya' ? 8 : 10;
+    this.wildlifeDirector = new WildlifeDirector(denTx, denTy);
+    this.wildlifeDirector.initDen((defId, owner, tx, ty) => this.spawnBuilding(defId, owner, tx, ty, true));
+
+    // Listen for lion slain trophy reward
+    EventBus.get().on('wildlife:lion_slain', (data: { grainReward: number }) => {
+      this.economy.resources.grain = (this.economy.resources.grain || 0) + data.grainReward;
+      EventBus.get().emit('economy:changed', this.economy.resources);
+      EventBus.get().emit('fx:floating_text', {
+        text: `+${data.grainReward} GRAIN (LION TROPHY)!`,
+        color: '#2de0a5',
+        x: (this.wildlifeDirector.denTx + 1) * TILE_SIZE,
+        y: (this.wildlifeDirector.denTy + 1) * TILE_SIZE - 20
+      });
+    });
 
     this.camera.centerOn(pStart.tx * TILE_SIZE, pStart.ty * TILE_SIZE);
     this.resizeCanvas();
@@ -158,6 +209,7 @@ class GameApp {
 
     this.hud = new HUDController();
     this.hud.populateBuildMenu(scenario.player.unlockedBuildings);
+    this.hud.setUnlockedUnits(scenario.player.unlockedUnits);
     this.hud.onSelectBuildItem = (defId: string) => {
       this.buildingToPlace = defId;
     };
@@ -184,6 +236,7 @@ class GameApp {
       this.updateFogOfWar();
       this.audio.startBGM();
     });
+    this.councilModal.setScenario(scenario);
     this.debriefingModal = new DebriefingModal(
       () => window.location.reload(),
       () => {
@@ -214,9 +267,9 @@ class GameApp {
     };
 
     // Strategic Map actions
-    this.campaignMapModal.onSelectScenario = (_scenarioId: string) => {
-      this.closeAllModals();
-      this.councilModal.show();
+    this.campaignMapModal.onSelectScenario = (scenarioId: string) => {
+      SaveManager.get().setCurrentScenarioId(scenarioId);
+      window.location.reload();
     };
     this.campaignMapModal.onClose = () => {
       this.closeAllModals();
@@ -350,11 +403,11 @@ class GameApp {
     // Wire Victory / Defeat events
     EventBus.get().on('scenario:victory', (data: any) => {
       this.isGamePaused = true;
-      this.debriefingModal.showVictory(data.stats, data.objectives);
+      this.debriefingModal.showVictory(data.stats, data.objectives, scenario.id);
     });
     EventBus.get().on('scenario:defeat', (data: any) => {
       this.isGamePaused = true;
-      this.debriefingModal.showDefeat(data.reason, data.stats, data.objectives);
+      this.debriefingModal.showDefeat(data.reason, data.stats, data.objectives, scenario.id);
     });
 
     this.setupInputHandlers();
@@ -432,6 +485,134 @@ class GameApp {
       const tx = Math.floor((Math.sin(i * 13.7) * 0.5 + 0.5) * (w - 6)) + 8;
       const ty = Math.floor((Math.cos(i * 19.3) * 0.5 + 0.5) * (h - 6)) + 3;
       const distPlayer = Math.hypot(tx - 12, ty - 28);
+      if (this.tileRenderer.getTile(tx, ty) === 'plain' && distPlayer > 6) {
+        this.decorations.push({ x: tx + 0.5, y: ty + 0.5, type: 'cedar', current: 240, max: 240 });
+      }
+    }
+  }
+
+  private setupUgaritShallowsMap(w: number, h: number): void {
+    // 1. Base terrain generation: Tidal shallows, sandbars, and rocky reefs in the west
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        if (x < 6) {
+          // Deep western open sea (where Shardana skiffs emerge)
+          this.tileRenderer.setTile(x, y, 'water');
+          this.gridGraph.setTileCost(x, y, 0);
+        } else if (x < 26) {
+          // Treacherous coastal tidal flats: sandbars, shallow marshy channels, and cliffs
+          const noise = Math.sin(x * 0.42) * Math.cos(y * 0.38) + Math.sin((x + y) * 0.28);
+          if (noise > 0.45) {
+            // Emerged sandbars / sandy shoals
+            this.tileRenderer.setTile(x, y, 'sand');
+            this.gridGraph.setTileCost(x, y, 14);
+          } else if (noise > 0.05) {
+            // Shallow tidal marsh/mud flat (wadeable by infantry and donkeys)
+            this.tileRenderer.setTile(x, y, 'marsh');
+            this.gridGraph.setTileCost(x, y, 18);
+          } else if (noise < -0.85 && (x === 12 || x === 18 || x === 22)) {
+            // Jagged reef outcrops / cyclopean rocks
+            this.tileRenderer.setTile(x, y, 'cliff');
+            this.gridGraph.setTileCost(x, y, 0);
+          } else {
+            // Tidal water channels (impassable without wading shallows)
+            this.tileRenderer.setTile(x, y, 'water');
+            this.gridGraph.setTileCost(x, y, 0);
+          }
+        } else if (x < 30) {
+          // Coastal beach dunes connecting to the mainland
+          this.tileRenderer.setTile(x, y, 'sand');
+          this.gridGraph.setTileCost(x, y, 14);
+        } else {
+          // Mainland Levantine terrace
+          this.tileRenderer.setTile(x, y, 'plain');
+          this.gridGraph.setTileCost(x, y, 10);
+        }
+      }
+    }
+
+    // 2. Clear safe wading causeways to the 3 stranded merchant galleys
+    const ensureWadingPath = (startX: number, endX: number, pathY: number) => {
+      for (let x = startX; x <= endX; x++) {
+        const cur = this.tileRenderer.getTile(x, pathY);
+        if (cur === 'water' || cur === 'cliff') {
+          this.tileRenderer.setTile(x, pathY, 'sand');
+          this.gridGraph.setTileCost(x, pathY, 14);
+        }
+      }
+    };
+    ensureWadingPath(12, 32, 14);
+    ensureWadingPath(8, 32, 27);
+    ensureWadingPath(12, 32, 42);
+
+    // 3. Stranded Shipwreck #1 (North Reef: x: 13..16, y: 12..15)
+    for (let dy = 0; dy < 3; dy++) {
+      for (let dx = 0; dx < 3; dx++) {
+        this.tileRenderer.setTile(13 + dx, 12 + dy, 'sand');
+        this.gridGraph.setTileCost(13 + dx, 12 + dy, 14);
+      }
+    }
+    this.tileRenderer.setTile(14, 13, 'vein_tin', 450);
+    this.gridGraph.setTileCost(14, 13, 0);
+    this.tileRenderer.setTile(15, 13, 'vein_tin', 450);
+    this.gridGraph.setTileCost(15, 13, 0);
+    this.tileRenderer.setTile(14, 14, 'vein_copper', 700);
+    this.gridGraph.setTileCost(14, 14, 0);
+    this.tileRenderer.setTile(15, 14, 'vein_copper', 700);
+    this.gridGraph.setTileCost(15, 14, 0);
+
+    // 4. Stranded Shipwreck #2 (Central Reef: x: 9..12, y: 26..29)
+    for (let dy = 0; dy < 4; dy++) {
+      for (let dx = 0; dx < 4; dx++) {
+        this.tileRenderer.setTile(9 + dx, 26 + dy, 'sand');
+        this.gridGraph.setTileCost(9 + dx, 26 + dy, 14);
+      }
+    }
+    this.tileRenderer.setTile(10, 27, 'vein_tin', 500);
+    this.gridGraph.setTileCost(10, 27, 0);
+    this.tileRenderer.setTile(11, 27, 'vein_tin', 500);
+    this.gridGraph.setTileCost(11, 27, 0);
+    this.tileRenderer.setTile(10, 28, 'vein_copper', 800);
+    this.gridGraph.setTileCost(10, 28, 0);
+    this.tileRenderer.setTile(11, 28, 'vein_copper', 800);
+    this.gridGraph.setTileCost(11, 28, 0);
+
+    // 5. Stranded Shipwreck #3 (South Reef: x: 13..16, y: 41..44)
+    for (let dy = 0; dy < 3; dy++) {
+      for (let dx = 0; dx < 3; dx++) {
+        this.tileRenderer.setTile(13 + dx, 41 + dy, 'sand');
+        this.gridGraph.setTileCost(13 + dx, 41 + dy, 14);
+      }
+    }
+    this.tileRenderer.setTile(14, 42, 'vein_tin', 450);
+    this.gridGraph.setTileCost(14, 42, 0);
+    this.tileRenderer.setTile(15, 42, 'vein_tin', 450);
+    this.gridGraph.setTileCost(15, 42, 0);
+    this.tileRenderer.setTile(14, 43, 'vein_copper', 750);
+    this.gridGraph.setTileCost(14, 43, 0);
+    this.tileRenderer.setTile(15, 43, 'vein_copper', 750);
+    this.gridGraph.setTileCost(15, 43, 0);
+
+    // 6. Mainland Stone Quarry & Copper Reserves east of Player Outpost
+    for (let dy = 0; dy < 2; dy++) {
+      for (let dx = 0; dx < 3; dx++) {
+        this.tileRenderer.setTile(46 + dx, 16 + dy, 'vein_stone', 900);
+        this.gridGraph.setTileCost(46 + dx, 16 + dy, 0);
+      }
+    }
+    for (let dy = 0; dy < 2; dy++) {
+      for (let dx = 0; dx < 2; dx++) {
+        this.tileRenderer.setTile(46 + dx, 34 + dy, 'vein_copper', 650);
+        this.gridGraph.setTileCost(46 + dx, 34 + dy, 0);
+      }
+    }
+
+    // 7. Scatter Cedar Trees across the mainland plateau
+    this.decorations = [];
+    for (let i = 0; i < 65; i++) {
+      const tx = Math.floor((Math.sin(i * 11.3) * 0.5 + 0.5) * (w - 33)) + 31;
+      const ty = Math.floor((Math.cos(i * 17.7) * 0.5 + 0.5) * (h - 6)) + 3;
+      const distPlayer = Math.hypot(tx - 36, ty - 26);
       if (this.tileRenderer.getTile(tx, ty) === 'plain' && distPlayer > 6) {
         this.decorations.push({ x: tx + 0.5, y: ty + 0.5, type: 'cedar', current: 240, max: 240 });
       }
@@ -1349,6 +1530,15 @@ class GameApp {
     // Update Sea Peoples AI Tactical Director with dynamic strategic targeting
     this.tacticalDirector.update(dt, this.gridGraph, this.units, 12, 28, this.buildings);
 
+    // Update Wildlife Director (Levantine Lion den sorties & hunting AI)
+    this.wildlifeDirector.update(
+      dt,
+      this.units,
+      this.buildings,
+      this.gridGraph,
+      (defId, owner, x, y) => this.spawnUnit(defId, owner, x, y)
+    );
+
     // Update Campaign Objective Progression & Evaluation
     if (this.objectiveManager) {
       this.objectiveManager.update(
@@ -1737,13 +1927,14 @@ class GameApp {
       ctx.strokeRect(x, y, w, h);
     }
 
-    // 7. Tactical Minimap HUD
+    // 7. Tactical Minimap HUD with Wildlife Lion ping
     this.hud.renderMinimap(
       this.camera,
       this.units,
       this.buildings,
       this.tileRenderer.width,
-      this.tileRenderer.height
+      this.tileRenderer.height,
+      this.wildlifeDirector?.minimapAlertPing
     );
   }
 

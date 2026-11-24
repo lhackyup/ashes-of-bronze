@@ -49,6 +49,7 @@ export class HUDController {
 
   public onSelectBuildItem?: (defId: string) => void;
   public onTrainUnit?: (unitDefId: string) => void;
+  private unlockedUnits: string[] = [];
 
   constructor() {
     this.cacheDOMElements();
@@ -217,6 +218,10 @@ export class HUDController {
     return parts.join(', ') || 'Free';
   }
 
+  public setUnlockedUnits(units: string[]): void {
+    this.unlockedUnits = units;
+  }
+
   public populateBuildMenu(unlockedBuildings?: string[]): void {
     const container = document.getElementById('build-items-container');
     if (!container) return;
@@ -308,13 +313,15 @@ export class HUDController {
           if (!uDef) continue;
           // Filter out future era locked units
           if (uDef.unlockEra === 'early_iron') continue;
+          if (this.unlockedUnits.length > 0 && !this.unlockedUnits.includes(uId)) continue;
 
           const uCostHtml = this.formatCostHtml(uDef.cost);
           const uCostText = this.formatCostTooltip(uDef.cost);
           const shortName = uId === 'spear_militia' ? 'Spearman' :
                             (uId === 'skirmisher' ? 'Slinger' :
+                            (uId === 'composite_bowman' ? 'Bowman' :
                             (uId === 'bronze_swordsman' ? 'Khopesh' :
-                            (uId === 'donkey_caravan' ? 'Donkey' : uDef.name.split(' ')[0])));
+                            (uId === 'donkey_caravan' ? 'Donkey' : uDef.name.split(' ')[0]))));
 
           const trainBtn = document.createElement('button');
           trainBtn.className = 'svga-btn';
@@ -387,7 +394,8 @@ export class HUDController {
     units: UnitEntity[],
     buildings: BuildingEntity[],
     mapW: number,
-    mapH: number
+    mapH: number,
+    alertPing?: { x: number; y: number } | null
   ): void {
     const ctx = this.minimapCtx;
     const cw = this.minimapCanvas.width;
@@ -402,14 +410,40 @@ export class HUDController {
 
     // Buildings
     for (const b of buildings) {
-      ctx.fillStyle = b.owner === 'player' ? '#2de0a5' : '#e63946';
+      if (b.defId === 'lion_den') {
+        ctx.fillStyle = '#854d0e';
+      } else {
+        ctx.fillStyle = b.owner === 'player' ? '#2de0a5' : '#e63946';
+      }
       ctx.fillRect(b.tx * TILE_SIZE * scaleX, b.ty * TILE_SIZE * scaleY, b.def.width * TILE_SIZE * scaleX, b.def.height * TILE_SIZE * scaleY);
     }
 
     // Units
     for (const u of units) {
-      ctx.fillStyle = u.owner === 'player' ? '#ffd166' : '#ff4d6d';
-      ctx.fillRect(u.x * scaleX - 1.5, u.y * scaleY - 1.5, 3, 3);
+      if (u.defId === 'levantine_lion') {
+        ctx.fillStyle = '#f59e0b'; // Amber lion blip
+        ctx.fillRect(u.x * scaleX - 2.5, u.y * scaleY - 2.5, 5, 5);
+      } else {
+        ctx.fillStyle = u.owner === 'player' ? '#ffd166' : '#ff4d6d';
+        ctx.fillRect(u.x * scaleX - 1.5, u.y * scaleY - 1.5, 3, 3);
+      }
+    }
+
+    // Alert ping for Lion Sortie
+    if (alertPing) {
+      const pingPx = alertPing.x * scaleX;
+      const pingPy = alertPing.y * scaleY;
+      const pulseRadius = 4 + ((Date.now() % 1200) / 1200) * 14;
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(pingPx, pingPy, pulseRadius, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.fillStyle = '#dc2626';
+      ctx.beginPath();
+      ctx.arc(pingPx, pingPy, 3, 0, Math.PI * 2);
+      ctx.fill();
     }
 
     // Camera viewport rectangle

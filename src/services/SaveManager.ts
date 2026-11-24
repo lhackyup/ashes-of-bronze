@@ -90,6 +90,15 @@ export class SaveManager {
     return this.data;
   }
 
+  public getCurrentScenarioId(): string {
+    return this.data.currentScenarioId || 'scenario_01_horned_sails';
+  }
+
+  public setCurrentScenarioId(scenarioId: string): void {
+    this.data.currentScenarioId = scenarioId;
+    this.save();
+  }
+
   public getSettings(): GameSettings {
     return this.data.settings;
   }
