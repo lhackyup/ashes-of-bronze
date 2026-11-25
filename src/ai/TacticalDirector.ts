@@ -33,6 +33,7 @@ export class TacticalDirector {
   private nextEntityId: number = 10000;
   public landingShips: LandingShip[] = [];
   public totalShipsLanded: number = 0;
+  public totalWavesSpawned: number = 0;
 
   constructor(scenario: ScenarioData, width: number, height: number) {
     this.flowField = new FlowField(width, height);
@@ -56,18 +57,21 @@ export class TacticalDirector {
     this.elapsedTime += dt;
 
     // Tactical Target Selection:
-    // Raiders first look to sack isolated caravans or peripheral foundries/watchtowers
+    // Raiders first look to sack isolated caravans, peripheral foundries/watchtowers, or the Acropolis
     let targetTx = playerTargetTx;
     let targetTy = playerTargetTy;
 
     if (buildings && buildings.length > 0) {
-      // Prioritize peripheral economic targets like the bronze foundry or granaries
-      const peripheralTarget = buildings.find(
+      const targetBuilding = buildings.find(
         b => b.owner === 'player' && b.buildProgress >= 1.0 && (b.defId === 'bronze_foundry' || b.defId === 'granary')
+      ) || buildings.find(
+        b => b.owner === 'player' && b.defId === 'acropolis' && b.hp > 0
+      ) || buildings.find(
+        b => b.owner === 'player' && b.hp > 0 && b.defId !== 'cyclopean_slab'
       );
-      if (peripheralTarget && Math.random() < 0.4) {
-        targetTx = peripheralTarget.tx + Math.floor(peripheralTarget.def.width / 2);
-        targetTy = peripheralTarget.ty + Math.floor(peripheralTarget.def.height / 2);
+      if (targetBuilding) {
+        targetTx = targetBuilding.tx + Math.floor(targetBuilding.def.width / 2);
+        targetTy = targetBuilding.ty + Math.floor(targetBuilding.def.height / 2);
       }
     }
 
@@ -156,6 +160,16 @@ export class TacticalDirector {
               spawnTy * TILE_SIZE + 24
             );
             units.push(spawned);
+
+            // Give newly spawned raider immediate marching orders towards player target
+            const marchPath = AStar.findPath(graph, { tx: spawnTx, ty: spawnTy }, { tx: Math.floor(targetTx), ty: Math.floor(targetTy) }, 2000);
+            if (marchPath.length > 1) {
+              spawned.path = marchPath.slice(1, 10).map(c => ({
+                x: c.tx * TILE_SIZE + 24,
+                y: c.ty * TILE_SIZE + 24
+              }));
+              spawned.state = 'MOVE_TO';
+            }
 
             EventBus.get().emit('fx:floating_text', {
               text: 'RAIDER DISEMBARKS!',
@@ -280,6 +294,7 @@ export class TacticalDirector {
     units: UnitEntity[],
     buildings?: BuildingEntity[]
   ): void {
+    this.totalWavesSpawned++;
     EventBus.get().emit('audio:horn_alert');
     if (wave.advisorWarning) {
       EventBus.get().emit('advisor:message', {
@@ -289,8 +304,9 @@ export class TacticalDirector {
       });
     }
 
-    // Calcola il punto di sbarco Y lungo la costa ovest:
+    // Calcola il punto bersaglio e il punto di sbarco Y lungo la costa ovest:
     // Varia l'approdo mantenendosi nella zona delle costruzioni del giocatore
+    let targetTx = Math.floor(graph.width * 0.6);
     let targetTy = Math.floor(graph.height / 2);
 
     if (buildings && buildings.length > 0) {
@@ -300,7 +316,10 @@ export class TacticalDirector {
       }
 
       if (playerBuildings.length > 0) {
+        const xCoords = playerBuildings.map(b => b.tx + Math.floor(b.def.width / 2));
         const yCoords = playerBuildings.map(b => b.ty + Math.floor(b.def.height / 2));
+        targetTx = Math.round(xCoords.reduce((a, b) => a + b, 0) / xCoords.length);
+
         const minY = Math.min(...yCoords);
         const maxY = Math.max(...yCoords);
         const span = maxY - minY;
@@ -335,25 +354,47 @@ export class TacticalDirector {
     }
 
     if (wave.spawnEdge === 'west' || !wave.spawnEdge) {
-      // Find the first walkable shore tile along or adjacent to targetTy
+      // Find the first walkable shore tile along or adjacent to targetTy that connects to player settlement
       let shoreTx = -1;
       let shoreTy = targetTy;
-      const candidateRows = [targetTy, targetTy - 1, targetTy + 1, targetTy - 2, targetTy + 2, targetTy - 3, targetTy + 3];
+      const candidateRows = [
+        targetTy,
+        targetTy - 1, targetTy + 1,
+        targetTy - 2, targetTy + 2,
+        targetTy - 3, targetTy + 3,
+        targetTy - 4, targetTy + 4,
+        27, 14, 42 // Guaranteed tidal causeways in shallows maps
+      ];
+
       for (const row of candidateRows) {
         if (row < 2 || row >= graph.height - 2) continue;
         for (let x = 3; x < Math.min(graph.width - 5, 28); x++) {
           if (graph.isWalkable(x, row)) {
-            shoreTx = x;
-            shoreTy = row;
-            break;
+            // Verify path to player settlement actually exists (avoid landing on isolated water-locked reefs)
+            const testPath = AStar.findPath(graph, { tx: x, ty: row }, { tx: Math.floor(targetTx), ty: Math.floor(targetTy) }, 2000);
+            if (testPath.length > 0) {
+              shoreTx = x;
+              shoreTy = row;
+              break;
+            }
           }
         }
         if (shoreTx !== -1) break;
       }
 
       if (shoreTx === -1) {
-        shoreTx = 7;
-        shoreTy = targetTy;
+        // Fallback: search for any walkable tile along the row
+        for (let x = 6; x < 28; x++) {
+          if (graph.isWalkable(x, targetTy)) {
+            shoreTx = x;
+            shoreTy = targetTy;
+            break;
+          }
+        }
+        if (shoreTx === -1) {
+          shoreTx = 7;
+          shoreTy = targetTy;
+        }
       }
 
       // Docking X position for the ship: stop immediately at the water-shore margin
@@ -434,8 +475,25 @@ export class TacticalDirector {
             spawnTy * TILE_SIZE + 24
           );
           units.push(spawned);
+
+          // Give overland raider immediate marching orders towards target
+          const marchPath = AStar.findPath(graph, { tx: spawnTx, ty: spawnTy }, { tx: Math.floor(targetTx), ty: Math.floor(targetTy) }, 2000);
+          if (marchPath.length > 1) {
+            spawned.path = marchPath.slice(1, 10).map(c => ({
+              x: c.tx * TILE_SIZE + 24,
+              y: c.ty * TILE_SIZE + 24
+            }));
+            spawned.state = 'MOVE_TO';
+          }
         }
       }
+
+      EventBus.get().emit('fx:floating_text', {
+        text: 'OVERLAND RAIDERS ASSAULT!',
+        color: '#f97316',
+        x: Math.floor(graph.width / 2) * TILE_SIZE,
+        y: 3 * TILE_SIZE
+      });
     }
   }
 

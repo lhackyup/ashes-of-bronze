@@ -51,7 +51,7 @@
           "advisorWarning": "Zalpa: Shardana longboats spotted navigating the outer shallows! They are making directly for the stranded merchant hulks!"
         },
         {
-          "triggerTimeSeconds": 330,
+          "triggerTimeSeconds": 320,
           "spawnEdge": "west",
           "units": [
             { "type": "sea_raider", "count": 4 }
@@ -59,7 +59,7 @@
           "advisorWarning": "Burna-Khabir: Horned warriors have beached on the sandbars! Form an archer screen and hold the tidal crossing!"
         },
         {
-          "triggerTimeSeconds": 480,
+          "triggerTimeSeconds": 450,
           "spawnEdge": "north",
           "units": [
             { "type": "sea_raider", "count": 5 }
@@ -67,7 +67,7 @@
           "advisorWarning": "Tarkhunta: Enemy skirmishers emerging from the northern reefs with burning pitch! Do not let them burn our recovered oxhide ingots!"
         },
         {
-          "triggerTimeSeconds": 660,
+          "triggerTimeSeconds": 580,
           "spawnEdge": "west",
           "units": [
             { "type": "sea_raider", "count": 7 }

@@ -37,6 +37,9 @@ export class ObjectiveManager {
 
   private isGameOver: boolean = false;
   private hadFoundryAtStart: boolean = false;
+  private hadBarracksAtStart: boolean = false;
+  private hadStablesAtStart: boolean = false;
+  private hadAmbushCampAtStart: boolean = false;
   public totalWaves: number = 3;
 
   constructor(scenario: ScenarioData) {
@@ -64,14 +67,23 @@ export class ObjectiveManager {
 
     if (rawObjs?.secondary) {
       for (const obj of rawObjs.secondary) {
+        if (obj.id === 'destroy_forest_ambush') {
+          this.hadAmbushCampAtStart = true;
+        }
+        if (obj.id === 'keep_barracks_alive') {
+          this.hadBarracksAtStart = true;
+        }
+        if (obj.id === 'keep_foundry_alive') {
+          this.hadFoundryAtStart = true;
+        }
         this.objectives.push({
           id: obj.id,
           type: obj.type,
           description: obj.description,
           isPrimary: false,
           targetId: obj.targetId,
-          targetAmount: 1,
-          currentAmount: 1,
+          targetAmount: obj.targetAmount || 1,
+          currentAmount: 0,
           isCompleted: false,
           isFailed: false
         });
@@ -87,6 +99,12 @@ export class ObjectiveManager {
     this.stats.buildingsErected++;
     if (defId === 'bronze_foundry') {
       this.hadFoundryAtStart = true;
+    }
+    if (defId === 'barracks') {
+      this.hadBarracksAtStart = true;
+    }
+    if (defId === 'chariot_stable') {
+      this.hadStablesAtStart = true;
     }
   }
 
@@ -137,7 +155,7 @@ export class ObjectiveManager {
     const barracksObj = this.objectives.find(o => o.id === 'keep_barracks_alive');
     if (barracksObj && !barracksObj.isFailed) {
       const playerBarracks = buildings.find(b => b.owner === 'player' && b.defId === 'barracks');
-      if (!playerBarracks || playerBarracks.hp <= 0) {
+      if (this.hadBarracksAtStart && (!playerBarracks || playerBarracks.hp <= 0)) {
         barracksObj.isFailed = true;
         EventBus.get().emit('advisor:message', {
           speaker: 'tarkhunta',
@@ -146,6 +164,53 @@ export class ObjectiveManager {
         });
       } else if (playerBarracks && playerBarracks.hp > 0) {
         barracksObj.currentAmount = 1;
+      }
+    }
+
+    const stablesObj = this.objectives.find(o => o.id === 'keep_stables_alive');
+    if (stablesObj && !stablesObj.isFailed) {
+      const playerStables = buildings.find(b => b.owner === 'player' && b.defId === 'chariot_stable');
+      if (this.hadStablesAtStart && (!playerStables || playerStables.hp <= 0)) {
+        stablesObj.isFailed = true;
+        EventBus.get().emit('advisor:message', {
+          speaker: 'zalpa',
+          text: 'Disaster! The War Chariot Stables have been razed by the raiders! Our chariot breeding is broken!',
+          isAlert: true
+        });
+      } else if (playerStables && playerStables.hp > 0) {
+        stablesObj.currentAmount = 1;
+      }
+    }
+
+    // Secondary Objective: L'Imboscata nei Boschi (Destroy forward raider outpost)
+    const ambushObj = this.objectives.find(o => o.id === 'destroy_forest_ambush');
+    if (ambushObj && !ambushObj.isCompleted && !ambushObj.isFailed) {
+      const hostileOutposts = buildings.filter(b => b.owner === 'sea_peoples' && b.hp > 0);
+      if (this.hadAmbushCampAtStart && hostileOutposts.length === 0) {
+        ambushObj.isCompleted = true;
+        ambushObj.currentAmount = 1;
+        EventBus.get().emit('audio:objective_complete');
+        EventBus.get().emit('advisor:message', {
+          speaker: 'zalpa',
+          text: 'The cedar ambush is crushed! The Shardana forward tower is smashed and we have seized their plundered timber and grain!',
+          isAlert: false
+        });
+        EventBus.get().emit('fx:floating_text', {
+          text: '+200 TIMBER, +150 GRAIN (AMBUSH CAMP SACKED)!',
+          color: '#f59e0b',
+          x: 44 * 48,
+          y: 10 * 48 - 20
+        });
+        economy.resources.timber = (economy.resources.timber || 0) + 200;
+        economy.resources.grain = (economy.resources.grain || 0) + 150;
+        EventBus.get().emit('economy:changed', economy.resources);
+      } else if (this.stats.elapsedSeconds >= (ambushObj.targetAmount || 480)) {
+        ambushObj.isFailed = true;
+        EventBus.get().emit('advisor:message', {
+          speaker: 'burna_khabir',
+          text: 'The raiders in the cedar woods have slipped past our scouts and torched the high passes! The ambush camp was not eliminated in time.',
+          isAlert: true
+        });
       }
     }
 
@@ -171,6 +236,21 @@ export class ObjectiveManager {
         } else {
           allPrimariesDone = false;
         }
+      } else if (obj.id === 'train_chariots' || (obj.type === 'train_units' && obj.targetId === 'war_chariot')) {
+        const chariots = units.filter(u => u.owner === 'player' && u.defId === 'war_chariot');
+        obj.currentAmount = chariots.length;
+        if (chariots.length >= (obj.targetAmount || 2)) {
+          this.completeObjective(obj);
+        } else {
+          allPrimariesDone = false;
+        }
+      } else if (obj.id === 'gather_timber' || (obj.type === 'gather_resource' && obj.targetId === 'timber')) {
+        obj.currentAmount = Math.floor(resources.timber);
+        if (resources.timber >= (obj.targetAmount || 350)) {
+          this.completeObjective(obj);
+        } else {
+          allPrimariesDone = false;
+        }
       } else if (obj.id === 'gather_tin' || obj.id === 'gather_cargo' || obj.type === 'gather_resource') {
         obj.currentAmount = Math.floor(resources.tin);
         if (resources.tin >= (obj.targetAmount || 200)) {
@@ -180,13 +260,24 @@ export class ObjectiveManager {
         }
       } else if (obj.id === 'survive_sea_peoples') {
         const remainingWaves = tactical.getRemainingWavesCount();
-        const activeRaiders = units.filter(u => u.owner === 'sea_peoples');
-        const shipsLanded = tactical.totalShipsLanded;
-        obj.currentAmount = shipsLanded;
-
-        // Objective completes when all waves have landed, ships emptied, and all hostile raiders defeated
+        const activeRaiders = units.filter(u => u.owner === 'sea_peoples' && u.hp > 0);
         const allHoldsEmpty = tactical.landingShips.every(s => s.pendingUnits.every(p => p.count === 0));
-        if (shipsLanded >= this.totalWaves && remainingWaves === 0 && activeRaiders.length === 0 && allHoldsEmpty) {
+
+        // Total waves configured for this scenario
+        const targetWaves = obj.targetAmount || this.totalWaves || 1;
+        const wavesSpawned = Math.max(0, targetWaves - remainingWaves);
+
+        // A wave is counted as repelled when all its raiders are defeated and holds emptied
+        let wavesRepelled = wavesSpawned;
+        if (activeRaiders.length > 0 || !allHoldsEmpty) {
+          wavesRepelled = Math.max(0, wavesSpawned - 1);
+        }
+
+        obj.currentAmount = wavesRepelled;
+
+        // Objective completes when all waves have spawned, holds are emptied, and all hostile raiders defeated
+        if (remainingWaves === 0 && activeRaiders.length === 0 && allHoldsEmpty) {
+          obj.currentAmount = targetWaves;
           this.completeObjective(obj);
         } else {
           allPrimariesDone = false;
@@ -201,6 +292,12 @@ export class ObjectiveManager {
     if (allPrimariesDone && this.objectives.some(o => o.isPrimary)) {
       if (foundryObj && !foundryObj.isFailed) {
         foundryObj.isCompleted = true;
+      }
+      if (barracksObj && !barracksObj.isFailed) {
+        barracksObj.isCompleted = true;
+      }
+      if (stablesObj && !stablesObj.isFailed && this.hadStablesAtStart) {
+        stablesObj.isCompleted = true;
       }
       this.triggerVictory();
     }

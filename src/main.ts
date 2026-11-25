@@ -42,6 +42,7 @@ class GameApp {
   private tacticalDirector!: TacticalDirector;
   private wildlifeDirector: WildlifeDirector | null = null;
   private hud!: HUDController;
+  private currentScenario: any = null;
 
   private titleScreen!: TitleScreen;
   private campaignMapModal!: CampaignMapModal;
@@ -118,6 +119,7 @@ class GameApp {
     // Load Current Scenario (persisted via SaveManager)
     const currentScenarioId = SaveManager.get().getCurrentScenarioId() || 'scenario_01_horned_sails';
     const scenario = await ScenarioLoader.loadScenario(currentScenarioId);
+    this.currentScenario = scenario;
 
     const mapW = scenario.map.width;
     const mapH = scenario.map.height;
@@ -1539,7 +1541,9 @@ class GameApp {
     this.combat.update(dt, this.units, this.buildings);
 
     // Update Sea Peoples AI Tactical Director with dynamic strategic targeting
-    this.tacticalDirector.update(dt, this.gridGraph, this.units, 12, 28, this.buildings);
+    const pStartTx = this.currentScenario?.player?.startPosition?.tx ?? 12;
+    const pStartTy = this.currentScenario?.player?.startPosition?.ty ?? 28;
+    this.tacticalDirector.update(dt, this.gridGraph, this.units, pStartTx, pStartTy, this.buildings);
 
     // Update Wildlife Director (Levantine Lion den sorties & hunting AI)
     if (this.wildlifeDirector) {

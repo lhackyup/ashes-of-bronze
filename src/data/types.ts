@@ -146,7 +146,7 @@ export interface ScenarioData {
   map: {
     width: number;
     height: number;
-    biome: 'levantine_coast' | 'shallows_of_ugarit' | 'river_valley' | 'taurus_mountains' | 'cyclopean_ruins';
+    biome: 'levantine_coast' | 'shallows_of_ugarit' | 'river_valley' | 'taurus_mountains' | 'cyclopean_ruins' | 'lebanon_cedar_pass';
     seed?: number;
     tiles?: number[];
   };

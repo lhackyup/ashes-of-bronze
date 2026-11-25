@@ -26,9 +26,11 @@ export class CouncilModal {
     const scenario = this.currentScenario;
     const scenarioMeta = scenario ? CAMPAIGN_SCENARIOS.find(s => s.id === scenario.id) : CAMPAIGN_SCENARIOS[0];
 
-    const title = scenario?.id === 'scenario_02_last_cargo_alashiya'
-      ? 'THE WAR COUNCIL: THE SHALLOWS OF UGARIT'
-      : 'THE WAR COUNCIL OF KADESH-ON-SEA';
+    const title = scenario?.id === 'scenario_03_gate_of_cedars'
+      ? 'THE WAR COUNCIL: THE GATE OF CEDARS'
+      : (scenario?.id === 'scenario_02_last_cargo_alashiya'
+          ? 'THE WAR COUNCIL: THE SHALLOWS OF UGARIT'
+          : 'THE WAR COUNCIL OF KADESH-ON-SEA');
 
     const subtitle = scenarioMeta
       ? `Scenario ${scenarioMeta.scenarioIndex}: ${scenarioMeta.title} — ${scenarioMeta.yearBC} BC, ${scenarioMeta.region}`
@@ -45,6 +47,10 @@ export class CouncilModal {
       burnaText = "The last merchant galleys of Alashiya have run aground upon the reefs. If we secure their copper and tin, our foundries will supply the army for an entire campaign!";
       tarkhuntaText = "The stranded oxhide ingots are pure Cypriot bronze bullion! Dispatch our donkey caravans onto the sandbars immediately before the Shardana torch the hulks!";
       zalpaText = "Our new Cypriot Composite Bowmen outrange the raiders' broadswords! Train at least 3 bowmen squads to control the tidal flats and screen our salvagers!";
+    } else if (scenario?.id === 'scenario_03_gate_of_cedars') {
+      burnaText = "The sacred cedar groves of the Lebanon range are the lungs of our realm. If the Sea Peoples burn the timber passes, our city will starve and our furnaces turn cold.";
+      tarkhuntaText = "Our bronze foundries have a voracious hunger for cedar charcoal! Stockpile at least 350 timber, and build the War Chariot Stables—without heavy bronze-tired wheels, we cannot hold the open valleys!";
+      zalpaText = "Mio Wanax! Scateniamo i Carri Reali a due cavalli! Nelle vaste pianure del passo, i nostri archi compositi calpesteranno gli incursori! E staniamo il loro covo nascosto nei boschi a nord-est!";
     }
 
     let objectivesListHtml = '';

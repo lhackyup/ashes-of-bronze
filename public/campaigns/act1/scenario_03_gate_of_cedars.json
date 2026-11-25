@@ -1,0 +1,147 @@
+{
+  "id": "scenario_03_gate_of_cedars",
+  "title": "Scenario III: The Gate of Cedars",
+  "act": 1,
+  "era": "late_bronze",
+  "map": {
+    "width": 56,
+    "height": 56,
+    "biome": "lebanon_cedar_pass",
+    "seed": 1179
+  },
+  "player": {
+    "faction": "player",
+    "startPosition": { "tx": 16, "ty": 26 },
+    "initialResources": {
+      "copper": 500,
+      "tin": 140,
+      "iron": 0,
+      "grain": 350,
+      "stone": 280,
+      "timber": 160
+    },
+    "unlockedBuildings": [
+      "cyclopean_slab",
+      "acropolis",
+      "granary",
+      "bronze_foundry",
+      "barracks",
+      "watchtower",
+      "chariot_stable"
+    ],
+    "unlockedUnits": [
+      "donkey_caravan",
+      "spear_militia",
+      "skirmisher",
+      "composite_bowman",
+      "bronze_swordsman",
+      "war_chariot"
+    ]
+  },
+  "opponents": [
+    {
+      "id": "lebanon_pass_raiders",
+      "faction": "sea_peoples",
+      "aiProfile": "aggressive_raider",
+      "waves": [
+        {
+          "triggerTimeSeconds": 180,
+          "spawnEdge": "north",
+          "units": [
+            { "type": "sea_raider", "count": 3 }
+          ],
+          "advisorWarning": "Zalpa: Enemy vanguard spotted descending from the Northern Defile! Form ranks and hold the gorge!"
+        },
+        {
+          "triggerTimeSeconds": 320,
+          "spawnEdge": "east",
+          "units": [
+            { "type": "sea_raider", "count": 4 }
+          ],
+          "advisorWarning": "Zalpa: More raiders charging down the Eastern Valley with torches! Deploy our War Chariots to flank them on the open ground!"
+        },
+        {
+          "triggerTimeSeconds": 480,
+          "spawnEdge": "north",
+          "units": [
+            { "type": "sea_raider", "count": 5 }
+          ],
+          "advisorWarning": "Tarkhunta: Shardana arsonists in the cedar groves! Protect our donkey caravans and the charcoal routes!"
+        },
+        {
+          "triggerTimeSeconds": 660,
+          "spawnEdge": "east",
+          "units": [
+            { "type": "sea_raider", "count": 7 }
+          ],
+          "advisorWarning": "Burna-Khabir: The chieftain of the highland raiders leads their final assault! Unleash the thunder of our chariots and cleanse the pass!"
+        }
+      ]
+    }
+  ],
+  "objectives": {
+    "primary": [
+      {
+        "id": "train_chariots",
+        "type": "train_units",
+        "description": "Erect a War Chariot Stables and train at least 2 Royal War Chariots to control the open valley passes.",
+        "targetId": "war_chariot",
+        "targetAmount": 2,
+        "isPrimary": true
+      },
+      {
+        "id": "gather_timber",
+        "type": "gather_resource",
+        "description": "Fell ancient cedars and stockpile at least 350 units of Timber to feed the bronze smelters with charcoal.",
+        "targetId": "timber",
+        "targetAmount": 350,
+        "isPrimary": true
+      },
+      {
+        "id": "survive_sea_peoples",
+        "type": "survive_time",
+        "description": "Repel all 4 overland assault waves surging through the northern and eastern passes.",
+        "targetAmount": 4,
+        "isPrimary": true
+      }
+    ],
+    "secondary": [
+      {
+        "id": "keep_stables_alive",
+        "type": "protect_entity",
+        "description": "Ensure the War Chariot Stables remain standing throughout the battle.",
+        "targetId": "chariot_stable",
+        "isPrimary": false
+      },
+      {
+        "id": "destroy_forest_ambush",
+        "type": "destroy_entity",
+        "description": "L'Imboscata nei Boschi: Destroy the Shardana forward raider outpost in the northeastern cedar woods before minute 8:00 (480s).",
+        "targetId": "watchtower",
+        "targetAmount": 480,
+        "isPrimary": false
+      }
+    ]
+  },
+  "narrative": {
+    "briefing": "Year 1179 BC. High in the Lebanon Mountain Passes, smoke rises above the ancient cedar canopy. The Sea Peoples have altered their assault: unable to pierce our coastal ramparts, their warbands now march inland to incinerate our timber groves and starve the foundries of charcoal. Construct the War Chariot Stables, unleash our 2-horse bronze war chariots across the open valley floor, crush the hidden forward ambush camp in the northeastern woods, and bar the Gate of Cedars!",
+    "advisorPortrait": "burna_khabir",
+    "dialogues": [
+      {
+        "condition": "start",
+        "speaker": "burna_khabir",
+        "message": "My Wanax, the cedars of Lebanon are sacred to gods and kings. If the barbarians incinerate these groves, our foundries will die and our people will be cast into the dark."
+      },
+      {
+        "condition": "chariots_trained",
+        "speaker": "zalpa",
+        "message": "The Royal War Chariots roll forth! With composite horn bows and bronze-rimmed wheels, we shall outflank the sea raiders across the open valley floor!"
+      },
+      {
+        "condition": "timber_progress",
+        "speaker": "tarkhunta",
+        "message": "The donkey teams are hauling mountainous stacks of cedar logs! The charcoal pits are burning hot—our foundries will sing with molten bronze!"
+      }
+    ]
+  }
+}
