@@ -280,15 +280,65 @@ export class CampaignMapModal {
       btn.addEventListener('click', () => {
         EventBus.get().emit('audio:click');
         this.selectedActIndex = act.act;
-        this.renderActButtons();
         // Select first scenario of this act
         if (act.scenarios.length > 0) {
           this.selectScenario(act.scenarios[0]);
         }
+        this.renderActButtons();
         this.drawStrategicMap();
       });
 
       container.appendChild(btn);
+    }
+
+    // Direct Scenario Selector for the selected Act
+    const scTitleDiv = document.createElement('div');
+    scTitleDiv.style.cssText = "font-family: 'Cinzel', serif; font-size: 11px; font-weight: bold; color: #ffd166; margin-top: 10px; padding-bottom: 4px; border-bottom: 1px solid #4a3e33;";
+    scTitleDiv.textContent = 'ACT MANDATES';
+    container.appendChild(scTitleDiv);
+
+    const scenarioListDiv = document.createElement('div');
+    scenarioListDiv.style.cssText = 'display: flex; flex-direction: column; gap: 4px;';
+    container.appendChild(scenarioListDiv);
+
+    const currentActScenarios = CAMPAIGN_SCENARIOS.filter(s => s.act === this.selectedActIndex);
+    for (const sc of currentActScenarios) {
+      const isSelected = this.selectedScenario?.id === sc.id;
+      const isCompleted = save.isScenarioCompleted(sc.id);
+      const isCurrent = save.getData().currentScenarioId === sc.id;
+      const isUnlocked = isCurrent || isCompleted || sc.scenarioIndex <= 4;
+
+      const scBtn = document.createElement('button');
+      scBtn.className = 'svga-btn';
+      scBtn.style.cssText = `
+        padding: 6px 8px;
+        text-align: left;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 11px;
+        font-family: 'Cinzel', serif;
+        ${isSelected ? 'background: linear-gradient(180deg, #573c1c 0%, #2e2010 100%); border-color: #ffd166;' : ''}
+        ${!isUnlocked ? 'opacity: 0.5;' : ''}
+      `;
+
+      const statusIcon = isCompleted ? '✓' : (isUnlocked ? '⚔' : '🔒');
+      const statusColor = isCompleted ? '#2de0a5' : (isUnlocked ? '#ffd166' : '#888');
+
+      scBtn.innerHTML = `
+        <span style="color: ${isSelected ? '#ffd166' : '#e8dccb'}; font-weight: 600;">
+          ${sc.scenarioIndex}. ${sc.title}
+        </span>
+        <span style="color: ${statusColor}; font-weight: bold; margin-left: 6px;">${statusIcon}</span>
+      `;
+
+      scBtn.addEventListener('click', () => {
+        EventBus.get().emit('audio:click');
+        this.selectScenario(sc);
+        this.renderActButtons();
+      });
+
+      scenarioListDiv.appendChild(scBtn);
     }
 
     // Badge
@@ -1455,17 +1505,30 @@ export class CampaignMapModal {
 
     const actScenarios = CAMPAIGN_SCENARIOS.filter(s => s.act === this.selectedActIndex);
 
+    let closestSc: CampaignScenarioMeta | null = null;
+    let minDistance = Infinity;
+
     for (const sc of actScenarios) {
       const nx = (sc.mapX / 100) * w;
       const ny = (sc.mapY / 100) * h;
       const dist = Math.hypot(cx - nx, cy - ny);
 
       // Hit area includes the node circle and title plaque underneath
-      if (dist <= 26 || (Math.abs(cx - nx) <= 60 && cy >= ny && cy <= ny + 35)) {
-        EventBus.get().emit('audio:click');
-        this.selectScenario(sc);
-        break;
+      const isCircleHit = dist <= 32;
+      const isPlaqueHit = Math.abs(cx - nx) <= 65 && cy >= ny && cy <= ny + 40;
+
+      if (isCircleHit || isPlaqueHit) {
+        if (dist < minDistance) {
+          minDistance = dist;
+          closestSc = sc;
+        }
       }
+    }
+
+    if (closestSc) {
+      EventBus.get().emit('audio:click');
+      this.selectScenario(closestSc);
+      this.renderActButtons();
     }
   }
 }

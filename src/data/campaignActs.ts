@@ -32,8 +32,8 @@ export const CAMPAIGN_SCENARIOS: CampaignScenarioMeta[] = [
     region: 'Levantine Coast (Kadesh-on-Sea)',
     yearBC: 1182,
     summary: 'Establish the coastal redoubt, lay cyclopean slabs, secure the scarce cassiterite tin veins, and repel initial Sea Peoples landing skiffs.',
-    mapX: 74,
-    mapY: 52
+    mapX: 72,
+    mapY: 49
   },
   {
     id: 'scenario_02_last_cargo_alashiya',
@@ -44,8 +44,8 @@ export const CAMPAIGN_SCENARIOS: CampaignScenarioMeta[] = [
     region: 'Shallows of Ugarit',
     yearBC: 1180,
     summary: 'A merchant fleet from Cyprus laden with raw copper and tin runs aground. Salvage the ingots before Shardana raiders torch the hulks.',
-    mapX: 71,
-    mapY: 46
+    mapX: 70,
+    mapY: 45
   },
   {
     id: 'scenario_03_gate_of_cedars',
@@ -57,7 +57,7 @@ export const CAMPAIGN_SCENARIOS: CampaignScenarioMeta[] = [
     yearBC: 1179,
     summary: 'Sea Peoples torch the inland cedar forests to starve the foundries of charcoal. Deploy chariot patrols to secure the highland caravans.',
     mapX: 75,
-    mapY: 58
+    mapY: 57
   },
   {
     id: 'scenario_04_siege_kadesh_sea',
@@ -68,8 +68,8 @@ export const CAMPAIGN_SCENARIOS: CampaignScenarioMeta[] = [
     region: 'Central Redoubt',
     yearBC: 1178,
     summary: 'The main armada of the horned sails attacks under darkness. Hold the cyclopean gates and towers against wave after wave of marauders.',
-    mapX: 73,
-    mapY: 53
+    mapX: 78,
+    mapY: 52
   },
   {
     id: 'scenario_05_silence_great_kings',
