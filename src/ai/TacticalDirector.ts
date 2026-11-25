@@ -34,6 +34,7 @@ export class TacticalDirector {
   public landingShips: LandingShip[] = [];
   public totalShipsLanded: number = 0;
   public totalWavesSpawned: number = 0;
+  private campSpawnTimers: Map<number, number> = new Map();
 
   constructor(scenario: ScenarioData, width: number, height: number) {
     this.flowField = new FlowField(width, height);
@@ -86,6 +87,28 @@ export class TacticalDirector {
       if (this.elapsedTime >= wave.triggerTimeSeconds) {
         this.spawnWave(wave, graph, units, buildings);
         this.waves.splice(i, 1);
+      }
+    }
+
+    // Gestione Spawner periodico degli accampamenti nemici fortificati (War Camps)
+    if (buildings && buildings.length > 0) {
+      const hostileCamps = buildings.filter(b => b.owner === 'sea_peoples' && b.defId === 'sea_camp' && b.hp > 0);
+      for (const camp of hostileCamps) {
+        let timer = this.campSpawnTimers.get(camp.id);
+        if (timer === undefined) {
+          // Timer iniziale: prima incursione dopo 35-45 secondi
+          timer = 35 + Math.random() * 10;
+          this.campSpawnTimers.set(camp.id, timer);
+        } else {
+          timer -= dt;
+          if (timer <= 0) {
+            // Nuova sortita di predoni ogni 38-48 secondi
+            this.campSpawnTimers.set(camp.id, 38 + Math.random() * 10);
+            this.spawnCampRaidingParty(camp, graph, units, targetTx, targetTy);
+          } else {
+            this.campSpawnTimers.set(camp.id, timer);
+          }
+        }
       }
     }
 
@@ -509,5 +532,71 @@ export class TacticalDirector {
     return this.waves.length > 0
       ? Math.max(0, Math.ceil(this.waves[0].triggerTimeSeconds - this.elapsedTime))
       : null;
+  }
+
+  private spawnCampRaidingParty(
+    camp: BuildingEntity,
+    graph: GridGraph,
+    units: UnitEntity[],
+    targetTx: number,
+    targetTy: number
+  ): void {
+    // Drappello rapido d'incursione dal villaggio/campo nemico
+    const party = [
+      'sea_raider',
+      Math.random() > 0.4 ? 'shardana_torchbearer' : 'sea_raider',
+      'shardana_torchbearer'
+    ];
+
+    for (let i = 0; i < party.length; i++) {
+      const type = party[i];
+      let spawnTx = camp.tx + (i === 0 ? -1 : (i === 1 ? camp.def.width : 1));
+      let spawnTy = camp.ty + (i === 2 ? camp.def.height : 1);
+
+      if (!graph.isWalkable(spawnTx, spawnTy)) {
+        for (let r = 1; r <= 3; r++) {
+          let found = false;
+          for (let dx = -r; dx <= r; dx++) {
+            for (let dy = -r; dy <= r; dy++) {
+              const nx = camp.tx + dx;
+              const ny = camp.ty + dy;
+              if (graph.isInBounds(nx, ny) && graph.isWalkable(nx, ny)) {
+                spawnTx = nx;
+                spawnTy = ny;
+                found = true;
+                break;
+              }
+            }
+            if (found) break;
+          }
+          if (found) break;
+        }
+      }
+
+      const spawned = new UnitEntity(
+        this.nextEntityId++,
+        type,
+        'sea_peoples',
+        spawnTx * TILE_SIZE + 24,
+        spawnTy * TILE_SIZE + 24
+      );
+      units.push(spawned);
+
+      const marchPath = AStar.findPath(graph, { tx: spawnTx, ty: spawnTy }, { tx: Math.floor(targetTx), ty: Math.floor(targetTy) }, 2000);
+      if (marchPath.length > 1) {
+        spawned.path = marchPath.slice(1, 10).map(c => ({
+          x: c.tx * TILE_SIZE + 24,
+          y: c.ty * TILE_SIZE + 24
+        }));
+        spawned.state = 'MOVE_TO';
+      }
+    }
+
+    EventBus.get().emit('fx:floating_text', {
+      text: 'WAR CAMP RAIDERS DEPLOYED!',
+      color: '#ef4444',
+      x: camp.centerX,
+      y: camp.centerY - 25
+    });
   }
 }

@@ -142,5 +142,32 @@ export const BUILDINGS: Record<string, BuildingDef> = {
     description: 'An ancient natural cavern cleft deep into the bedrock. Indestructible lair of the Levantine Lion.',
     requiresFoundation: false,
     indestructible: true
+  },
+
+  cyclopean_wall: {
+    id: 'cyclopean_wall',
+    name: 'Cyclopean Rampart Wall',
+    category: 'defense',
+    width: 1,
+    height: 1,
+    maxHp: 1200,
+    cost: { stone: 25, copper: 5 },
+    buildTime: 3.5,
+    description: 'Megalithic polygonal stone wall block. Bars enemy progress and channels siege forces into archer kill zones.',
+    requiresFoundation: false
+  },
+
+  sea_camp: {
+    id: 'sea_camp',
+    name: 'Sea Peoples War Camp',
+    category: 'military',
+    width: 3,
+    height: 3,
+    maxHp: 2000,
+    cost: {},
+    buildTime: 0,
+    description: 'Hostile forward staging encampment. Periodically spawns raiding parties until burned to the ground.',
+    requiresFoundation: false,
+    indestructible: false
   }
 };

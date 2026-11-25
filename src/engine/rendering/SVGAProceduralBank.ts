@@ -1574,29 +1574,450 @@ export class SVGAProceduralBank {
         ctx.fillRect(47, -1, 2, 3); // Roof peak finial
       }));
 
-      // 6. Chariot Stable / Factory (3x3 tiles = 144x144)
+      // 6. Royal War Chariot Stables & Wheelwright Forge (3x3 tiles = 144x144)
+      // Authentic 2.5D Late Bronze Age royal chariot compound:
+      // Megalithic stone socle, twin war horse stalls with bay & chestnut horses,
+      // gabled terracotta tile roofs with carved horse-head akroteria, open timber portico,
+      // wheelwright workshop with spoked bronze wheels, forge hearth with glowing charcoal,
+      // standing royal war chariot on display, weapon rack with composite bows and javelins,
+      // and faction standard.
       this.buildingSprites.set(`chariot_stable_${owner}`, this.makeBuildingSprite(144, (ctx) => {
-        ctx.fillStyle = '#968c82';
-        ctx.fillRect(9, 21, 126, 114);
+        // --- A. Volumetric Ground Shadow & Assembly Courtyard ---
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.46)';
+        ctx.fillRect(6, 16, 132, 124);
 
-        this.drawRoofTiles(ctx, 9, 15, 126, 36, cMain, cHi);
+        // Compacted earthen & straw-strewn muster yard
+        const yardG = ctx.createLinearGradient(6, 18, 138, 138);
+        yardG.addColorStop(0, '#785b3b');
+        yardG.addColorStop(0.5, '#5c4328');
+        yardG.addColorStop(1, '#3b2917');
+        ctx.fillStyle = yardG;
+        ctx.fillRect(8, 20, 128, 118);
+        ctx.strokeStyle = '#24170c';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(8, 20, 128, 118);
 
-        ctx.fillStyle = '#1f1b18';
-        ctx.fillRect(21, 57, 102, 74);
+        // Weathered flagstone pavers leading from the stable doors and workshop
+        ctx.fillStyle = '#918272';
+        for (let fx = 12; fx < 132; fx += 13) {
+          ctx.fillRect(fx, 126, 11, 10);
+          ctx.strokeStyle = '#473d34';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(fx, 126, 11, 10);
+        }
+        for (let fy = 96; fy < 126; fy += 10) {
+          ctx.fillRect(10, fy, 12, 8);
+          ctx.strokeStyle = '#473d34';
+          ctx.strokeRect(10, fy, 12, 8);
+        }
 
-        // Radiant glowing forge fire
-        const fireG = ctx.createRadialGradient(42, 84, 3, 42, 84, 21);
-        fireG.addColorStop(0, '#fef08a');
-        fireG.addColorStop(0.5, '#f97316');
-        fireG.addColorStop(1, 'rgba(185, 28, 28, 0)');
-        ctx.fillStyle = fireG;
-        ctx.fillRect(24, 66, 36, 36);
+        // --- B. The War Horse Stable Wing (Left: x: 8..80, y: 16..84) ---
+        // Cyclopean stone wall masonry
+        const stableWallG = ctx.createLinearGradient(8, 26, 80, 84);
+        stableWallG.addColorStop(0, '#c7bbb0');
+        stableWallG.addColorStop(0.5, '#9e9182');
+        stableWallG.addColorStop(1, '#635749');
+        ctx.fillStyle = stableWallG;
+        ctx.fillRect(10, 26, 70, 56);
+        ctx.strokeStyle = '#2b231a';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(10, 26, 70, 56);
 
-        // Industrial smokestack
-        ctx.fillStyle = '#575049';
-        ctx.fillRect(102, 6, 21, 42);
+        // Polygonal masonry lines on stable wall
+        ctx.strokeStyle = 'rgba(40, 32, 24, 0.5)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(10, 44); ctx.lineTo(80, 44);
+        ctx.moveTo(10, 62); ctx.lineTo(80, 62);
+        ctx.moveTo(28, 26); ctx.lineTo(28, 44);
+        ctx.moveTo(60, 26); ctx.lineTo(60, 44);
+        ctx.moveTo(44, 44); ctx.lineTo(44, 62);
+        ctx.moveTo(26, 62); ctx.lineTo(26, 82);
+        ctx.moveTo(62, 62); ctx.lineTo(62, 82);
+        ctx.stroke();
+
+        // Stable Stall Openings (Twin bays: Left x: 16..42, Right x: 48..74)
+        // Dark interior stall shadows
+        ctx.fillStyle = '#18110b';
+        ctx.fillRect(16, 42, 26, 38);
+        ctx.fillRect(48, 42, 26, 38);
+
+        // Golden straw bedding in stalls
+        ctx.fillStyle = '#eab308';
+        ctx.fillRect(16, 74, 26, 6);
+        ctx.fillRect(48, 74, 26, 6);
+        ctx.fillStyle = '#fef08a';
+        for (let sx = 14; sx < 44; sx += 4) {
+          ctx.fillRect(sx, 78 + (sx % 3), 3, 2);
+        }
+        for (let sx = 46; sx < 76; sx += 4) {
+          ctx.fillRect(sx, 78 + (sx % 3), 3, 2);
+        }
+
+        // War Horse #1 in Left Stall (Bay Stallion)
+        // Body/Neck in stall
+        ctx.fillStyle = '#78350f'; // Rich bay
+        ctx.beginPath();
+        ctx.ellipse(28, 56, 7, 10, 0.2, 0, Math.PI * 2);
+        ctx.fill();
+        // Head & Muzzle
+        ctx.beginPath();
+        ctx.ellipse(31, 48, 5, 7, 0.35, 0, Math.PI * 2);
+        ctx.fill();
+        // Dark muzzle
         ctx.fillStyle = '#292524';
-        ctx.fillRect(105, 6, 15, 6);
+        ctx.beginPath();
+        ctx.ellipse(33, 52, 3, 3, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // Pricked ears
+        ctx.fillStyle = '#9a3412';
+        ctx.beginPath();
+        ctx.moveTo(27, 43); ctx.lineTo(29, 38); ctx.lineTo(31, 43);
+        ctx.moveTo(31, 43); ctx.lineTo(33, 39); ctx.lineTo(35, 43);
+        ctx.fill();
+        // Dark mane
+        ctx.fillStyle = '#1c1917';
+        ctx.fillRect(25, 42, 2.5, 12);
+        // Bronze Bridle & Phalera (Boss)
+        ctx.strokeStyle = '#d97706';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(28, 45); ctx.lineTo(33, 51);
+        ctx.stroke();
+        ctx.fillStyle = '#fbbf24';
+        ctx.beginPath(); ctx.arc(30, 48, 1.8, 0, Math.PI * 2); ctx.fill();
+
+        // War Horse #2 in Right Stall (Chestnut Stallion with white star)
+        // Neck
+        ctx.fillStyle = '#9a3412';
+        ctx.beginPath();
+        ctx.ellipse(60, 56, 7, 10, -0.2, 0, Math.PI * 2);
+        ctx.fill();
+        // Head
+        ctx.beginPath();
+        ctx.ellipse(58, 48, 5, 7, -0.35, 0, Math.PI * 2);
+        ctx.fill();
+        // White star blaze
+        ctx.fillStyle = '#f8fafc';
+        ctx.beginPath();
+        ctx.ellipse(57, 47, 1.5, 2.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // Ears
+        ctx.fillStyle = '#b45309';
+        ctx.beginPath();
+        ctx.moveTo(55, 43); ctx.lineTo(54, 38); ctx.lineTo(58, 43);
+        ctx.moveTo(59, 43); ctx.lineTo(61, 39); ctx.lineTo(63, 43);
+        ctx.fill();
+        // Mane
+        ctx.fillStyle = '#451a03';
+        ctx.fillRect(61, 43, 2.5, 11);
+        // Bronze bridle boss
+        ctx.fillStyle = '#fbbf24';
+        ctx.beginPath(); ctx.arc(58, 51, 1.8, 0, Math.PI * 2); ctx.fill();
+
+        // Split-Rail Timber Stable Doors (Half-doors)
+        // Left stall half-door
+        ctx.fillStyle = '#452613';
+        ctx.fillRect(16, 58, 26, 20);
+        ctx.strokeStyle = '#1e1007';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(16, 58, 26, 20);
+        // Diagonal cross brace & bronze hinge pins
+        ctx.strokeStyle = '#6e3c1d';
+        ctx.beginPath();
+        ctx.moveTo(17, 59); ctx.lineTo(41, 77);
+        ctx.moveTo(17, 77); ctx.lineTo(41, 59);
+        ctx.stroke();
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(17, 60, 2, 2);
+        ctx.fillRect(17, 74, 2, 2);
+        ctx.fillRect(40, 67, 2, 2); // Door latch
+
+        // Right stall half-door
+        ctx.fillStyle = '#452613';
+        ctx.fillRect(48, 58, 26, 20);
+        ctx.strokeStyle = '#1e1007';
+        ctx.strokeRect(48, 58, 26, 20);
+        ctx.strokeStyle = '#6e3c1d';
+        ctx.beginPath();
+        ctx.moveTo(49, 59); ctx.lineTo(73, 77);
+        ctx.moveTo(49, 77); ctx.lineTo(73, 59);
+        ctx.stroke();
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(49, 60, 2, 2);
+        ctx.fillRect(49, 74, 2, 2);
+        ctx.fillRect(72, 67, 2, 2);
+
+        // Cedar Posts framing the stalls
+        for (const px of [14, 44, 74]) {
+          ctx.fillStyle = '#5c3a21';
+          ctx.fillRect(px, 38, 4, 42);
+          ctx.fillStyle = '#85532f';
+          ctx.fillRect(px, 38, 1.2, 42);
+        }
+
+        // Hanging Wicker Hay Mangers
+        ctx.fillStyle = '#ca8a04';
+        ctx.fillRect(43, 44, 6, 8);
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(44, 42, 4, 3); // Straw poking out
+
+        // Stone Watering Trough (Left foreground: x: 10..26, y: 88..102)
+        ctx.fillStyle = '#78716c';
+        ctx.fillRect(10, 88, 16, 12);
+        ctx.strokeStyle = '#292524';
+        ctx.strokeRect(10, 88, 16, 12);
+        // Water reservoir
+        ctx.fillStyle = '#0284c7';
+        ctx.fillRect(12, 90, 12, 7);
+        ctx.fillStyle = '#38bdf8';
+        ctx.fillRect(13, 91, 10, 3); // Shimmering water surface
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(14, 91, 3, 1); // Specular gleam
+
+        // --- C. Double-Pitch Gabled Tile Roof over Stables (x: 6..82, y: 10..40) ---
+        this.drawRoofTiles(ctx, 6, 10, 76, 28, cMain, cHi);
+        // Roof fascia board & trim
+        ctx.fillStyle = cTrim;
+        ctx.fillRect(6, 36, 76, 3);
+        ctx.fillStyle = '#381e0f';
+        ctx.fillRect(6, 39, 76, 2); // Rafter overhang shadow
+
+        // Carved Wooden Horse-Head Akroteria (Roof Finials) on Gable Peaks
+        for (const gx of [7, 44, 80]) {
+          ctx.fillStyle = '#85532f';
+          ctx.beginPath();
+          ctx.moveTo(gx - 2, 10);
+          ctx.quadraticCurveTo(gx - 3, 3, gx, 2);
+          ctx.quadraticCurveTo(gx + 3, 4, gx + 2, 10);
+          ctx.closePath();
+          ctx.fill();
+          ctx.fillStyle = cTrim;
+          ctx.beginPath(); ctx.arc(gx, 5, 1.2, 0, Math.PI * 2); ctx.fill(); // Inlaid eye
+        }
+
+        // --- D. Right Wing: The Wheelwright Workshop & Bronze Forge (x: 80..138, y: 22..124) ---
+        // Open timber portico roof
+        this.drawRoofTiles(ctx, 80, 20, 56, 24, cMain, cHi);
+        ctx.fillStyle = cTrim;
+        ctx.fillRect(80, 42, 56, 2.5);
+
+        // Workshop timber pillars
+        for (const px of [80, 106, 132]) {
+          ctx.fillStyle = '#5c3a21';
+          ctx.fillRect(px, 42, 4, 38);
+          ctx.fillStyle = '#85532f';
+          ctx.fillRect(px, 42, 1.2, 38);
+        }
+
+        // 1. Wheelwright Hearth & Anvil (Rear-Right: x: 108..134, y: 38..66)
+        // Stone forge base
+        ctx.fillStyle = '#57534e';
+        ctx.fillRect(110, 44, 24, 18);
+        ctx.strokeStyle = '#1c1917';
+        ctx.strokeRect(110, 44, 24, 18);
+
+        // Glowing charcoal embers bed
+        const forgeFireG = ctx.createRadialGradient(122, 51, 1, 122, 51, 9);
+        forgeFireG.addColorStop(0, '#ffffff'); // White heat
+        forgeFireG.addColorStop(0.35, '#fde047'); // Yellow flame
+        forgeFireG.addColorStop(0.7, '#ea580c'); // Orange fire
+        forgeFireG.addColorStop(1, '#991b1b'); // Deep red embers
+        ctx.fillStyle = forgeFireG;
+        ctx.beginPath();
+        ctx.ellipse(122, 51, 8, 5, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Leather twin bellows
+        ctx.fillStyle = '#78350f';
+        ctx.beginPath();
+        ctx.moveTo(112, 46); ctx.lineTo(118, 48); ctx.lineTo(112, 52);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#451a03'; ctx.stroke();
+
+        // Anvil & Tree Stump
+        ctx.fillStyle = '#452a16'; // Wood stump
+        ctx.fillRect(100, 54, 8, 12);
+        ctx.fillStyle = '#475569'; // Bronze/Iron Anvil body
+        ctx.fillRect(98, 49, 12, 5);
+        ctx.fillRect(96, 50, 4, 2); // Horn
+        ctx.fillStyle = '#fbbf24'; // Red-hot bronze bar on anvil
+        ctx.fillRect(101, 48, 5, 1.5);
+
+        // 2. Wheelwright Spare 6-Spoke Bronze War Chariot Wheels!
+        // Large chariot wheel propped against the workshop wall (x: 84..104, y: 64..88)
+        const cx = 94;
+        const cy = 76;
+        const radius = 11;
+
+        // Wheel drop shadow
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+        ctx.beginPath();
+        ctx.ellipse(cx + 2, cy + 3, radius, radius * 0.9, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Bronze outer tire rim
+        ctx.strokeStyle = '#d97706';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Wooden felloe ring
+        ctx.strokeStyle = '#78350f';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius - 1.5, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // 6 Radiating spokes
+        ctx.strokeStyle = '#b45309';
+        ctx.lineWidth = 1;
+        for (let a = 0; a < 6; a++) {
+          const angle = (a * Math.PI) / 3;
+          ctx.beginPath();
+          ctx.moveTo(cx, cy);
+          ctx.lineTo(cx + Math.cos(angle) * (radius - 1), cy + Math.sin(angle) * (radius - 1));
+          ctx.stroke();
+        }
+
+        // Bronze central hub (nave) with axle linchpin
+        ctx.fillStyle = '#fbbf24';
+        ctx.beginPath();
+        ctx.arc(cx, cy, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#1c1917';
+        ctx.fillRect(cx - 0.5, cy - 2, 1, 4); // Linchpin
+
+        // Spare wood felloes hanging on pegs on workshop wall
+        ctx.strokeStyle = '#92400e';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(110, 36, 5, 0, Math.PI);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(120, 36, 5, 0, Math.PI);
+        ctx.stroke();
+
+        // 3. Fully Assembled Royal War Chariot on Display in the Yard! (x: 94..134, y: 86..124)
+        // Shadow beneath chariot cab and wheels
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.beginPath();
+        ctx.ellipse(114, 114, 18, 9, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Left Chariot Wheel (4-spoke/6-spoke in 2.5D perspective)
+        ctx.strokeStyle = '#d97706';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.ellipse(100, 110, 3, 9, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(99, 109, 2, 2); // Hub
+
+        // Right Chariot Wheel
+        ctx.strokeStyle = '#d97706';
+        ctx.beginPath();
+        ctx.ellipse(128, 110, 3, 9, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(127, 109, 2, 2);
+
+        // Axle beam connecting wheels
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(100, 109, 28, 2.5);
+
+        // Chariot D-shaped Cab & Floorboard
+        const cabG = ctx.createLinearGradient(102, 94, 126, 112);
+        cabG.addColorStop(0, '#b45309');
+        cabG.addColorStop(0.5, '#78350f');
+        cabG.addColorStop(1, '#451a03');
+        ctx.fillStyle = cabG;
+        ctx.beginPath();
+        ctx.moveTo(104, 104);
+        ctx.lineTo(104, 96);
+        ctx.quadraticCurveTo(114, 92, 124, 96);
+        ctx.lineTo(124, 104);
+        ctx.lineTo(122, 110);
+        ctx.lineTo(106, 110);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#1e1007';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Wickerwork openwork lattice rails on cab sides
+        ctx.strokeStyle = '#f59e0b';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(105, 96); ctx.lineTo(110, 104);
+        ctx.moveTo(109, 95); ctx.lineTo(114, 104);
+        ctx.moveTo(119, 95); ctx.lineTo(114, 104);
+        ctx.moveTo(123, 96); ctx.lineTo(118, 104);
+        ctx.stroke();
+
+        // Front Bronze Embossed Breastplate Shield with Faction Color
+        ctx.fillStyle = cMain;
+        ctx.beginPath();
+        ctx.ellipse(114, 101, 7, 4.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = cTrim;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.fillStyle = '#fbbf24'; // Center sun boss
+        ctx.beginPath(); ctx.arc(114, 101, 2, 0, Math.PI * 2); ctx.fill();
+
+        // Draught Pole (Tongue) jutting forward to the right
+        ctx.fillStyle = '#92400e';
+        ctx.fillRect(113, 110, 2, 16);
+        // Double-Horse Neck Yoke with bronze rings
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(107, 122, 14, 2.5);
+        ctx.fillStyle = '#fbbf24';
+        ctx.beginPath(); ctx.arc(110, 123, 1.5, 0, Math.PI * 2); ctx.fill(); // Yoke ring 1
+        ctx.beginPath(); ctx.arc(118, 123, 1.5, 0, Math.PI * 2); ctx.fill(); // Yoke ring 2
+
+        // --- E. Charioteer Weapons Rack & Royal Standard (x: 74..90, y: 88..128) ---
+        // Wooden armory rack standing in yard
+        ctx.fillStyle = '#452613';
+        ctx.fillRect(74, 96, 14, 2.5);
+        ctx.fillRect(76, 96, 2.5, 24);
+        ctx.fillRect(84, 96, 2.5, 24);
+
+        // 2 Upright Composite Horn Bows in Leather Bowcases
+        ctx.fillStyle = '#9a3412';
+        ctx.fillRect(75, 88, 3, 26);
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(75, 88, 3, 2); // Gold bowcase cap
+        ctx.fillRect(75, 102, 3, 2);
+
+        // 2 Bronze-Tipped Chariot Javelins
+        ctx.strokeStyle = '#78350f';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(81, 84); ctx.lineTo(81, 116);
+        ctx.moveTo(85, 82); ctx.lineTo(85, 116);
+        ctx.stroke();
+        // Bronze leaf-shaped tips
+        ctx.fillStyle = '#fbbf24';
+        ctx.beginPath();
+        ctx.moveTo(81, 81); ctx.lineTo(80, 85); ctx.lineTo(82, 85);
+        ctx.moveTo(85, 79); ctx.lineTo(84, 83); ctx.lineTo(86, 83);
+        ctx.fill();
+
+        // Royal Chariot Pennant / Faction Flag
+        ctx.fillStyle = '#5c3a21';
+        ctx.fillRect(6, 6, 2, 28); // Flagstaff on corner of roof
+        ctx.fillStyle = cMain;
+        ctx.beginPath();
+        ctx.moveTo(8, 7);
+        ctx.lineTo(24, 11);
+        ctx.lineTo(8, 16);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = cTrim;
+        ctx.fillRect(7, 6, 2, 10);
       }));
 
       // 7. Iron Smelter

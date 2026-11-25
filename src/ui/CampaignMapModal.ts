@@ -198,8 +198,8 @@ export class CampaignMapModal {
       const isCompleted = save.isScenarioCompleted(this.selectedScenario.id);
       const isCurrent = save.getData().currentScenarioId === this.selectedScenario.id;
 
-      // Allow if unlocked or already cleared (Scenarios 1 and 2 unlocked directly during dev)
-      if (isCurrent || isCompleted || this.selectedScenario.scenarioIndex <= 2) {
+      // Allow if unlocked or already cleared (Scenarios 1, 2 and 3 unlocked directly during dev)
+      if (isCurrent || isCompleted || this.selectedScenario.scenarioIndex <= 3) {
         EventBus.get().emit('audio:command');
         this.hide();
         if (this.onSelectScenario) {
@@ -304,8 +304,8 @@ export class CampaignMapModal {
     const save = SaveManager.get();
     const isCompleted = save.isScenarioCompleted(sc.id);
     const isCurrent = save.getData().currentScenarioId === sc.id;
-    // Allow Scenario 1 and 2 directly during development
-    const isUnlocked = isCurrent || isCompleted || sc.scenarioIndex <= 2;
+    // Allow Scenario 1, 2 and 3 directly during development
+    const isUnlocked = isCurrent || isCompleted || sc.scenarioIndex <= 3;
 
     document.getElementById('intel-scenario-title')!.textContent = `${sc.scenarioIndex}. ${sc.title}`;
     document.getElementById('intel-scenario-meta')!.textContent = `Act ${sc.act} · ${sc.yearBC} BC · ${sc.region}`;
@@ -1406,7 +1406,7 @@ export class CampaignMapModal {
         ctx.fillStyle = '#2de0a5';
         ctx.fill();
         ctx.strokeStyle = '#ffffff';
-      } else if (isCurrent || sc.scenarioIndex <= 2) {
+      } else if (isCurrent || sc.scenarioIndex <= 3) {
         ctx.fillStyle = '#ffd166';
         ctx.fill();
         ctx.strokeStyle = '#8a6234';

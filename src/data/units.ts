@@ -151,5 +151,39 @@ export const UNITS: Record<string, UnitDef> = {
     attackCooldown: 0.85,
     armor: 1,
     damageType: 'slash'
+  },
+
+  shardana_torchbearer: {
+    id: 'shardana_torchbearer',
+    name: 'Shardana Torchbearer',
+    category: 'infantry',
+    maxHp: 150,
+    speed: 1.40,
+    cost: { copper: 45 },
+    trainTime: 3.5,
+    description: 'Swift sea marauder hurling flaming pitch torches. Specializes in incinerating wooden ramparts and supply buildings.',
+    supplyCost: 1,
+    attackRange: 1.8,
+    damage: 24,
+    attackCooldown: 0.85,
+    armor: 1,
+    damageType: 'fire'
+  },
+
+  shardana_warlord: {
+    id: 'shardana_warlord',
+    name: 'Shardana Fleet Warlord',
+    category: 'infantry',
+    maxHp: 950,
+    speed: 1.05,
+    cost: { copper: 250, tin: 60 },
+    trainTime: 20.0,
+    description: 'Towering Sea Peoples champion clad in horned bronze helmet and embossed cuirass. Cleaves through phalanxes with colossal power.',
+    supplyCost: 3,
+    attackRange: 1.35,
+    damage: 48,
+    attackCooldown: 1.15,
+    armor: 6,
+    damageType: 'slash'
   }
 };

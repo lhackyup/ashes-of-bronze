@@ -140,7 +140,9 @@ class GameApp {
     );
 
     // Setup map terrain depending on scenario biome
-    if (scenario.id === 'scenario_02_last_cargo_alashiya' || scenario.map.biome === 'shallows_of_ugarit') {
+    if (scenario.id === 'scenario_03_gate_of_cedars' || scenario.map.biome === 'lebanon_cedar_pass') {
+      this.setupCedarPassMap(mapW, mapH);
+    } else if (scenario.id === 'scenario_02_last_cargo_alashiya' || scenario.map.biome === 'shallows_of_ugarit') {
       this.setupUgaritShallowsMap(mapW, mapH);
     } else {
       this.setupLevantineMap(mapW, mapH);
@@ -148,7 +150,40 @@ class GameApp {
 
     // Position starting buildings and units
     const pStart = scenario.player.startPosition;
-    if (scenario.id === 'scenario_02_last_cargo_alashiya') {
+    if (scenario.id === 'scenario_03_gate_of_cedars') {
+      // Scenario 3: Highland fortress safeguarding the Gate of Cedars
+      this.gridGraph.setFoundation(pStart.tx, pStart.ty, 4, 4, true);
+      this.gridGraph.setFoundation(pStart.tx + 5, pStart.ty, 3, 3, true);
+      this.gridGraph.setFoundation(pStart.tx, pStart.ty - 4, 2, 2, true);
+      this.gridGraph.setFoundation(pStart.tx, pStart.ty + 5, 3, 3, true);
+      this.gridGraph.setFoundation(pStart.tx - 4, pStart.ty, 2, 2, true);
+
+      this.spawnBuilding('cyclopean_slab', 'player', pStart.tx - 2, pStart.ty, true);
+      this.spawnBuilding('cyclopean_slab', 'player', pStart.tx - 2, pStart.ty + 2, true);
+      this.spawnBuilding('acropolis', 'player', pStart.tx, pStart.ty, true);
+      this.spawnBuilding('bronze_foundry', 'player', pStart.tx + 5, pStart.ty, true);
+      this.spawnBuilding('granary', 'player', pStart.tx, pStart.ty - 4, true);
+      this.spawnBuilding('barracks', 'player', pStart.tx, pStart.ty + 5, true);
+      this.spawnBuilding('watchtower', 'player', pStart.tx - 4, pStart.ty, true);
+
+      // Starting units (2 donkey caravans, 2 spearmen, 2 slingers, 1 composite bowman)
+      this.spawnUnit('donkey_caravan', 'player', (pStart.tx + 2) * TILE_SIZE + 24, (pStart.ty + 4) * TILE_SIZE + 24);
+      this.spawnUnit('donkey_caravan', 'player', (pStart.tx + 3) * TILE_SIZE + 24, (pStart.ty + 4) * TILE_SIZE + 24);
+      this.spawnUnit('spear_militia', 'player', (pStart.tx + 2) * TILE_SIZE + 24, (pStart.ty + 6) * TILE_SIZE + 24);
+      this.spawnUnit('spear_militia', 'player', (pStart.tx - 2) * TILE_SIZE + 24, (pStart.ty + 4) * TILE_SIZE + 24);
+      this.spawnUnit('skirmisher', 'player', (pStart.tx - 2) * TILE_SIZE + 24, (pStart.ty) * TILE_SIZE + 24);
+      this.spawnUnit('skirmisher', 'player', (pStart.tx - 2) * TILE_SIZE + 24, (pStart.ty - 2) * TILE_SIZE + 24);
+      this.spawnUnit('composite_bowman', 'player', (pStart.tx - 4) * TILE_SIZE + 24, (pStart.ty + 2) * TILE_SIZE + 24);
+
+      // Forward hostile ambush camp in the northeastern cedar woods: "L'Imboscata nei Boschi"
+      const ambushTx = 44;
+      const ambushTy = 10;
+      this.gridGraph.setFoundation(ambushTx, ambushTy, 2, 2, true);
+      this.spawnBuilding('watchtower', 'sea_peoples', ambushTx, ambushTy, true);
+      this.spawnUnit('sea_raider', 'sea_peoples', (ambushTx - 1) * TILE_SIZE + 24, (ambushTy + 2) * TILE_SIZE + 24);
+      this.spawnUnit('sea_raider', 'sea_peoples', (ambushTx + 2) * TILE_SIZE + 24, (ambushTy + 1) * TILE_SIZE + 24);
+      this.spawnUnit('sea_raider', 'sea_peoples', (ambushTx + 1) * TILE_SIZE + 24, (ambushTy + 3) * TILE_SIZE + 24);
+    } else if (scenario.id === 'scenario_02_last_cargo_alashiya') {
       // Scenario 2: Established beachhead outpost facing the reefs
       this.gridGraph.setFoundation(pStart.tx, pStart.ty, 4, 4, true);
       this.gridGraph.setFoundation(pStart.tx + 5, pStart.ty, 3, 3, true);
@@ -441,6 +476,124 @@ class GameApp {
       this.canvas.height = parent.clientHeight;
       if (this.camera) {
         this.camera.updateDimensions(this.canvas.width, this.canvas.height);
+      }
+    }
+  }
+
+  private setupCedarPassMap(w: number, h: number): void {
+    // 1. Base topography: Highland mountain defiles and central chariot plains
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        // Northern Mountain Wall with North Pass at x: 25..31
+        const isNorthPass = (x >= 25 && x <= 31) && y <= 4;
+        const isNorthWall = y < 4 && !isNorthPass;
+
+        // Eastern Mountain Wall with East Pass at y: 23..29
+        const isEastPass = (y >= 23 && y <= 29) && x >= w - 5;
+        const isEastWall = x >= w - 4 && !isEastPass;
+
+        // Western Crags with Plateau Gate at y: 23..29
+        const isWestGate = (y >= 23 && y <= 29) && x < 4;
+        const isWestWall = x < 4 && !isWestGate;
+
+        // Southern Mountain Ridge
+        const isSouthWall = y >= h - 4;
+
+        // Internal rocky spurs shaping tactical valleys
+        const isNorthSpur = (x >= 21 && x <= 24 && y >= 7 && y <= 13);
+        const isSouthSpur = (x >= 35 && x <= 39 && y >= 35 && y <= 41);
+
+        if (isNorthWall || isEastWall || isWestWall || isSouthWall || isNorthSpur || isSouthSpur) {
+          this.tileRenderer.setTile(x, y, 'cliff');
+          this.gridGraph.setTileCost(x, y, 0);
+        } else if ((x >= 22 && x <= 28 && y >= 20 && y <= 32)) {
+          // Fertile alluvial loam around the central mountain springs
+          this.tileRenderer.setTile(x, y, 'fertile_soil');
+          this.gridGraph.setTileCost(x, y, 10);
+        } else {
+          // Broad highland plain: fast speed (1.0), optimal for 2-horse war chariot skirmishing
+          this.tileRenderer.setTile(x, y, 'plain');
+          this.gridGraph.setTileCost(x, y, 10);
+        }
+      }
+    }
+
+    // 2. Copper resource nodes east of the player's foundry (6 tiles, 650 copper each)
+    for (let dy = 0; dy < 2; dy++) {
+      for (let dx = 0; dx < 3; dx++) {
+        this.tileRenderer.setTile(23 + dx, 28 + dy, 'vein_copper', 650);
+        this.gridGraph.setTileCost(23 + dx, 28 + dy, 0);
+      }
+    }
+
+    // 3. Rare Tin (Cassiterite) veins:
+    // South-west vein near base (4 tiles, 350 tin each)
+    for (let dy = 0; dy < 2; dy++) {
+      for (let dx = 0; dx < 2; dx++) {
+        this.tileRenderer.setTile(19 + dx, 33 + dy, 'vein_tin', 350);
+        this.gridGraph.setTileCost(19 + dx, 33 + dy, 0);
+      }
+    }
+    // Highland mountain tin vein in the north defile (4 tiles, 400 tin each)
+    for (let dy = 0; dy < 2; dy++) {
+      for (let dx = 0; dx < 2; dx++) {
+        this.tileRenderer.setTile(34 + dx, 15 + dy, 'vein_tin', 400);
+        this.gridGraph.setTileCost(34 + dx, 15 + dy, 0);
+      }
+    }
+
+    // 4. Limestone Stone Quarries (for Cyclopean Slabs, Stables, and Towers)
+    for (let dy = 0; dy < 2; dy++) {
+      for (let dx = 0; dx < 3; dx++) {
+        this.tileRenderer.setTile(11 + dx, 19 + dy, 'vein_stone', 800);
+        this.gridGraph.setTileCost(11 + dx, 19 + dy, 0);
+      }
+    }
+
+    // 5. Scatter Dense Groves of Mediterranean Cedar Trees (Ancient Lebanon Forests)
+    // Timber is a critical primary objective: provide abundant cedar trees (240 Timber each)
+    this.decorations = [];
+    const treeCoords: Array<{ x: number; y: number }> = [];
+
+    // Grove 1: Northwest highland groves (x: 7..19, y: 5..17)
+    for (let i = 0; i < 22; i++) {
+      const tx = 7 + Math.floor((Math.sin(i * 1.7) * 0.5 + 0.5) * 12);
+      const ty = 5 + Math.floor((Math.cos(i * 2.3) * 0.5 + 0.5) * 12);
+      treeCoords.push({ x: tx, y: ty });
+    }
+
+    // Grove 2: Northeast groves surrounding the Ambush Camp (x: 38..49, y: 6..16)
+    for (let i = 0; i < 20; i++) {
+      const tx = 38 + Math.floor((Math.sin(i * 2.1) * 0.5 + 0.5) * 11);
+      const ty = 6 + Math.floor((Math.cos(i * 1.9) * 0.5 + 0.5) * 10);
+      if (!(tx >= 43 && tx <= 45 && ty >= 9 && ty <= 11)) { // Leave space for ambush tower
+        treeCoords.push({ x: tx, y: ty });
+      }
+    }
+
+    // Grove 3: Southern mountain foothills (x: 20..38, y: 38..48)
+    for (let i = 0; i < 24; i++) {
+      const tx = 20 + Math.floor((Math.sin(i * 1.3) * 0.5 + 0.5) * 18);
+      const ty = 38 + Math.floor((Math.cos(i * 2.7) * 0.5 + 0.5) * 10);
+      treeCoords.push({ x: tx, y: ty });
+    }
+
+    // Grove 4: Eastern valley fringes (x: 42..49, y: 20..35)
+    for (let i = 0; i < 18; i++) {
+      const tx = 42 + Math.floor((Math.sin(i * 2.9) * 0.5 + 0.5) * 7);
+      const ty = 20 + Math.floor((Math.cos(i * 1.5) * 0.5 + 0.5) * 15);
+      treeCoords.push({ x: tx, y: ty });
+    }
+
+    const placed = new Set<string>();
+    for (const pos of treeCoords) {
+      const key = `${pos.x},${pos.y}`;
+      if (placed.has(key)) continue;
+      const tile = this.tileRenderer.getTile(pos.x, pos.y);
+      const distPlayer = Math.hypot(pos.x - 16, pos.y - 26);
+      if ((tile === 'plain' || tile === 'fertile_soil') && distPlayer > 4.5) {
+        placed.add(key);
+        this.decorations.push({ x: pos.x + 0.5, y: pos.y + 0.5, type: 'cedar', current: 240, max: 240 });
       }
     }
   }
@@ -1385,7 +1538,7 @@ class GameApp {
       // Remove fallen units and record casualties
       if (u.hp <= 0) {
         if (u.owner === 'sea_peoples') {
-          this.objectiveManager.recordEnemyKilled();
+          this.objectiveManager.recordEnemyKilled(u.defId);
         } else if (u.owner === 'player') {
           this.objectiveManager.recordFriendlyLost();
         }

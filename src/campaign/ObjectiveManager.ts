@@ -40,6 +40,7 @@ export class ObjectiveManager {
   private hadBarracksAtStart: boolean = false;
   private hadStablesAtStart: boolean = false;
   private hadAmbushCampAtStart: boolean = false;
+  public warlordSlain: boolean = false;
   public totalWaves: number = 3;
 
   constructor(scenario: ScenarioData) {
@@ -108,8 +109,22 @@ export class ObjectiveManager {
     }
   }
 
-  public recordEnemyKilled(): void {
+  public recordEnemyKilled(defId?: string): void {
     this.stats.enemiesSlain++;
+    if (defId === 'shardana_warlord') {
+      this.warlordSlain = true;
+      EventBus.get().emit('advisor:message', {
+        speaker: 'burna_khabir',
+        text: 'The Shardana Fleet Warlord has fallen! His horned helmet rolls in the sand and his reavers scatter in terror!',
+        isAlert: false
+      });
+      EventBus.get().emit('fx:floating_text', {
+        text: 'SHARDANA FLEET WARLORD DEFEATED!',
+        color: '#f59e0b',
+        x: 28 * 48,
+        y: 28 * 48 - 30
+      });
+    }
   }
 
   public recordFriendlyLost(): void {
@@ -258,7 +273,7 @@ export class ObjectiveManager {
         } else {
           allPrimariesDone = false;
         }
-      } else if (obj.id === 'survive_sea_peoples') {
+      } else if (obj.id === 'survive_sea_peoples' || obj.id === 'survive_siege') {
         const remainingWaves = tactical.getRemainingWavesCount();
         const activeRaiders = units.filter(u => u.owner === 'sea_peoples' && u.hp > 0);
         const allHoldsEmpty = tactical.landingShips.every(s => s.pendingUnits.every(p => p.count === 0));
@@ -282,6 +297,35 @@ export class ObjectiveManager {
         } else {
           allPrimariesDone = false;
         }
+      } else if (obj.id === 'slay_warlord' || (obj.type === 'destroy_entity' && obj.targetId === 'shardana_warlord')) {
+        if (this.warlordSlain) {
+          obj.currentAmount = 1;
+          this.completeObjective(obj);
+        } else {
+          allPrimariesDone = false;
+        }
+      } else if (obj.id === 'defend_megaron' || (obj.id === 'keep_acropolis_alive')) {
+        const acropolis = buildings.find(b => b.owner === 'player' && b.defId === 'acropolis' && b.hp > 0);
+        if (acropolis) {
+          obj.currentAmount = 1;
+          // Primary victory check will seal this once all other primaries (waves & warlord) are completed
+        } else {
+          obj.isFailed = true;
+          allPrimariesDone = false;
+        }
+      } else if (obj.id === 'destroy_war_camps' || (obj.type === 'destroy_entity' && obj.targetId === 'sea_camp')) {
+        const remainingCamps = buildings.filter(b => b.owner === 'sea_peoples' && b.defId === 'sea_camp' && b.hp > 0).length;
+        const destroyed = Math.max(0, (obj.targetAmount || 2) - remainingCamps);
+        obj.currentAmount = destroyed;
+        if (destroyed >= (obj.targetAmount || 2)) {
+          this.completeObjective(obj);
+        }
+      } else if (obj.id === 'preserve_watchtowers') {
+        const survivingTowers = buildings.filter(b => b.owner === 'player' && b.defId === 'watchtower' && b.hp > 0).length;
+        obj.currentAmount = survivingTowers;
+        if (survivingTowers < (obj.targetAmount || 2)) {
+          obj.isFailed = true;
+        }
       }
     }
 
@@ -290,6 +334,10 @@ export class ObjectiveManager {
 
     // 4. Check Victory Condition
     if (allPrimariesDone && this.objectives.some(o => o.isPrimary)) {
+      const megaronObj = this.objectives.find(o => o.id === 'defend_megaron');
+      if (megaronObj && !megaronObj.isFailed) {
+        megaronObj.isCompleted = true;
+      }
       if (foundryObj && !foundryObj.isFailed) {
         foundryObj.isCompleted = true;
       }

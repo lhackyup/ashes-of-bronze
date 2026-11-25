@@ -1,0 +1,161 @@
+{
+  "id": "scenario_04_siege_kadesh_sea",
+  "title": "Scenario IV: Siege of Kadesh-on-Sea",
+  "act": 1,
+  "era": "late_bronze",
+  "map": {
+    "width": 60,
+    "height": 60,
+    "biome": "kadesh_night_siege",
+    "seed": 1178
+  },
+  "player": {
+    "faction": "player",
+    "startPosition": { "tx": 28, "ty": 28 },
+    "initialResources": {
+      "copper": 650,
+      "tin": 180,
+      "iron": 0,
+      "grain": 450,
+      "stone": 420,
+      "timber": 280
+    },
+    "unlockedBuildings": [
+      "cyclopean_slab",
+      "cyclopean_wall",
+      "acropolis",
+      "granary",
+      "bronze_foundry",
+      "barracks",
+      "watchtower",
+      "chariot_stable"
+    ],
+    "unlockedUnits": [
+      "donkey_caravan",
+      "spear_militia",
+      "skirmisher",
+      "composite_bowman",
+      "bronze_swordsman",
+      "war_chariot"
+    ]
+  },
+  "opponents": [
+    {
+      "id": "sea_peoples_grand_fleet",
+      "faction": "sea_peoples",
+      "aiProfile": "aggressive_raider",
+      "waves": [
+        {
+          "triggerTimeSeconds": 90,
+          "spawnEdge": "west",
+          "units": [
+            { "type": "sea_raider", "count": 3 },
+            { "type": "shardana_torchbearer", "count": 2 }
+          ],
+          "advisorWarning": "Zalpa: Night sails off the western shore! Horned galleys have hit the sand and incendiaries are rushing our lower gate!"
+        },
+        {
+          "triggerTimeSeconds": 200,
+          "spawnEdge": "north",
+          "units": [
+            { "type": "sea_raider", "count": 4 },
+            { "type": "shardana_torchbearer", "count": 2 }
+          ],
+          "advisorWarning": "Zalpa: Torches spotted descending the northern gorge! Form the phalanx at the rampart chokepoint!"
+        },
+        {
+          "triggerTimeSeconds": 310,
+          "spawnEdge": "west",
+          "units": [
+            { "type": "sea_raider", "count": 5 },
+            { "type": "shardana_torchbearer", "count": 3 }
+          ],
+          "advisorWarning": "Tarkhunta: Second naval wave landing! Flaming pitch arrows fall upon the lower foundries! Hold the cyclopean walls!"
+        },
+        {
+          "triggerTimeSeconds": 420,
+          "spawnEdge": "east",
+          "units": [
+            { "type": "sea_raider", "count": 6 },
+            { "type": "shardana_torchbearer", "count": 3 }
+          ],
+          "advisorWarning": "Zalpa: Encirclement from the eastern ravines! Deploy our Royal War Chariots to sweep the flanks before they reach the granaries!"
+        },
+        {
+          "triggerTimeSeconds": 530,
+          "spawnEdge": "west",
+          "units": [
+            { "type": "shardana_warlord", "count": 1 },
+            { "type": "sea_raider", "count": 6 },
+            { "type": "shardana_torchbearer", "count": 4 }
+          ],
+          "advisorWarning": "Burna-Khabir: The Shardana Fleet Warlord has come ashore in embossed bronze armor! Stand firm before the sacred Megaron—break their horde!"
+        }
+      ]
+    }
+  ],
+  "objectives": {
+    "primary": [
+      {
+        "id": "defend_megaron",
+        "type": "protect_entity",
+        "description": "Ensure the Royal Megaron stands unbroken through the ferocious night assault.",
+        "targetId": "acropolis",
+        "isPrimary": true
+      },
+      {
+        "id": "survive_siege",
+        "type": "survive_time",
+        "description": "Repel all 5 nocturnal assault waves breaking against the citadel.",
+        "targetAmount": 5,
+        "isPrimary": true
+      },
+      {
+        "id": "slay_warlord",
+        "type": "destroy_entity",
+        "description": "Slay the Shardana Fleet Warlord leading the grand midnight invasion.",
+        "targetId": "shardana_warlord",
+        "isPrimary": true
+      }
+    ],
+    "secondary": [
+      {
+        "id": "destroy_war_camps",
+        "type": "destroy_entity",
+        "description": "Accampamenti d'Assedio: Raze both forward Sea Peoples war camps (North & East) to extinguish their raiding spawners.",
+        "targetId": "sea_camp",
+        "targetAmount": 2,
+        "isPrimary": false
+      },
+      {
+        "id": "preserve_watchtowers",
+        "type": "protect_entity",
+        "description": "Mura Inespugnabili: Keep at least 2 Cyclopean Watchtowers standing when dawn breaks.",
+        "targetId": "watchtower",
+        "targetAmount": 2,
+        "isPrimary": false
+      }
+    ]
+  },
+  "narrative": {
+    "briefing": "Year 1178 BC. The shroud of night falls upon Kadesh-on-Sea, but the horizon blazes with pitch fire. The combined armada of the horned sails strikes under darkness. Two forward war camps have established siege lines in the outer ravines, feeding a relentless stream of raiders against our gates. Fortify the breaches with Cyclopean Ramparts, dispatch chariot sorties to burn their war camps, and defend the sacred Megaron against the Shardana Fleet Warlord!",
+    "advisorPortrait": "burna_khabir",
+    "dialogues": [
+      {
+        "condition": "start",
+        "speaker": "burna_khabir",
+        "message": "My Wanax, the skies rain embers and the sea roars with war horns. If the Megaron falls tonight, the cuneiform wisdom of three thousand years turns to ash."
+      },
+      {
+        "condition": "ramparts_built",
+        "speaker": "tarkhunta",
+        "message": "The cyclopean stones are laid true! Let the horned barbarians break their bronze blades against our megalithic ramparts!"
+      },
+      {
+        "condition": "camps_destroyed",
+        "speaker": "zalpa",
+        "message": "The enemy war camps are burning to cinders! Their flank reinforcements have ceased—now we crush their warlord at the gates!"
+      }
+    ]
+  }
+}
