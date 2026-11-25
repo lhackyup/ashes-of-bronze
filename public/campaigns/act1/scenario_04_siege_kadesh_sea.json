@@ -17,8 +17,8 @@
       "tin": 180,
       "iron": 0,
       "grain": 450,
-      "stone": 420,
-      "timber": 280
+      "stone": 450,
+      "timber": 380
     },
     "unlockedBuildings": [
       "cyclopean_slab",
@@ -46,50 +46,50 @@
       "aiProfile": "aggressive_raider",
       "waves": [
         {
-          "triggerTimeSeconds": 90,
+          "triggerTimeSeconds": 160,
           "spawnEdge": "west",
           "units": [
-            { "type": "sea_raider", "count": 3 },
-            { "type": "shardana_torchbearer", "count": 2 }
+            { "type": "sea_raider", "count": 2 },
+            { "type": "shardana_torchbearer", "count": 1 }
           ],
-          "advisorWarning": "Zalpa: Night sails off the western shore! Horned galleys have hit the sand and incendiaries are rushing our lower gate!"
+          "advisorWarning": "Zalpa: Night sails off the western shore! A landing galley has hit the sand and an incendiary team is scouting our lower approaches!"
         },
         {
-          "triggerTimeSeconds": 200,
+          "triggerTimeSeconds": 320,
+          "spawnEdge": "north",
+          "units": [
+            { "type": "sea_raider", "count": 3 },
+            { "type": "shardana_torchbearer", "count": 1 }
+          ],
+          "advisorWarning": "Zalpa: Torches descending from the northern gorge! Man the ramparts and repel the raiders!"
+        },
+        {
+          "triggerTimeSeconds": 480,
+          "spawnEdge": "west",
+          "units": [
+            { "type": "sea_raider", "count": 4 },
+            { "type": "shardana_torchbearer", "count": 2 }
+          ],
+          "advisorWarning": "Tarkhunta: Second naval wave landing on the beach! Form the phalanx and loose arrows from the towers!"
+        },
+        {
+          "triggerTimeSeconds": 640,
           "spawnEdge": "north",
           "units": [
             { "type": "sea_raider", "count": 4 },
             { "type": "shardana_torchbearer", "count": 2 }
           ],
-          "advisorWarning": "Zalpa: Torches spotted descending the northern gorge! Form the phalanx at the rampart chokepoint!"
+          "advisorWarning": "Zalpa: Major overland push through the northern ravines! Deploy our Royal War Chariots to sweep their flanks!"
         },
         {
-          "triggerTimeSeconds": 310,
-          "spawnEdge": "west",
-          "units": [
-            { "type": "sea_raider", "count": 5 },
-            { "type": "shardana_torchbearer", "count": 3 }
-          ],
-          "advisorWarning": "Tarkhunta: Second naval wave landing! Flaming pitch arrows fall upon the lower foundries! Hold the cyclopean walls!"
-        },
-        {
-          "triggerTimeSeconds": 420,
-          "spawnEdge": "east",
-          "units": [
-            { "type": "sea_raider", "count": 6 },
-            { "type": "shardana_torchbearer", "count": 3 }
-          ],
-          "advisorWarning": "Zalpa: Encirclement from the eastern ravines! Deploy our Royal War Chariots to sweep the flanks before they reach the granaries!"
-        },
-        {
-          "triggerTimeSeconds": 530,
+          "triggerTimeSeconds": 800,
           "spawnEdge": "west",
           "units": [
             { "type": "shardana_warlord", "count": 1 },
-            { "type": "sea_raider", "count": 6 },
-            { "type": "shardana_torchbearer", "count": 4 }
+            { "type": "sea_raider", "count": 4 },
+            { "type": "shardana_torchbearer", "count": 2 }
           ],
-          "advisorWarning": "Burna-Khabir: The Shardana Fleet Warlord has come ashore in embossed bronze armor! Stand firm before the sacred Megaron—break their horde!"
+          "advisorWarning": "Burna-Khabir: The Shardana Fleet Warlord has come ashore in embossed bronze armor! Stand firm before the sacred Megaron—break their final assault!"
         }
       ]
     }
@@ -122,9 +122,9 @@
       {
         "id": "destroy_war_camps",
         "type": "destroy_entity",
-        "description": "Accampamenti d'Assedio: Raze both forward Sea Peoples war camps (North & East) to extinguish their raiding spawners.",
+        "description": "Accampamento d'Assedio: Raze the forward Sea Peoples war camp in the northern gorge to extinguish its raiding spawner.",
         "targetId": "sea_camp",
-        "targetAmount": 2,
+        "targetAmount": 1,
         "isPrimary": false
       },
       {
@@ -138,7 +138,7 @@
     ]
   },
   "narrative": {
-    "briefing": "Year 1178 BC. The shroud of night falls upon Kadesh-on-Sea, but the horizon blazes with pitch fire. The combined armada of the horned sails strikes under darkness. Two forward war camps have established siege lines in the outer ravines, feeding a relentless stream of raiders against our gates. Fortify the breaches with Cyclopean Ramparts, dispatch chariot sorties to burn their war camps, and defend the sacred Megaron against the Shardana Fleet Warlord!",
+    "briefing": "Year 1178 BC. The shroud of night falls upon Kadesh-on-Sea, but the horizon blazes with pitch fire. The combined armada of the horned sails strikes under darkness. A forward war camp has established a siege base in the northern gorge, sending raiding parties against our gates. Fell ancient cedar groves to fuel the foundries, fortify the breaches with Cyclopean Ramparts, dispatch chariot sorties to burn their war camp, and defend the sacred Megaron against the Shardana Fleet Warlord!",
     "advisorPortrait": "burna_khabir",
     "dialogues": [
       {
@@ -154,7 +154,7 @@
       {
         "condition": "camps_destroyed",
         "speaker": "zalpa",
-        "message": "The enemy war camps are burning to cinders! Their flank reinforcements have ceased—now we crush their warlord at the gates!"
+        "message": "The enemy war camp is burning to cinders! Their flank reinforcements have ceased—now we crush their warlord at the gates!"
       }
     ]
   }

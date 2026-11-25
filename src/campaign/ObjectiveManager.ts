@@ -315,9 +315,10 @@ export class ObjectiveManager {
         }
       } else if (obj.id === 'destroy_war_camps' || (obj.type === 'destroy_entity' && obj.targetId === 'sea_camp')) {
         const remainingCamps = buildings.filter(b => b.owner === 'sea_peoples' && b.defId === 'sea_camp' && b.hp > 0).length;
-        const destroyed = Math.max(0, (obj.targetAmount || 2) - remainingCamps);
+        const targetReq = obj.targetAmount || 1;
+        const destroyed = Math.max(0, targetReq - remainingCamps);
         obj.currentAmount = destroyed;
-        if (destroyed >= (obj.targetAmount || 2)) {
+        if (destroyed >= targetReq) {
           this.completeObjective(obj);
         }
       } else if (obj.id === 'preserve_watchtowers') {

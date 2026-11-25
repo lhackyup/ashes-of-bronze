@@ -48,7 +48,7 @@ export class CouncilModal {
     if (scenario?.id === 'scenario_04_siege_kadesh_sea') {
       burnaText = "The Great Green is filled with horned sails under the black sky! The Great Kings of Hatti and Mycenae are silent; only our Megaron still shines. If we fall tonight, humanity enters three centuries of darkness!";
       tarkhuntaText = "Erect Cyclopean Ramparts across every choke point! Lay heavy stone slabs and man the walls with composite bowmen. When the Shardana broadswords strike our megalithic stone, they will shatter!";
-      zalpaText = "Wanax, the enemy has pitched 2 forward war camps in the outer ravines that will spawn endless raiding parties! We must use our War Chariots to sweep around and burn those camps to ash, or we will be suffocated before their Warlord arrives!";
+      zalpaText = "Wanax, the enemy has pitched a forward war camp in the northern gorge that will spawn raiding parties! We must use our War Chariots to sweep around and burn that camp to ash, or we will be harassed before their Warlord arrives!";
     } else if (scenario?.id === 'scenario_02_last_cargo_alashiya') {
       burnaText = "The last merchant galleys of Alashiya have run aground upon the reefs. If we secure their copper and tin, our foundries will supply the army for an entire campaign!";
       tarkhuntaText = "The stranded oxhide ingots are pure Cypriot bronze bullion! Dispatch our donkey caravans onto the sandbars immediately before the Shardana torch the hulks!";

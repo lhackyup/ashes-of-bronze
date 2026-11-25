@@ -227,24 +227,13 @@ class GameApp {
       this.spawnUnit('bronze_swordsman', 'player', (pStart.tx - 3) * TILE_SIZE + 24, (pStart.ty + 1) * TILE_SIZE + 24);
       this.spawnUnit('bronze_swordsman', 'player', (pStart.tx - 3) * TILE_SIZE + 24, (pStart.ty + 3) * TILE_SIZE + 24);
 
-      // 2 Hostile Sea Peoples War Camps (Forward Encampments with periodic spawners)
-      // North Camp (Gorge Ravine)
+      // 1 Hostile Sea Peoples War Camp (Forward Encampment in the Northern Gorge)
       const northCampTx = 30;
       const northCampTy = 5;
       this.gridGraph.setFoundation(northCampTx, northCampTy, 3, 3, true);
       this.spawnBuilding('sea_camp', 'sea_peoples', northCampTx, northCampTy, true);
       this.spawnUnit('sea_raider', 'sea_peoples', (northCampTx - 1) * TILE_SIZE + 24, (northCampTy + 2) * TILE_SIZE + 24);
-      this.spawnUnit('sea_raider', 'sea_peoples', (northCampTx + 3) * TILE_SIZE + 24, (northCampTy + 1) * TILE_SIZE + 24);
-      this.spawnUnit('shardana_torchbearer', 'sea_peoples', (northCampTx + 1) * TILE_SIZE + 24, (northCampTy + 3) * TILE_SIZE + 24);
-
-      // East Camp (Highland Pass)
-      const eastCampTx = 50;
-      const eastCampTy = 28;
-      this.gridGraph.setFoundation(eastCampTx, eastCampTy, 3, 3, true);
-      this.spawnBuilding('sea_camp', 'sea_peoples', eastCampTx, eastCampTy, true);
-      this.spawnUnit('sea_raider', 'sea_peoples', (eastCampTx - 1) * TILE_SIZE + 24, (eastCampTy + 2) * TILE_SIZE + 24);
-      this.spawnUnit('sea_raider', 'sea_peoples', (eastCampTx + 3) * TILE_SIZE + 24, (eastCampTy + 1) * TILE_SIZE + 24);
-      this.spawnUnit('shardana_torchbearer', 'sea_peoples', (eastCampTx + 1) * TILE_SIZE + 24, (eastCampTy + 3) * TILE_SIZE + 24);
+      this.spawnUnit('shardana_torchbearer', 'sea_peoples', (northCampTx + 3) * TILE_SIZE + 24, (northCampTy + 1) * TILE_SIZE + 24);
     } else if (scenario.id === 'scenario_03_gate_of_cedars') {
       // Scenario 3: Highland fortress safeguarding the Gate of Cedars
       this.gridGraph.setFoundation(pStart.tx, pStart.ty, 4, 4, true);
@@ -649,41 +638,52 @@ class GameApp {
       }
     }
 
-    // 3. Cedar Groves in Citadel Courtyards & Ravines for Timber
+    // 3. Abundant Cedar Groves in Citadel Courtyards, Plains & Ravines for Timber
     this.decorations = [];
     const treeCoords: Array<{ x: number; y: number }> = [];
 
-    // Inner sacred grove
+    // Inner courtyard grove right next to player's base (x: 21..27, y: 22..27)
+    for (let i = 0; i < 18; i++) {
+      const tx = 21 + Math.floor((Math.sin(i * 1.9) * 0.5 + 0.5) * 6);
+      const ty = 22 + Math.floor((Math.cos(i * 2.2) * 0.5 + 0.5) * 5);
+      treeCoords.push({ x: tx, y: ty });
+    }
+
+    // Southern highland grove (x: 26..38, y: 36..46)
+    for (let i = 0; i < 24; i++) {
+      const tx = 26 + Math.floor((Math.sin(i * 1.5) * 0.5 + 0.5) * 12);
+      const ty = 36 + Math.floor((Math.cos(i * 2.5) * 0.5 + 0.5) * 10);
+      treeCoords.push({ x: tx, y: ty });
+    }
+
+    // Eastern fertile groves (x: 36..48, y: 20..32)
+    for (let i = 0; i < 24; i++) {
+      const tx = 36 + Math.floor((Math.sin(i * 2.1) * 0.5 + 0.5) * 12);
+      const ty = 20 + Math.floor((Math.cos(i * 1.7) * 0.5 + 0.5) * 12);
+      treeCoords.push({ x: tx, y: ty });
+    }
+
+    // North plateau grove (x: 22..28, y: 10..18)
     for (let i = 0; i < 16; i++) {
-      const tx = 24 + Math.floor((Math.sin(i * 1.9) * 0.5 + 0.5) * 8);
-      const ty = 20 + Math.floor((Math.cos(i * 2.2) * 0.5 + 0.5) * 6);
+      const tx = 22 + Math.floor((Math.sin(i * 2.4) * 0.5 + 0.5) * 6);
+      const ty = 10 + Math.floor((Math.cos(i * 1.8) * 0.5 + 0.5) * 8);
       treeCoords.push({ x: tx, y: ty });
     }
 
-    // Southern highland grove
-    for (let i = 0; i < 20; i++) {
-      const tx = 30 + Math.floor((Math.sin(i * 1.5) * 0.5 + 0.5) * 12);
-      const ty = 40 + Math.floor((Math.cos(i * 2.5) * 0.5 + 0.5) * 8);
-      treeCoords.push({ x: tx, y: ty });
-    }
-
-    // North gorge grove
-    for (let i = 0; i < 14; i++) {
-      const tx = 24 + Math.floor((Math.sin(i * 2.4) * 0.5 + 0.5) * 10);
-      const ty = 8 + Math.floor((Math.cos(i * 1.8) * 0.5 + 0.5) * 6);
-      treeCoords.push({ x: tx, y: ty });
-    }
-
+    const placed = new Set<string>();
     for (const pos of treeCoords) {
-      if (this.gridGraph.isWalkable(pos.x, pos.y)) {
+      const key = `${pos.x},${pos.y}`;
+      if (placed.has(key)) continue;
+      const tile = this.tileRenderer.getTile(pos.x, pos.y);
+      if (tile === 'plain' || tile === 'fertile_soil') {
+        placed.add(key);
         this.decorations.push({
           x: pos.x + 0.5,
           y: pos.y + 0.5,
-          type: 'tree_pine',
-          max: 200,
-          current: 200
+          type: 'cedar',
+          current: 240,
+          max: 240
         });
-        this.gridGraph.setTileCost(pos.x, pos.y, 0);
       }
     }
   }

@@ -96,14 +96,14 @@ export class TacticalDirector {
       for (const camp of hostileCamps) {
         let timer = this.campSpawnTimers.get(camp.id);
         if (timer === undefined) {
-          // Timer iniziale: prima incursione dopo 35-45 secondi
-          timer = 35 + Math.random() * 10;
+          // Timer iniziale: prima incursione dopo 80-100 secondi
+          timer = 80 + Math.random() * 20;
           this.campSpawnTimers.set(camp.id, timer);
         } else {
           timer -= dt;
           if (timer <= 0) {
-            // Nuova sortita di predoni ogni 38-48 secondi
-            this.campSpawnTimers.set(camp.id, 38 + Math.random() * 10);
+            // Nuova sortita di predoni ogni 65-85 secondi
+            this.campSpawnTimers.set(camp.id, 65 + Math.random() * 20);
             this.spawnCampRaidingParty(camp, graph, units, targetTx, targetTy);
           } else {
             this.campSpawnTimers.set(camp.id, timer);
@@ -544,7 +544,6 @@ export class TacticalDirector {
     // Drappello rapido d'incursione dal villaggio/campo nemico
     const party = [
       'sea_raider',
-      Math.random() > 0.4 ? 'shardana_torchbearer' : 'sea_raider',
       'shardana_torchbearer'
     ];
 
