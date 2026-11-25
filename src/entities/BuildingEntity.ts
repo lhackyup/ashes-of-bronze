@@ -86,6 +86,9 @@ export class BuildingEntity {
   }
 
   public takeDamage(amount: number): boolean {
+    if (this.def.indestructible || this.defId === 'lion_den') {
+      return false;
+    }
     this.hp -= amount;
     return this.hp <= 0;
   }

@@ -51,6 +51,22 @@ export class UnitFSM {
     UnitFSM.resolveBuildingCollisions(u, buildings);
   }
 
+  private static isEnemy(uOwner: string, targetOwner: string): boolean {
+    if (uOwner === 'sea_peoples') {
+      // Sea Peoples exclusively target the player; they ignore neutral wildlife/lions and neutral dens
+      return targetOwner === 'player';
+    }
+    if (uOwner === 'neutral') {
+      // Neutral wildlife predators hunt only player humans
+      return targetOwner === 'player';
+    }
+    if (uOwner === 'player') {
+      // Player defends against any hostile faction (sea_peoples and wild predators)
+      return targetOwner !== 'player';
+    }
+    return targetOwner !== uOwner;
+  }
+
   private static handleIdle(
     u: UnitEntity,
     units: UnitEntity[],
@@ -60,7 +76,7 @@ export class UnitFSM {
     if (u.def.category === 'infantry' || u.def.category === 'skirmisher' || u.def.category === 'chariot') {
       const aggroRange = (u.def.attackRange || 2) * TILE_SIZE + 320;
       for (const other of units) {
-        if (other.owner !== u.owner && other.hp > 0) {
+        if (UnitFSM.isEnemy(u.owner, other.owner) && other.hp > 0) {
           const dist = Math.hypot(other.x - u.x, other.y - u.y);
           if (dist <= aggroRange) {
             u.targetEntityId = other.id;
@@ -71,9 +87,9 @@ export class UnitFSM {
         }
       }
 
-      // Se non ci sono unità nemiche vicine, cerca edifici nemici
+      // Se non ci sono unità nemiche vicine, cerca edifici nemici (esclude strutture indistruttibili come le caverne naturali)
       for (const b of buildings) {
-        if (b.owner !== u.owner && b.hp > 0) {
+        if (UnitFSM.isEnemy(u.owner, b.owner) && b.hp > 0 && !b.def.indestructible && b.defId !== 'lion_den') {
           const dist = Math.hypot(b.centerX - u.x, b.centerY - u.y);
           if (dist <= aggroRange) {
             u.targetEntityId = b.id;
@@ -86,11 +102,11 @@ export class UnitFSM {
   }
 
   private static handleMove(u: UnitEntity, dt: number, graph: GridGraph, units?: UnitEntity[]): void {
-    // If military unit on a manual move order, scan for encroaching enemies within aggro sight (4 tiles)
+    // If military unit on a manual move order, scan for encroaching enemies within aggro sight (5 tiles)
     if (u.state === 'MOVE_TO' && units && (u.def.category === 'infantry' || u.def.category === 'skirmisher' || u.def.category === 'chariot')) {
-      const aggroRange = (u.def.attackRange || 1.5) * TILE_SIZE + 80;
+      const aggroRange = (u.def.attackRange || 2.0) * TILE_SIZE + 180;
       for (const other of units) {
-        if (other.owner !== u.owner && other.hp > 0) {
+        if (UnitFSM.isEnemy(u.owner, other.owner) && other.hp > 0) {
           const dist = Math.hypot(other.x - u.x, other.y - u.y);
           if (dist <= aggroRange) {
             u.targetEntityId = other.id;
@@ -104,12 +120,14 @@ export class UnitFSM {
 
     const curTx = Math.floor(u.x / TILE_SIZE);
     const curTy = Math.floor(u.y / TILE_SIZE);
-    const waterEdgePx = 6 * TILE_SIZE + 24;
+    const waterEdgePx = 24;
 
     if (u.path.length === 0) {
-      u.x = Math.max(waterEdgePx, curTx * TILE_SIZE + 24);
+      u.x = curTx * TILE_SIZE + 24;
       u.y = curTy * TILE_SIZE + 24;
-      u.state = 'IDLE';
+      if (u.state !== 'ATTACK_TARGET') {
+        u.state = 'IDLE';
+      }
       return;
     }
 
@@ -166,7 +184,9 @@ export class UnitFSM {
         const isAdjacent = Math.abs(curTx - goalTx) <= 1 && Math.abs(curTy - goalTy) <= 1;
         if (isAdjacent) {
           u.path = [];
-          u.state = 'IDLE';
+          if (u.state !== 'ATTACK_TARGET') {
+            u.state = 'IDLE';
+          }
           return;
         }
 
@@ -200,7 +220,9 @@ export class UnitFSM {
         if (bestAdjTile) {
           if (curTx === bestAdjTile.tx && curTy === bestAdjTile.ty) {
             u.path = [];
-            u.state = 'IDLE';
+            if (u.state !== 'ATTACK_TARGET') {
+              u.state = 'IDLE';
+            }
             return;
           }
           goalTx = bestAdjTile.tx;
@@ -208,7 +230,9 @@ export class UnitFSM {
         } else {
           // No free tile around destination: stop in current tile center
           u.path = [];
-          u.state = 'IDLE';
+          if (u.state !== 'ATTACK_TARGET') {
+            u.state = 'IDLE';
+          }
           return;
         }
       }
@@ -344,10 +368,8 @@ export class UnitFSM {
     const isAdjacentTile = Math.abs(curTx - destTx) <= 1 && Math.abs(curTy - destTy) <= 1;
 
     if (dist <= attackRangePx || (!isRanged && isAdjacentTile)) {
-      // In gittata: ferma il movimento, centra sulla casella e attacca
+      // In gittata: ferma il movimento e attacca
       u.path = [];
-      u.x = Math.max(6 * TILE_SIZE + 24, curTx * TILE_SIZE + 24);
-      u.y = curTy * TILE_SIZE + 24;
 
       if (u.attackCooldown <= 0) {
         u.attackCooldown = u.def.attackCooldown || 1.0;
@@ -367,6 +389,17 @@ export class UnitFSM {
           if (isBuilding) {
             const b = buildings.find(b => b.id === u.targetEntityId);
             if (b) {
+              if (b.def.indestructible || b.defId === 'lion_den') {
+                EventBus.get().emit('fx:floating_text', {
+                  text: 'INDESTRUCTIBLE!',
+                  color: '#94a3b8',
+                  x: b.centerX,
+                  y: b.centerY - 24
+                });
+                u.targetEntityId = null;
+                u.state = 'IDLE';
+                return;
+              }
               const dmg = u.def.damage || 15;
               EventBus.get().emit('fx:floating_text', {
                 text: `-${dmg}`,
@@ -385,6 +418,7 @@ export class UnitFSM {
                 EventBus.get().emit('combat:building_destroyed', b);
                 u.targetEntityId = null;
                 u.state = 'IDLE';
+                this.handleIdle(u, units, buildings);
               }
             }
           } else {
@@ -415,42 +449,65 @@ export class UnitFSM {
                 EventBus.get().emit('combat:unit_killed', victim);
                 u.targetEntityId = null;
                 u.state = 'IDLE';
-              } else if (victim.state === 'IDLE' || victim.state === 'MOVE_TO') {
-                // Immediate tactical retaliation against the attacker
-                victim.targetEntityId = u.id;
-                victim.state = 'ATTACK_TARGET';
+                // Immediately acquire another target if available
+                this.handleIdle(u, units, buildings);
+              } else if (victim.targetEntityId === null || victim.state === 'IDLE' || victim.state === 'MOVE_TO') {
+                // Immediate tactical retaliation against the attacker if valid enemy
+                if (UnitFSM.isEnemy(victim.owner, u.owner)) {
+                  victim.targetEntityId = u.id;
+                  victim.state = 'ATTACK_TARGET';
+                  victim.path = [];
+                }
               }
             }
           }
         }
       }
     } else {
-      // Out of attack range: close distance towards target using pathfinding along the grid
-      if (dist > attackRangePx + 12 && (!isAdjacentTile || isRanged)) {
-        // Recompute path towards target if we have no path
-        if (u.path.length === 0) {
-          const pathCoords = AStar.findPath(_graph, { tx: curTx, ty: curTy }, { tx: destTx, ty: destTy }, 2000);
-          if (pathCoords.length > 0) {
-            const finalCoords = (pathCoords.length > 1 && pathCoords[0].tx === curTx && pathCoords[0].ty === curTy)
-              ? pathCoords.slice(1)
-              : pathCoords;
-            u.path = finalCoords.map(c => ({
-              x: Math.max(6 * TILE_SIZE + 24, c.tx * TILE_SIZE + 24),
-              y: c.ty * TILE_SIZE + 24
-            }));
-          }
+      // Out of attack range: close distance towards target smoothly
+      if (u.path.length === 0) {
+        const pathCoords = AStar.findPath(_graph, { tx: curTx, ty: curTy }, { tx: destTx, ty: destTy }, 2500);
+        if (pathCoords.length > 0) {
+          const finalCoords = (pathCoords.length > 1 && pathCoords[0].tx === curTx && pathCoords[0].ty === curTy)
+            ? pathCoords.slice(1)
+            : pathCoords;
+          u.path = finalCoords.map(c => ({
+            x: c.tx * TILE_SIZE + 24,
+            y: c.ty * TILE_SIZE + 24
+          }));
+        }
+      }
+
+      if (u.path.length > 0) {
+        const wp = u.path[0];
+        const dx = wp.x - u.x;
+        const dy = wp.y - u.y;
+        const dWp = Math.hypot(dx, dy);
+        const step = u.def.speed * TILE_SIZE * dt;
+        if (dWp <= step || dWp < 6) {
+          u.x = wp.x;
+          u.y = wp.y;
+          u.path.shift();
+        } else {
+          u.x += (dx / dWp) * step;
+          u.y += (dy / dWp) * step;
         }
 
-        if (u.path.length > 0) {
-          this.handleMove(u, dt, _graph, units);
-        } else {
-          const step = u.def.speed * TILE_SIZE * dt;
-          const moveDist = isBuilding ? Math.min(step, Math.max(0, dist - attackRangePx * 0.4)) : step;
-          if (dist > 0) {
-            u.x += (attackDx / dist) * moveDist;
-            u.y += (attackDy / dist) * moveDist;
-            if (u.x < 6 * TILE_SIZE + 24) u.x = 6 * TILE_SIZE + 24;
-          }
+        // Check if now arrived in range during movement
+        const currentDist = Math.hypot(targetX - u.x, targetY - u.y);
+        const nowTx = Math.floor(u.x / TILE_SIZE);
+        const nowTy = Math.floor(u.y / TILE_SIZE);
+        const nowAdjacent = Math.abs(nowTx - destTx) <= 1 && Math.abs(nowTy - destTy) <= 1;
+        if (currentDist <= attackRangePx || (!isRanged && nowAdjacent)) {
+          u.path = [];
+        }
+      } else {
+        // Direct bee-line closing when path is clear or close
+        const step = u.def.speed * TILE_SIZE * dt;
+        if (dist > 0) {
+          const moveDist = Math.min(step, Math.max(0, dist - (isRanged ? attackRangePx * 0.7 : 36)));
+          u.x += (attackDx / dist) * moveDist;
+          u.y += (attackDy / dist) * moveDist;
         }
       }
     }
@@ -508,22 +565,20 @@ export class UnitFSM {
   }
 
   // --- Strict Unit-to-Unit Collision & Tile Occupancy Separation ---
-  // Guarantees stationary units are firmly locked to the exact center of their tile.
-  // Stationary units never share a tile. Moving units avoid occupied tiles dynamically via handleMove.
+  // Guarantees idle units do not stack infinitely on the same tile.
+  // Units actively in combat or marching are NEVER disrupted or forced into IDLE!
   public static resolveUnitCollisions(units: UnitEntity[], buildings: BuildingEntity[]): void {
-    const minWaterX = 6 * TILE_SIZE + 24;
-
-    // 1. Lock all stationary units firmly to the exact center of their tile
     const occupiedTiles = new Map<number, UnitEntity>();
 
     for (const u of units) {
       if (u.hp <= 0) continue;
-      const isStationary = u.state === 'IDLE' || u.state === 'WAITING_STORAGE' || u.path.length === 0;
+      // Do NOT interrupt combat, attacking units, or units with active orders!
+      const isStationary = (u.state === 'IDLE' || u.state === 'WAITING_STORAGE') && u.path.length === 0;
       if (!isStationary) continue;
 
       const tx = Math.floor(u.x / TILE_SIZE);
       const ty = Math.floor(u.y / TILE_SIZE);
-      u.x = Math.max(minWaterX, tx * TILE_SIZE + 24);
+      u.x = tx * TILE_SIZE + 24;
       u.y = ty * TILE_SIZE + 24;
 
       const key = ty * 10000 + tx;
@@ -531,7 +586,7 @@ export class UnitFSM {
       if (!resident) {
         occupiedTiles.set(key, u);
       } else {
-        // Two stationary units sharing the exact same tile: relocate the secondary unit to the nearest free adjacent tile
+        // Two idle stationary units sharing the exact same tile: relocate the secondary unit to the nearest free adjacent tile
         const neighborOffsets = [
           { dx: 0, dy: 1 }, { dx: 0, dy: -1 }, { dx: 1, dy: 0 }, { dx: -1, dy: 0 },
           { dx: 1, dy: 1 }, { dx: -1, dy: 1 }, { dx: 1, dy: -1 }, { dx: -1, dy: -1 },
@@ -542,7 +597,7 @@ export class UnitFSM {
           const atx = tx + off.dx;
           const aty = ty + off.dy;
           const aKey = aty * 10000 + atx;
-          if (atx >= 6 && !occupiedTiles.has(aKey)) {
+          if (!occupiedTiles.has(aKey)) {
             const insideB = buildings.some(b =>
               b.defId !== 'cyclopean_slab' &&
               atx >= b.tx && atx < b.tx + b.def.width &&
@@ -552,7 +607,6 @@ export class UnitFSM {
               u.x = atx * TILE_SIZE + 24;
               u.y = aty * TILE_SIZE + 24;
               u.path = [];
-              u.state = 'IDLE';
               occupiedTiles.set(aKey, u);
               break;
             }
@@ -561,10 +615,9 @@ export class UnitFSM {
       }
     }
 
-    // 2. Eject any unit from building interiors and keep out of deep sea
+    // 2. Eject any unit from solid building interiors
     for (const u of units) {
       if (u.hp <= 0) continue;
-      if (u.x < minWaterX) u.x = minWaterX;
       UnitFSM.resolveBuildingCollisions(u, buildings);
     }
   }

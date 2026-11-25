@@ -40,7 +40,7 @@ class GameApp {
   private economy!: EconomySystem;
   private combat!: CombatSystem;
   private tacticalDirector!: TacticalDirector;
-  private wildlifeDirector!: WildlifeDirector;
+  private wildlifeDirector: WildlifeDirector | null = null;
   private hud!: HUDController;
 
   private titleScreen!: TitleScreen;
@@ -186,22 +186,27 @@ class GameApp {
     }
 
     // Initialize Wildlife Director & Lion's Rocky Den (placed in rugged periphery)
-    const denTx = scenario.id === 'scenario_02_last_cargo_alashiya' ? 36 : 38;
-    const denTy = scenario.id === 'scenario_02_last_cargo_alashiya' ? 8 : 10;
-    this.wildlifeDirector = new WildlifeDirector(denTx, denTy);
-    this.wildlifeDirector.initDen((defId, owner, tx, ty) => this.spawnBuilding(defId, owner, tx, ty, true));
+    // ONLY initialize in Scenario 2 (Shallows of Ugarit); Scenario 1 is strictly about the coastal redoubt without wildlife
+    if (scenario.id === 'scenario_02_last_cargo_alashiya') {
+      const denTx = 36;
+      const denTy = 8;
+      this.wildlifeDirector = new WildlifeDirector(denTx, denTy);
+      this.wildlifeDirector.initDen((defId, owner, tx, ty) => this.spawnBuilding(defId, owner, tx, ty, true));
 
-    // Listen for lion slain trophy reward
-    EventBus.get().on('wildlife:lion_slain', (data: { grainReward: number }) => {
-      this.economy.resources.grain = (this.economy.resources.grain || 0) + data.grainReward;
-      EventBus.get().emit('economy:changed', this.economy.resources);
-      EventBus.get().emit('fx:floating_text', {
-        text: `+${data.grainReward} GRAIN (LION TROPHY)!`,
-        color: '#2de0a5',
-        x: (this.wildlifeDirector.denTx + 1) * TILE_SIZE,
-        y: (this.wildlifeDirector.denTy + 1) * TILE_SIZE - 20
+      // Listen for lion slain trophy reward
+      EventBus.get().on('wildlife:lion_slain', (data: { grainReward: number }) => {
+        this.economy.resources.grain = (this.economy.resources.grain || 0) + data.grainReward;
+        EventBus.get().emit('economy:changed', this.economy.resources);
+        EventBus.get().emit('fx:floating_text', {
+          text: `+${data.grainReward} GRAIN (LION TROPHY)!`,
+          color: '#2de0a5',
+          x: ((this.wildlifeDirector?.denTx || 36) + 1) * TILE_SIZE,
+          y: ((this.wildlifeDirector?.denTy || 8) + 1) * TILE_SIZE - 20
+        });
       });
-    });
+    } else {
+      this.wildlifeDirector = null;
+    }
 
     this.camera.centerOn(pStart.tx * TILE_SIZE, pStart.ty * TILE_SIZE);
     this.resizeCanvas();
@@ -953,7 +958,8 @@ class GameApp {
         const clickTy = Math.floor(p1.y / TILE_SIZE);
         const clickedEnemy = this.units.find(
           u => u.owner !== 'player' && u.hp > 0 &&
-          (Math.hypot(u.x - p1.x, u.y - p1.y) < 30 ||
+          (Math.hypot(u.x - p1.x, u.y - p1.y) < 42 ||
+           (Math.abs(u.x - p1.x) <= 28 && Math.abs(u.y - p1.y) <= 38) ||
            (Math.floor(u.x / TILE_SIZE) === clickTx && Math.floor(u.y / TILE_SIZE) === clickTy))
         );
 
@@ -1074,36 +1080,41 @@ class GameApp {
 
     EventBus.get().emit('audio:command');
 
-    let targetTx = Math.floor(wx / TILE_SIZE);
-    let targetTy = Math.floor(wy / TILE_SIZE);
+    const clickTx = Math.floor(wx / TILE_SIZE);
+    const clickTy = Math.floor(wy / TILE_SIZE);
 
-    // Prevent land units from marching into the sea without boats:
-    // Western sea occupies x < 6. Clamp destination to the sandy beach shoreline (x = 6)
-    const isWater = targetTx < 6 || this.tileRenderer.getTile(targetTx, targetTy) === 'water';
-    if (isWater) {
-      targetTx = 6;
-      wx = 6 * TILE_SIZE + 24;
-      EventBus.get().emit('fx:floating_text', {
-        text: 'CANNOT CROSS WATER!',
-        color: '#38bdf8',
-        x: wx,
-        y: wy - 18
-      });
-    }
-
-    // Check if clicking on an enemy entity
+    // Check if clicking on an enemy unit (with generous bounding radius and box)
     const targetEnemyUnit = this.units.find(
       u => u.owner !== 'player' && u.hp > 0 &&
-      (Math.hypot(u.x - wx, u.y - wy) < 32 ||
-       (Math.floor(u.x / TILE_SIZE) === targetTx && Math.floor(u.y / TILE_SIZE) === targetTy))
+      (Math.hypot(u.x - wx, u.y - wy) < 42 ||
+       (Math.abs(u.x - wx) <= 28 && Math.abs(u.y - wy) <= 38) ||
+       (Math.floor(u.x / TILE_SIZE) === clickTx && Math.floor(u.y / TILE_SIZE) === clickTy))
     );
 
     // Check if clicking on an enemy building
     const targetEnemyBuilding = this.buildings.find(
       b => b.owner !== 'player' && b.hp > 0 &&
-      targetTx >= b.tx && targetTx < b.tx + b.def.width &&
-      targetTy >= b.ty && targetTy < b.ty + b.def.height
+      clickTx >= b.tx && clickTx < b.tx + b.def.width &&
+      clickTy >= b.ty && clickTy < b.ty + b.def.height
     );
+
+    let targetTx = clickTx;
+    let targetTy = clickTy;
+
+    // Prevent land units from marching into deep sea only if NOT targeting an enemy entity
+    if (!targetEnemyUnit && !targetEnemyBuilding) {
+      const isWater = targetTx < 6 || this.tileRenderer.getTile(targetTx, targetTy) === 'water';
+      if (isWater) {
+        targetTx = 6;
+        wx = 6 * TILE_SIZE + 24;
+        EventBus.get().emit('fx:floating_text', {
+          text: 'CANNOT CROSS WATER!',
+          color: '#38bdf8',
+          x: wx,
+          y: wy - 18
+        });
+      }
+    }
 
     if (targetEnemyUnit) {
       EventBus.get().emit('fx:floating_text', {
@@ -1531,13 +1542,15 @@ class GameApp {
     this.tacticalDirector.update(dt, this.gridGraph, this.units, 12, 28, this.buildings);
 
     // Update Wildlife Director (Levantine Lion den sorties & hunting AI)
-    this.wildlifeDirector.update(
-      dt,
-      this.units,
-      this.buildings,
-      this.gridGraph,
-      (defId, owner, x, y) => this.spawnUnit(defId, owner, x, y)
-    );
+    if (this.wildlifeDirector) {
+      this.wildlifeDirector.update(
+        dt,
+        this.units,
+        this.buildings,
+        this.gridGraph,
+        (defId, owner, x, y) => this.spawnUnit(defId, owner, x, y)
+      );
+    }
 
     // Update Campaign Objective Progression & Evaluation
     if (this.objectiveManager) {

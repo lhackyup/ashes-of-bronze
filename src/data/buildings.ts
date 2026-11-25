@@ -136,10 +136,11 @@ export const BUILDINGS: Record<string, BuildingDef> = {
     category: 'defense',
     width: 2,
     height: 2,
-    maxHp: 2000,
+    maxHp: 99999,
     cost: {},
     buildTime: 0,
-    description: 'A shadowy natural cavern in the rugged crags. The lair of a fierce Levantine Lion.',
-    requiresFoundation: false
+    description: 'An ancient natural cavern cleft deep into the bedrock. Indestructible lair of the Levantine Lion.',
+    requiresFoundation: false,
+    indestructible: true
   }
 };

@@ -114,9 +114,39 @@ export class TacticalDirector {
             req.count--;
             ship.unitsSpawned++;
 
-            const spawnTx = 7;
-            const yOffset = (ship.unitsSpawned - (ship.totalUnitsCount + 1) / 2) * 1.6;
-            const spawnTy = Math.max(2, Math.min(graph.height - 3, Math.round(ship.ty + yOffset)));
+            // Find a walkable shoreline/sandbar tile near docking point
+            const startScanX = Math.max(1, Math.floor(ship.targetDockX / TILE_SIZE));
+            let spawnTx = -1;
+            let spawnTy = ship.ty;
+
+            // Search for an unoccupied walkable tile first, then any walkable tile
+            const yOffsets = [0, 1, -1, 2, -2, 3, -3];
+            for (let x = startScanX; x < Math.min(graph.width - 3, startScanX + 8); x++) {
+              for (const yo of yOffsets) {
+                const testY = Math.max(1, Math.min(graph.height - 2, ship.ty + yo));
+                if (graph.isWalkable(x, testY)) {
+                  const isTileOccupied = units.some(u =>
+                    u.hp > 0 && Math.hypot(u.x - (x * TILE_SIZE + 24), u.y - (testY * TILE_SIZE + 24)) < 24
+                  );
+                  if (!isTileOccupied) {
+                    spawnTx = x;
+                    spawnTy = testY;
+                    break;
+                  } else if (spawnTx === -1) {
+                    spawnTx = x;
+                    spawnTy = testY;
+                  }
+                }
+              }
+              if (spawnTx !== -1 && !units.some(u => u.hp > 0 && Math.hypot(u.x - (spawnTx * TILE_SIZE + 24), u.y - (spawnTy * TILE_SIZE + 24)) < 24)) {
+                break;
+              }
+            }
+
+            if (spawnTx === -1) {
+              spawnTx = Math.min(graph.width - 3, startScanX + 2);
+              spawnTy = ship.ty;
+            }
 
             const spawned = new UnitEntity(
               this.nextEntityId++,
@@ -161,47 +191,83 @@ export class TacticalDirector {
       }
     }
 
-    // Applica spinta vettoriale del Flow Field alle unità nemiche senza ordine manuale
+    // Applica aggressione attiva e spinta del Flow Field alle unità nemiche
     for (const u of units) {
-      if (u.owner === 'sea_peoples' && u.state === 'IDLE') {
-        const tx = Math.floor(u.x / TILE_SIZE);
-        const ty = Math.floor(u.y / TILE_SIZE);
-        // Trace flow field forward up to 8 tiles to create a smooth, continuous march
-        const path: Array<{ x: number; y: number }> = [];
-        let currTx = tx;
-        let currTy = ty;
+      if (u.owner === 'sea_peoples' && (u.state === 'IDLE' || u.state === 'MOVE_TO')) {
+        // 1. Controlla prima se c'è un'unità del giocatore a distanza di aggro (raggio di 260px ~ 5.5 caselle)
+        let nearestPlayerTarget: UnitEntity | BuildingEntity | null = null;
+        let nearestDist = 260;
 
-        for (let step = 0; step < 8; step++) {
-          const dir = this.flowField.getVectorAt(currTx, currTy);
-          if (dir.x === 0 && dir.y === 0) break;
-          const stepX = Math.round(dir.x);
-          const stepTy = Math.round(dir.y);
-          const nextTx = currTx + stepX;
-          const nextTy = currTy + stepTy;
-
-          if (nextTx < 6 || !graph.isInBounds(nextTx, nextTy) || !graph.isWalkable(nextTx, nextTy)) break;
-          if (nextTx === currTx && nextTy === currTy) break;
-
-          path.push({
-            x: nextTx * TILE_SIZE + 24,
-            y: nextTy * TILE_SIZE + 24
-          });
-          currTx = nextTx;
-          currTy = nextTy;
+        for (const target of units) {
+          if (target.owner === 'player' && target.hp > 0) {
+            const d = Math.hypot(target.x - u.x, target.y - u.y);
+            if (d < nearestDist) {
+              nearestDist = d;
+              nearestPlayerTarget = target;
+            }
+          }
         }
 
-        if (path.length > 0) {
-          u.path = path;
-          u.state = 'MOVE_TO';
-        } else {
-          // Flow field neutral or stalled: plan direct march towards player target
-          const pathCoords = AStar.findPath(graph, { tx, ty }, { tx: targetTx, ty: targetTy }, 2000);
-          if (pathCoords.length > 1) {
-            u.path = pathCoords.slice(1, 10).map((c: GridCoord) => ({
-              x: Math.max(6 * TILE_SIZE + 24, c.tx * TILE_SIZE + 24),
-              y: c.ty * TILE_SIZE + 24
-            }));
+        if (!nearestPlayerTarget && buildings) {
+          for (const b of buildings) {
+            if (b.owner === 'player' && b.hp > 0 && b.defId !== 'cyclopean_slab') {
+              const d = Math.hypot(b.centerX - u.x, b.centerY - u.y);
+              if (d < nearestDist) {
+                nearestDist = d;
+                nearestPlayerTarget = b;
+              }
+            }
+          }
+        }
+
+        if (nearestPlayerTarget) {
+          u.targetEntityId = nearestPlayerTarget.id;
+          u.state = 'ATTACK_TARGET';
+          u.path = [];
+          continue;
+        }
+
+        // 2. Se non ha nemici immediati e si trova in IDLE, prosegue la marcia verso gli obiettivi
+        if (u.state === 'IDLE') {
+          const tx = Math.floor(u.x / TILE_SIZE);
+          const ty = Math.floor(u.y / TILE_SIZE);
+          // Trace flow field forward up to 8 tiles to create a smooth, continuous march
+          const path: Array<{ x: number; y: number }> = [];
+          let currTx = tx;
+          let currTy = ty;
+
+          for (let step = 0; step < 8; step++) {
+            const dir = this.flowField.getVectorAt(currTx, currTy);
+            if (dir.x === 0 && dir.y === 0) break;
+            const stepX = Math.round(dir.x);
+            const stepTy = Math.round(dir.y);
+            const nextTx = currTx + stepX;
+            const nextTy = currTy + stepTy;
+
+            if (nextTx < 0 || !graph.isInBounds(nextTx, nextTy) || !graph.isWalkable(nextTx, nextTy)) break;
+            if (nextTx === currTx && nextTy === currTy) break;
+
+            path.push({
+              x: nextTx * TILE_SIZE + 24,
+              y: nextTy * TILE_SIZE + 24
+            });
+            currTx = nextTx;
+            currTy = nextTy;
+          }
+
+          if (path.length > 0) {
+            u.path = path;
             u.state = 'MOVE_TO';
+          } else {
+            // Flow field neutral or stalled: plan direct march towards player target
+            const pathCoords = AStar.findPath(graph, { tx, ty }, { tx: targetTx, ty: targetTy }, 2000);
+            if (pathCoords.length > 1) {
+              u.path = pathCoords.slice(1, 10).map((c: GridCoord) => ({
+                x: c.tx * TILE_SIZE + 24,
+                y: c.ty * TILE_SIZE + 24
+              }));
+              u.state = 'MOVE_TO';
+            }
           }
         }
       }
@@ -269,17 +335,38 @@ export class TacticalDirector {
     }
 
     if (wave.spawnEdge === 'west' || !wave.spawnEdge) {
-      // Approccio navale: la galea da guerra Shardana arriva gradualmente via mare da ovest
+      // Find the first walkable shore tile along or adjacent to targetTy
+      let shoreTx = -1;
+      let shoreTy = targetTy;
+      const candidateRows = [targetTy, targetTy - 1, targetTy + 1, targetTy - 2, targetTy + 2, targetTy - 3, targetTy + 3];
+      for (const row of candidateRows) {
+        if (row < 2 || row >= graph.height - 2) continue;
+        for (let x = 3; x < Math.min(graph.width - 5, 28); x++) {
+          if (graph.isWalkable(x, row)) {
+            shoreTx = x;
+            shoreTy = row;
+            break;
+          }
+        }
+        if (shoreTx !== -1) break;
+      }
+
+      if (shoreTx === -1) {
+        shoreTx = 7;
+        shoreTy = targetTy;
+      }
+
+      // Docking X position for the ship: stop immediately at the water-shore margin
       const startX = -150;
-      const targetDockX = 5.3 * TILE_SIZE + 24;
+      const targetDockX = Math.max(2 * TILE_SIZE, (shoreTx - 1.2) * TILE_SIZE + 24);
       const totalUnits = wave.units.reduce((sum, u) => sum + u.count, 0);
 
       const ship: LandingShip = {
         id: this.nextEntityId++,
         x: startX,
-        y: targetTy * TILE_SIZE + 24,
+        y: shoreTy * TILE_SIZE + 24,
         tx: startX / TILE_SIZE,
-        ty: targetTy,
+        ty: shoreTy,
         targetDockX,
         speed: 75,
         waveNum: this.totalShipsLanded + 1,
@@ -315,6 +402,28 @@ export class TacticalDirector {
           if (wave.spawnEdge === 'south') {
             spawnTx = Math.floor(graph.width / 2) + c * 2;
             spawnTy = graph.height - 3;
+          }
+
+          // Ensure spawn tile is walkable
+          if (!graph.isWalkable(spawnTx, spawnTy)) {
+            let foundWalkable = false;
+            for (let step = 1; step <= 8; step++) {
+              const offsets = [
+                { dx: 0, dy: step }, { dx: 0, dy: -step },
+                { dx: step, dy: 0 }, { dx: -step, dy: 0 }
+              ];
+              for (const off of offsets) {
+                const nx = spawnTx + off.dx;
+                const ny = spawnTy + off.dy;
+                if (graph.isInBounds(nx, ny) && graph.isWalkable(nx, ny)) {
+                  spawnTx = nx;
+                  spawnTy = ny;
+                  foundWalkable = true;
+                  break;
+                }
+              }
+              if (foundWalkable) break;
+            }
           }
 
           const spawned = new UnitEntity(

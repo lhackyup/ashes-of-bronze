@@ -71,6 +71,7 @@ export interface BuildingDef {
   attackRange?: number;
   damage?: number;
   attackRate?: number; // hits per sec
+  indestructible?: boolean;
 }
 
 export type UnitCategory = 'worker' | 'infantry' | 'skirmisher' | 'chariot' | 'siege' | 'wildlife';

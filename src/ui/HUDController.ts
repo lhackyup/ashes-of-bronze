@@ -304,8 +304,14 @@ export class HUDController {
       } else {
         this.inspectorDescEl.textContent = selectedBuilding.def.description;
       }
-      const hpPct = Math.max(0, Math.min(100, (selectedBuilding.hp / selectedBuilding.maxHp) * 100));
-      this.inspectorHpFillEl.style.width = `${hpPct}%`;
+      if (selectedBuilding.def.indestructible || selectedBuilding.defId === 'lion_den') {
+        this.inspectorDescEl.textContent += '\n[STRUCTURE: INDESTRUCTIBLE BEDROCK CAVERN - Immune to all damage]';
+        this.inspectorHpFillEl.style.width = '100%';
+        this.inspectorHpFillEl.style.backgroundColor = '#64748b';
+      } else {
+        const hpPct = Math.max(0, Math.min(100, (selectedBuilding.hp / selectedBuilding.maxHp) * 100));
+        this.inspectorHpFillEl.style.width = `${hpPct}%`;
+      }
 
       if (actionsBox && selectedBuilding.owner === 'player' && selectedBuilding.def.producesUnits) {
         for (const uId of selectedBuilding.def.producesUnits) {

@@ -99,6 +99,20 @@ export class CombatSystem {
         if (p.targetIsBuilding) {
           const tb = buildings.find(b => b.id === p.targetId);
           if (tb) {
+            if (tb.def.indestructible || tb.defId === 'lion_den') {
+              EventBus.get().emit('fx:floating_text', {
+                text: 'IMMUNE!',
+                color: '#94a3b8',
+                x: tb.centerX,
+                y: tb.centerY - 20
+              });
+              EventBus.get().emit('fx:combat_hit', {
+                x: tb.centerX,
+                y: tb.centerY - 10,
+                color: '#64748b'
+              });
+              continue;
+            }
             EventBus.get().emit('fx:floating_text', {
               text: `-${p.damage}`,
               color: '#f59e0b',

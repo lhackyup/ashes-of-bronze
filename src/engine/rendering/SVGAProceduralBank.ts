@@ -1619,72 +1619,278 @@ export class SVGAProceduralBank {
     }
 
     // 8. Natural Wildlife Lair: Lion's Rocky Den (2x2 tiles = 96x96)
+    // Authentic 2.5D Bronze Age SVGA limestone/sandstone mountain crag with cave maw,
+    // hanging rock teeth, predatory glowing amber eyes, claw gouges, bleached bones, and scrub.
     const denCanvas = this.makeBuildingSprite(96, (ctx) => {
-      // Natural rugged crags & shadow base
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+      // 1. Volumetric ground shadow
+      const groundG = ctx.createRadialGradient(48, 74, 10, 48, 74, 46);
+      groundG.addColorStop(0, 'rgba(0, 0, 0, 0.7)');
+      groundG.addColorStop(0.6, 'rgba(0, 0, 0, 0.4)');
+      groundG.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = groundG;
       ctx.beginPath();
-      ctx.ellipse(48, 70, 42, 20, 0, 0, Math.PI * 2);
+      ctx.ellipse(48, 74, 46, 20, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // Giant weathered boulders forming the natural cave
-      const rocks = [
-        { x: 14, y: 35, w: 32, h: 42, color: '#443a32', hi: '#6e6053' },
-        { x: 50, y: 32, w: 34, h: 46, color: '#3d342d', hi: '#635548' },
-        { x: 26, y: 16, w: 46, h: 28, color: '#52463d', hi: '#7a6a5d' },
-        { x: 8, y: 52, w: 22, h: 28, color: '#362e28', hi: '#574b41' },
-        { x: 68, y: 50, w: 22, h: 30, color: '#362e28', hi: '#574b41' },
+      // 2. Talus & scree gravel apron at cave mouth
+      const screeStones = [
+        { x: 18, y: 76, r: 3, c: '#453c35', hi: '#6e6055' },
+        { x: 26, y: 81, r: 2, c: '#38302a', hi: '#5a4d43' },
+        { x: 33, y: 78, r: 4, c: '#4e433b', hi: '#7a6a5d' },
+        { x: 42, y: 82, r: 2.5, c: '#362e28', hi: '#635448' },
+        { x: 58, y: 81, r: 3.5, c: '#483d35', hi: '#756456' },
+        { x: 67, y: 77, r: 2.5, c: '#3d342d', hi: '#695a4d' },
+        { x: 74, y: 80, r: 3, c: '#443a32', hi: '#6d5d50' },
+        { x: 81, y: 75, r: 2, c: '#332b25', hi: '#55483d' },
       ];
-
-      for (const r of rocks) {
-        ctx.fillStyle = r.color;
+      for (const s of screeStones) {
+        ctx.fillStyle = s.c;
         ctx.beginPath();
-        ctx.roundRect(r.x, r.y, r.w, r.h, 8);
+        ctx.ellipse(s.x, s.y, s.r, s.r * 0.65, 0, 0, Math.PI * 2);
         ctx.fill();
-        // Highlight crag edge
-        ctx.strokeStyle = r.hi;
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
+        ctx.fillStyle = s.hi;
+        ctx.fillRect(s.x - 1, s.y - 1, 1.5, 1);
       }
 
-      // Dark, yawning cavern maw (the lion's den entrance)
-      ctx.fillStyle = '#0a0806';
+      // 3. Main mountain crag massif (layered sedimentary limestone / sandstone)
+      // Base backfill rock polygon
+      ctx.fillStyle = '#2b231c';
       ctx.beginPath();
-      ctx.ellipse(48, 62, 18, 16, 0, 0, Math.PI * 2);
+      ctx.moveTo(8, 74);
+      ctx.lineTo(12, 42);
+      ctx.lineTo(24, 22);
+      ctx.lineTo(40, 14);
+      ctx.lineTo(60, 12);
+      ctx.lineTo(76, 20);
+      ctx.lineTo(88, 38);
+      ctx.lineTo(90, 72);
+      ctx.lineTo(78, 80);
+      ctx.lineTo(18, 82);
+      ctx.closePath();
       ctx.fill();
 
-      // Deep abyss interior gradient
-      const darkG = ctx.createRadialGradient(48, 64, 2, 48, 64, 18);
-      darkG.addColorStop(0, '#000000');
-      darkG.addColorStop(0.7, '#140f0b');
-      darkG.addColorStop(1, 'rgba(20, 15, 11, 0)');
-      ctx.fillStyle = darkG;
+      // Left Crag Pillar (sunlit facets on the left/top)
+      const leftPillarGrad = ctx.createLinearGradient(10, 20, 40, 70);
+      leftPillarGrad.addColorStop(0, '#857566');
+      leftPillarGrad.addColorStop(0.3, '#6e5f52');
+      leftPillarGrad.addColorStop(0.7, '#473d34');
+      leftPillarGrad.addColorStop(1, '#2c241e');
+      ctx.fillStyle = leftPillarGrad;
       ctx.beginPath();
-      ctx.ellipse(48, 62, 18, 16, 0, 0, Math.PI * 2);
+      ctx.moveTo(10, 74);
+      ctx.lineTo(14, 44);
+      ctx.lineTo(22, 28);
+      ctx.lineTo(36, 18);
+      ctx.lineTo(44, 28);
+      ctx.lineTo(38, 54);
+      ctx.lineTo(30, 72);
+      ctx.lineTo(16, 76);
+      ctx.closePath();
       ctx.fill();
 
-      // Subtle glowing predator eyes deep within the dark cave
+      // Right Crag Massif (shadowed & rugged)
+      const rightMassifGrad = ctx.createLinearGradient(48, 14, 88, 70);
+      rightMassifGrad.addColorStop(0, '#756658');
+      rightMassifGrad.addColorStop(0.4, '#54473d');
+      rightMassifGrad.addColorStop(0.8, '#372d26');
+      rightMassifGrad.addColorStop(1, '#221a14');
+      ctx.fillStyle = rightMassifGrad;
+      ctx.beginPath();
+      ctx.moveTo(42, 14);
+      ctx.lineTo(62, 12);
+      ctx.lineTo(78, 20);
+      ctx.lineTo(88, 38);
+      ctx.lineTo(88, 70);
+      ctx.lineTo(66, 72);
+      ctx.lineTo(58, 50);
+      ctx.lineTo(44, 28);
+      ctx.closePath();
+      ctx.fill();
+
+      // Overhanging Cave Brow / Roof shelf
+      const browGrad = ctx.createLinearGradient(28, 18, 64, 46);
+      browGrad.addColorStop(0, '#968574');
+      browGrad.addColorStop(0.5, '#6e6052');
+      browGrad.addColorStop(1, '#3b3128');
+      ctx.fillStyle = browGrad;
+      ctx.beginPath();
+      ctx.moveTo(26, 32);
+      ctx.lineTo(38, 20);
+      ctx.lineTo(58, 18);
+      ctx.lineTo(70, 28);
+      ctx.lineTo(68, 44);
+      ctx.lineTo(50, 48);
+      ctx.lineTo(34, 46);
+      ctx.closePath();
+      ctx.fill();
+
+      // Sunlit ridges & highlights (North-West light source)
+      ctx.strokeStyle = '#baa997';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      // Top rim highlight
+      ctx.moveTo(24, 23);
+      ctx.lineTo(38, 15);
+      ctx.lineTo(60, 13);
+      ctx.lineTo(74, 20);
+      // Left edge highlight
+      ctx.moveTo(13, 44);
+      ctx.lineTo(21, 28);
+      ctx.lineTo(35, 19);
+      // Brow edge
+      ctx.moveTo(28, 33);
+      ctx.lineTo(40, 22);
+      ctx.lineTo(56, 20);
+      ctx.stroke();
+
+      // Sedimentary horizontal strata lines (weathered limestone bands)
+      ctx.strokeStyle = '#231b15';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(15, 52); ctx.lineTo(32, 50);
+      ctx.moveTo(18, 62); ctx.lineTo(28, 61);
+      ctx.moveTo(64, 30); ctx.lineTo(84, 34);
+      ctx.moveTo(62, 42); ctx.lineTo(86, 46);
+      ctx.moveTo(66, 56); ctx.lineTo(86, 60);
+      ctx.stroke();
+
+      // Deep vertical crag fissures
+      ctx.strokeStyle = '#18120d';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(36, 19); ctx.lineTo(38, 36); ctx.lineTo(33, 48);
+      ctx.moveTo(62, 13); ctx.lineTo(60, 26); ctx.lineTo(65, 42);
+      ctx.stroke();
+
+      // 4. The Yawning Cave Maw (Entrance into pitch black abyss)
+      ctx.fillStyle = '#0a0705';
+      ctx.beginPath();
+      ctx.moveTo(30, 68);
+      ctx.lineTo(33, 48);
+      ctx.lineTo(42, 44);
+      ctx.lineTo(54, 43);
+      ctx.lineTo(65, 47);
+      ctx.lineTo(67, 68);
+      ctx.lineTo(58, 72);
+      ctx.lineTo(40, 72);
+      ctx.closePath();
+      ctx.fill();
+
+      // Deep interior radial abyss (infinite depth darkness)
+      const abyssGrad = ctx.createRadialGradient(49, 58, 2, 49, 58, 22);
+      abyssGrad.addColorStop(0, '#000000');
+      abyssGrad.addColorStop(0.7, '#080504');
+      abyssGrad.addColorStop(1, 'rgba(8, 5, 4, 0)');
+      ctx.fillStyle = abyssGrad;
+      ctx.beginPath();
+      ctx.ellipse(49, 58, 20, 14, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Stalactites hanging like fangs from cave entrance ceiling
+      ctx.fillStyle = '#3f352c';
+      // Tooth 1
+      ctx.beginPath(); ctx.moveTo(38, 44); ctx.lineTo(41, 44); ctx.lineTo(39.5, 50); ctx.closePath(); ctx.fill();
+      // Tooth 2
+      ctx.beginPath(); ctx.moveTo(46, 43); ctx.lineTo(49, 43); ctx.lineTo(47.5, 52); ctx.closePath(); ctx.fill();
+      // Tooth 3
+      ctx.beginPath(); ctx.moveTo(55, 44); ctx.lineTo(59, 44); ctx.lineTo(57, 51); ctx.closePath(); ctx.fill();
+      // Tooth 4 (small)
+      ctx.beginPath(); ctx.moveTo(62, 46); ctx.lineTo(64, 46); ctx.lineTo(63, 49); ctx.closePath(); ctx.fill();
+
+      // Stalactite highlights
+      ctx.fillStyle = '#7a6a5b';
+      ctx.fillRect(39, 45, 1, 3);
+      ctx.fillRect(47, 44, 1, 5);
+      ctx.fillRect(56, 45, 1, 4);
+
+      // 5. Menacing predatory feline eyes peering from deep inside cave
+      // Outer amber glow
+      ctx.fillStyle = '#f59e0b';
+      ctx.beginPath();
+      ctx.arc(45, 57, 1.8, 0, Math.PI * 2);
+      ctx.arc(53, 57, 1.8, 0, Math.PI * 2);
+      ctx.fill();
+      // Bright yellow iris & pinpoint
       ctx.fillStyle = '#fef08a';
       ctx.beginPath();
-      ctx.arc(44, 60, 1.2, 0, Math.PI * 2);
-      ctx.arc(52, 60, 1.2, 0, Math.PI * 2);
+      ctx.arc(45, 57, 1.0, 0, Math.PI * 2);
+      ctx.arc(53, 57, 1.0, 0, Math.PI * 2);
       ctx.fill();
+      // Pure specular slit pupil
+      ctx.fillStyle = '#1c1917';
+      ctx.fillRect(45, 56.2, 0.6, 1.6);
+      ctx.fillRect(53, 56.2, 0.6, 1.6);
 
-      // Bleached animal bones & skulls scattered outside
+      // 6. Territorial Beast Claw Scratch Gouges on Left Stone Face
+      ctx.strokeStyle = '#18120c';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(22, 48); ctx.lineTo(26, 62);
+      ctx.moveTo(25, 47); ctx.lineTo(29, 61);
+      ctx.moveTo(28, 48); ctx.lineTo(32, 62);
+      ctx.stroke();
+      ctx.strokeStyle = '#7c6d5e';
+      ctx.beginPath();
+      ctx.moveTo(23, 48); ctx.lineTo(27, 62);
+      ctx.stroke();
+
+      // 7. Sun-bleached prey remains & Horned Beast Skull outside cave
+      // Horned wild goat/ibex skull
       ctx.fillStyle = '#e2e8f0';
-      // Horned skull fragment
-      ctx.fillRect(28, 74, 4, 3);
-      ctx.fillRect(31, 72, 2, 2);
-      ctx.fillRect(26, 73, 2, 2);
-      // Leg bones
-      ctx.fillRect(62, 75, 7, 2);
-      ctx.fillRect(68, 74, 2, 4);
+      // Cranium
+      ctx.fillRect(25, 75, 4, 3);
+      ctx.fillRect(26, 78, 2, 2);
+      // Eye socket & nose hollow
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(25, 76, 1, 1);
+      ctx.fillRect(27, 76, 1, 1);
+      // Arched horns
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(25, 75); ctx.quadraticCurveTo(21, 72, 20, 76);
+      ctx.moveTo(28, 75); ctx.quadraticCurveTo(32, 72, 33, 76);
+      ctx.stroke();
 
-      // Desert steppe shrubs & thorn roots clinging to stone
-      ctx.fillStyle = '#716041';
-      ctx.fillRect(16, 30, 8, 3);
-      ctx.fillRect(72, 34, 6, 3);
-      ctx.fillStyle = '#854d0e';
-      ctx.fillRect(20, 24, 2, 8);
+      // Scattered leg bones & ribs on right gravel
+      ctx.fillStyle = '#f1f5f9';
+      // Femur
+      ctx.fillRect(68, 76, 7, 2);
+      ctx.fillRect(67, 75, 2, 4);
+      ctx.fillRect(74, 75, 2, 4);
+      // Rib splinter
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(63, 76, 3, 0.4, Math.PI * 0.9);
+      ctx.stroke();
+
+      // 8. Arid Steppe Mountain Flora: thorny roots & desert shrubs clinging to crags
+      // Thorny bush on top shelf
+      ctx.fillStyle = '#3f2e1a'; // woody stems
+      ctx.fillRect(36, 15, 2, 4);
+      ctx.fillRect(48, 12, 2, 5);
+      ctx.fillStyle = '#4d7c0f'; // olive-green foliage
+      ctx.beginPath();
+      ctx.arc(37, 14, 3, 0, Math.PI * 2);
+      ctx.arc(49, 11, 3.5, 0, Math.PI * 2);
+      ctx.arc(43, 13, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#65a30d'; // sunlit leaf tips
+      ctx.fillRect(36, 12, 2, 1.5);
+      ctx.fillRect(48, 9, 2, 1.5);
+
+      // Clinging creeper root on right cliff wall
+      ctx.strokeStyle = '#573c1c';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(76, 30);
+      ctx.lineTo(73, 42);
+      ctx.lineTo(77, 54);
+      ctx.stroke();
+      ctx.fillStyle = '#365314';
+      ctx.fillRect(72, 38, 2, 2);
+      ctx.fillRect(76, 48, 2, 2);
     });
 
     for (const owner of ['player', 'sea_peoples', 'neutral']) {

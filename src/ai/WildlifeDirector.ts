@@ -129,7 +129,7 @@ export class WildlifeDirector {
 
         for (const u of units) {
           if (u.id === this.activeLion.id) continue;
-          if (u.owner === 'neutral') continue;
+          if (u.owner !== 'player') continue; // Lion preys exclusively on the player human settlement; ignores Sea Peoples
           if (u.hp <= 0) continue;
 
           const dist = Math.hypot(u.x - this.activeLion.x, u.y - this.activeLion.y);
