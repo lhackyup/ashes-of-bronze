@@ -227,13 +227,32 @@ class GameApp {
       this.spawnUnit('bronze_swordsman', 'player', (pStart.tx - 3) * TILE_SIZE + 24, (pStart.ty + 1) * TILE_SIZE + 24);
       this.spawnUnit('bronze_swordsman', 'player', (pStart.tx - 3) * TILE_SIZE + 24, (pStart.ty + 3) * TILE_SIZE + 24);
 
-      // 1 Hostile Sea Peoples War Camp (Forward Encampment in the Northern Gorge)
-      const northCampTx = 30;
-      const northCampTy = 5;
-      this.gridGraph.setFoundation(northCampTx, northCampTy, 3, 3, true);
-      this.spawnBuilding('sea_camp', 'sea_peoples', northCampTx, northCampTy, true);
-      this.spawnUnit('sea_raider', 'sea_peoples', (northCampTx - 1) * TILE_SIZE + 24, (northCampTy + 2) * TILE_SIZE + 24);
-      this.spawnUnit('shardana_torchbearer', 'sea_peoples', (northCampTx + 3) * TILE_SIZE + 24, (northCampTy + 1) * TILE_SIZE + 24);
+      // 1 Hostile Sea Peoples Fortified Outpost in the Northern Gorge
+      // Sea Camp (Headquarters & war hearth)
+      const campTx = 29;
+      const campTy = 4;
+      this.gridGraph.setFoundation(campTx, campTy, 3, 3, true);
+      this.spawnBuilding('sea_camp', 'sea_peoples', campTx, campTy, true);
+
+      // Sea Peoples Barracks (Forges & trains raiding squads)
+      const barracksTx = 33;
+      const barracksTy = 4;
+      this.gridGraph.setFoundation(barracksTx, barracksTy, 3, 3, true);
+      this.spawnBuilding('barracks', 'sea_peoples', barracksTx, barracksTy, true);
+
+      // Sea Peoples Watchtower (Guards the southern entrance to the gorge)
+      const towerTx = 26;
+      const towerTy = 7;
+      this.gridGraph.setFoundation(towerTx, towerTy, 2, 2, true);
+      this.spawnBuilding('watchtower', 'sea_peoples', towerTx, towerTy, true);
+
+      // Hostile Troops already stationed on the ground defending the outpost
+      this.spawnUnit('sea_raider', 'sea_peoples', (campTx + 1) * TILE_SIZE + 24, (campTy + 3) * TILE_SIZE + 24);
+      this.spawnUnit('sea_raider', 'sea_peoples', (barracksTx + 1) * TILE_SIZE + 24, (barracksTy + 3) * TILE_SIZE + 24);
+      this.spawnUnit('shardana_torchbearer', 'sea_peoples', (campTx - 1) * TILE_SIZE + 24, (campTy + 1) * TILE_SIZE + 24);
+      this.spawnUnit('shardana_torchbearer', 'sea_peoples', (barracksTx + 3) * TILE_SIZE + 24, (barracksTy + 1) * TILE_SIZE + 24);
+      this.spawnUnit('skirmisher', 'sea_peoples', (towerTx + 2) * TILE_SIZE + 24, (towerTy + 1) * TILE_SIZE + 24);
+      this.spawnUnit('spear_militia', 'sea_peoples', (towerTx) * TILE_SIZE + 24, (towerTy + 2) * TILE_SIZE + 24);
     } else if (scenario.id === 'scenario_03_gate_of_cedars') {
       // Scenario 3: Highland fortress safeguarding the Gate of Cedars
       this.gridGraph.setFoundation(pStart.tx, pStart.ty, 4, 4, true);
@@ -576,8 +595,8 @@ class GameApp {
         // Sea cliff ramparts bounding the beach, with Sea Gate breach at y: 24..33
         const isSeaCliff = (x >= 15 && x <= 19) && !(y >= 24 && y <= 33);
 
-        // Northern mountain range with North Gorge at x: 27..33
-        const isNorthGorge = (x >= 27 && x <= 33) && y <= 14;
+        // Northern mountain range with North Gorge at x: 25..37
+        const isNorthGorge = (x >= 25 && x <= 37) && y <= 15;
         const isNorthRidge = y < 5 && !isNorthGorge;
 
         // Eastern mountain range with East Pass at y: 25..31
@@ -2308,7 +2327,7 @@ class GameApp {
           ctx.beginPath();
           ctx.arc(b.centerX, b.centerY, 140, 0, Math.PI * 2);
           ctx.fill();
-        } else if (b.defId === 'sea_camp' && b.hp > 0) {
+        } else if ((b.defId === 'sea_camp' || (b.defId === 'barracks' && b.owner === 'sea_peoples')) && b.hp > 0) {
           const grad = ctx.createRadialGradient(b.centerX, b.centerY, 15, b.centerX, b.centerY, 150);
           grad.addColorStop(0, 'rgba(0, 0, 0, 0.60)');
           grad.addColorStop(1, 'rgba(0, 0, 0, 0)');

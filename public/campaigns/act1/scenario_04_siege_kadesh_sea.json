@@ -122,7 +122,7 @@
       {
         "id": "destroy_war_camps",
         "type": "destroy_entity",
-        "description": "Accampamento d'Assedio: Raze the forward Sea Peoples war camp in the northern gorge to extinguish its raiding spawner.",
+        "description": "Accampamento d'Assedio: Raze the forward Sea Peoples war camp and barracks in the northern gorge to extinguish their raiding spawner.",
         "targetId": "sea_camp",
         "targetAmount": 1,
         "isPrimary": false

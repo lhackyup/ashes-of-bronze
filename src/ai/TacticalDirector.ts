@@ -90,23 +90,26 @@ export class TacticalDirector {
       }
     }
 
-    // Gestione Spawner periodico degli accampamenti nemici fortificati (War Camps)
+    // Gestione Spawner periodico degli accampamenti nemici fortificati (War Camps & Barracks)
     if (buildings && buildings.length > 0) {
-      const hostileCamps = buildings.filter(b => b.owner === 'sea_peoples' && b.defId === 'sea_camp' && b.hp > 0);
-      for (const camp of hostileCamps) {
-        let timer = this.campSpawnTimers.get(camp.id);
+      const hostileBarracks = buildings.find(b => b.owner === 'sea_peoples' && b.defId === 'barracks' && b.hp > 0);
+      const hostileCamp = buildings.find(b => b.owner === 'sea_peoples' && b.defId === 'sea_camp' && b.hp > 0);
+      const activeSpawner = hostileBarracks || hostileCamp;
+
+      if (activeSpawner) {
+        let timer = this.campSpawnTimers.get(activeSpawner.id);
         if (timer === undefined) {
-          // Timer iniziale: prima incursione dopo 80-100 secondi
-          timer = 80 + Math.random() * 20;
-          this.campSpawnTimers.set(camp.id, timer);
+          // Timer iniziale: prima sortita dopo 85-110 secondi
+          timer = 85 + Math.random() * 25;
+          this.campSpawnTimers.set(activeSpawner.id, timer);
         } else {
           timer -= dt;
           if (timer <= 0) {
-            // Nuova sortita di predoni ogni 65-85 secondi
-            this.campSpawnTimers.set(camp.id, 65 + Math.random() * 20);
-            this.spawnCampRaidingParty(camp, graph, units, targetTx, targetTy);
+            // Nuova sortita non troppo frequente: ogni 70-95 secondi
+            this.campSpawnTimers.set(activeSpawner.id, 70 + Math.random() * 25);
+            this.spawnCampRaidingParty(activeSpawner, graph, units, targetTx, targetTy);
           } else {
-            this.campSpawnTimers.set(camp.id, timer);
+            this.campSpawnTimers.set(activeSpawner.id, timer);
           }
         }
       }
@@ -591,8 +594,9 @@ export class TacticalDirector {
       }
     }
 
+    const label = camp.defId === 'barracks' ? 'ENEMY BARRACKS SQUAD DEPLOYED!' : 'WAR CAMP RAIDERS DEPLOYED!';
     EventBus.get().emit('fx:floating_text', {
-      text: 'WAR CAMP RAIDERS DEPLOYED!',
+      text: label,
       color: '#ef4444',
       x: camp.centerX,
       y: camp.centerY - 25
