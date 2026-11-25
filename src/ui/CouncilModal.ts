@@ -26,11 +26,13 @@ export class CouncilModal {
     const scenario = this.currentScenario;
     const scenarioMeta = scenario ? CAMPAIGN_SCENARIOS.find(s => s.id === scenario.id) : CAMPAIGN_SCENARIOS[0];
 
-    const title = scenario?.id === 'scenario_03_gate_of_cedars'
-      ? 'THE WAR COUNCIL: THE GATE OF CEDARS'
-      : (scenario?.id === 'scenario_02_last_cargo_alashiya'
-          ? 'THE WAR COUNCIL: THE SHALLOWS OF UGARIT'
-          : 'THE WAR COUNCIL OF KADESH-ON-SEA');
+    const title = scenario?.id === 'scenario_04_siege_kadesh_sea'
+      ? 'THE WAR COUNCIL: THE SIEGE OF KADESH-ON-SEA'
+      : (scenario?.id === 'scenario_03_gate_of_cedars'
+          ? 'THE WAR COUNCIL: THE GATE OF CEDARS'
+          : (scenario?.id === 'scenario_02_last_cargo_alashiya'
+              ? 'THE WAR COUNCIL: THE SHALLOWS OF UGARIT'
+              : 'THE WAR COUNCIL OF KADESH-ON-SEA'));
 
     const subtitle = scenarioMeta
       ? `Scenario ${scenarioMeta.scenarioIndex}: ${scenarioMeta.title} — ${scenarioMeta.yearBC} BC, ${scenarioMeta.region}`
@@ -43,7 +45,11 @@ export class CouncilModal {
     let tarkhuntaText = "Copper is as soft as river mud without Cassiterite! Send Donkey Caravans to gather pure Tin for the armory.";
     let zalpaText = "Bird prows have been spotted off the coast. Deploy our forces to intercept the landing craft!";
 
-    if (scenario?.id === 'scenario_02_last_cargo_alashiya') {
+    if (scenario?.id === 'scenario_04_siege_kadesh_sea') {
+      burnaText = "The Great Green is filled with horned sails under the black sky! The Great Kings of Hatti and Mycenae are silent; only our Megaron still shines. If we fall tonight, humanity enters three centuries of darkness!";
+      tarkhuntaText = "Erect Cyclopean Ramparts across every choke point! Lay heavy stone slabs and man the walls with composite bowmen. When the Shardana broadswords strike our megalithic stone, they will shatter!";
+      zalpaText = "Wanax, the enemy has pitched 2 forward war camps in the outer ravines that will spawn endless raiding parties! We must use our War Chariots to sweep around and burn those camps to ash, or we will be suffocated before their Warlord arrives!";
+    } else if (scenario?.id === 'scenario_02_last_cargo_alashiya') {
       burnaText = "The last merchant galleys of Alashiya have run aground upon the reefs. If we secure their copper and tin, our foundries will supply the army for an entire campaign!";
       tarkhuntaText = "The stranded oxhide ingots are pure Cypriot bronze bullion! Dispatch our donkey caravans onto the sandbars immediately before the Shardana torch the hulks!";
       zalpaText = "Our new Cypriot Composite Bowmen outrange the raiders' broadswords! Train at least 3 bowmen squads to control the tidal flats and screen our salvagers!";

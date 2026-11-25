@@ -140,7 +140,9 @@ class GameApp {
     );
 
     // Setup map terrain depending on scenario biome
-    if (scenario.id === 'scenario_03_gate_of_cedars' || scenario.map.biome === 'lebanon_cedar_pass') {
+    if (scenario.id === 'scenario_04_siege_kadesh_sea' || scenario.map.biome === 'kadesh_night_siege') {
+      this.setupNightSiegeMap(mapW, mapH);
+    } else if (scenario.id === 'scenario_03_gate_of_cedars' || scenario.map.biome === 'lebanon_cedar_pass') {
       this.setupCedarPassMap(mapW, mapH);
     } else if (scenario.id === 'scenario_02_last_cargo_alashiya' || scenario.map.biome === 'shallows_of_ugarit') {
       this.setupUgaritShallowsMap(mapW, mapH);
@@ -150,7 +152,100 @@ class GameApp {
 
     // Position starting buildings and units
     const pStart = scenario.player.startPosition;
-    if (scenario.id === 'scenario_03_gate_of_cedars') {
+    if (scenario.id === 'scenario_04_siege_kadesh_sea') {
+      // Scenario 4: Fortress Citadel of Kadesh-on-Sea under Grand Nocturnal Siege
+      this.gridGraph.setFoundation(pStart.tx, pStart.ty, 4, 4, true);
+      this.gridGraph.setFoundation(pStart.tx + 6, pStart.ty - 2, 3, 3, true);
+      this.gridGraph.setFoundation(pStart.tx - 5, pStart.ty, 2, 2, true);
+      this.gridGraph.setFoundation(pStart.tx, pStart.ty + 6, 3, 3, true);
+      this.gridGraph.setFoundation(pStart.tx + 5, pStart.ty + 5, 3, 3, true);
+      this.gridGraph.setFoundation(pStart.tx - 8, pStart.ty - 2, 2, 2, true);
+      this.gridGraph.setFoundation(pStart.tx + 2, pStart.ty - 7, 2, 2, true);
+      this.gridGraph.setFoundation(pStart.tx + 2, pStart.ty + 10, 2, 2, true);
+
+      // Cyclopean slabs
+      this.spawnBuilding('cyclopean_slab', 'player', pStart.tx - 2, pStart.ty, true);
+      this.spawnBuilding('cyclopean_slab', 'player', pStart.tx - 2, pStart.ty + 2, true);
+      this.spawnBuilding('cyclopean_slab', 'player', pStart.tx + 4, pStart.ty, true);
+
+      // Core Citadel Buildings
+      this.spawnBuilding('acropolis', 'player', pStart.tx, pStart.ty, true);
+      this.spawnBuilding('bronze_foundry', 'player', pStart.tx + 6, pStart.ty - 2, true);
+      this.spawnBuilding('granary', 'player', pStart.tx - 5, pStart.ty, true);
+      this.spawnBuilding('barracks', 'player', pStart.tx, pStart.ty + 6, true);
+      this.spawnBuilding('chariot_stable', 'player', pStart.tx + 5, pStart.ty + 5, true);
+
+      // Three Fortress Watchtowers guarding main avenues
+      this.spawnBuilding('watchtower', 'player', pStart.tx - 8, pStart.ty - 2, true);
+      this.spawnBuilding('watchtower', 'player', pStart.tx + 2, pStart.ty - 7, true);
+      this.spawnBuilding('watchtower', 'player', pStart.tx + 2, pStart.ty + 10, true);
+
+      // Cyclopean Rampart Walls creating chokepoints and bastion gates
+      const wallCoords = [
+        // Western Sea Gate Rampart
+        { tx: pStart.tx - 8, ty: pStart.ty + 1 },
+        { tx: pStart.tx - 8, ty: pStart.ty + 2 },
+        { tx: pStart.tx - 8, ty: pStart.ty + 3 },
+        { tx: pStart.tx - 8, ty: pStart.ty - 3 },
+        { tx: pStart.tx - 8, ty: pStart.ty - 4 },
+        // Northern Defile Barrier
+        { tx: pStart.tx + 1, ty: pStart.ty - 8 },
+        { tx: pStart.tx, ty: pStart.ty - 8 },
+        { tx: pStart.tx + 4, ty: pStart.ty - 8 },
+        { tx: pStart.tx + 5, ty: pStart.ty - 8 },
+        // Southern Defile Barrier
+        { tx: pStart.tx + 1, ty: pStart.ty + 12 },
+        { tx: pStart.tx, ty: pStart.ty + 12 },
+        { tx: pStart.tx + 4, ty: pStart.ty + 12 },
+        { tx: pStart.tx + 5, ty: pStart.ty + 12 }
+      ];
+      for (const w of wallCoords) {
+        this.spawnBuilding('cyclopean_wall', 'player', w.tx, w.ty, true);
+      }
+
+      // Starting Citadel Defenders:
+      // 3 donkey logistics caravans
+      this.spawnUnit('donkey_caravan', 'player', (pStart.tx + 2) * TILE_SIZE + 24, (pStart.ty + 4) * TILE_SIZE + 24);
+      this.spawnUnit('donkey_caravan', 'player', (pStart.tx + 3) * TILE_SIZE + 24, (pStart.ty + 4) * TILE_SIZE + 24);
+      this.spawnUnit('donkey_caravan', 'player', (pStart.tx + 2) * TILE_SIZE + 24, (pStart.ty - 2) * TILE_SIZE + 24);
+
+      // 2 Royal War Chariots stationed in the courtyard
+      this.spawnUnit('war_chariot', 'player', (pStart.tx + 4) * TILE_SIZE + 24, (pStart.ty + 3) * TILE_SIZE + 24);
+      this.spawnUnit('war_chariot', 'player', (pStart.tx + 6) * TILE_SIZE + 24, (pStart.ty + 3) * TILE_SIZE + 24);
+
+      // 3 Cypriot Composite Bowmen stationed behind ramparts
+      this.spawnUnit('composite_bowman', 'player', (pStart.tx - 7) * TILE_SIZE + 24, (pStart.ty - 1) * TILE_SIZE + 24);
+      this.spawnUnit('composite_bowman', 'player', (pStart.tx + 2) * TILE_SIZE + 24, (pStart.ty - 6) * TILE_SIZE + 24);
+      this.spawnUnit('composite_bowman', 'player', (pStart.tx + 2) * TILE_SIZE + 24, (pStart.ty + 9) * TILE_SIZE + 24);
+
+      // 3 Tower-Shield Spearmen holding the gates
+      this.spawnUnit('spear_militia', 'player', (pStart.tx - 7) * TILE_SIZE + 24, (pStart.ty) * TILE_SIZE + 24);
+      this.spawnUnit('spear_militia', 'player', (pStart.tx + 1) * TILE_SIZE + 24, (pStart.ty - 7) * TILE_SIZE + 24);
+      this.spawnUnit('spear_militia', 'player', (pStart.tx + 1) * TILE_SIZE + 24, (pStart.ty + 11) * TILE_SIZE + 24);
+
+      // 2 Khopesh Bronze Warriors
+      this.spawnUnit('bronze_swordsman', 'player', (pStart.tx - 3) * TILE_SIZE + 24, (pStart.ty + 1) * TILE_SIZE + 24);
+      this.spawnUnit('bronze_swordsman', 'player', (pStart.tx - 3) * TILE_SIZE + 24, (pStart.ty + 3) * TILE_SIZE + 24);
+
+      // 2 Hostile Sea Peoples War Camps (Forward Encampments with periodic spawners)
+      // North Camp (Gorge Ravine)
+      const northCampTx = 30;
+      const northCampTy = 5;
+      this.gridGraph.setFoundation(northCampTx, northCampTy, 3, 3, true);
+      this.spawnBuilding('sea_camp', 'sea_peoples', northCampTx, northCampTy, true);
+      this.spawnUnit('sea_raider', 'sea_peoples', (northCampTx - 1) * TILE_SIZE + 24, (northCampTy + 2) * TILE_SIZE + 24);
+      this.spawnUnit('sea_raider', 'sea_peoples', (northCampTx + 3) * TILE_SIZE + 24, (northCampTy + 1) * TILE_SIZE + 24);
+      this.spawnUnit('shardana_torchbearer', 'sea_peoples', (northCampTx + 1) * TILE_SIZE + 24, (northCampTy + 3) * TILE_SIZE + 24);
+
+      // East Camp (Highland Pass)
+      const eastCampTx = 50;
+      const eastCampTy = 28;
+      this.gridGraph.setFoundation(eastCampTx, eastCampTy, 3, 3, true);
+      this.spawnBuilding('sea_camp', 'sea_peoples', eastCampTx, eastCampTy, true);
+      this.spawnUnit('sea_raider', 'sea_peoples', (eastCampTx - 1) * TILE_SIZE + 24, (eastCampTy + 2) * TILE_SIZE + 24);
+      this.spawnUnit('sea_raider', 'sea_peoples', (eastCampTx + 3) * TILE_SIZE + 24, (eastCampTy + 1) * TILE_SIZE + 24);
+      this.spawnUnit('shardana_torchbearer', 'sea_peoples', (eastCampTx + 1) * TILE_SIZE + 24, (eastCampTy + 3) * TILE_SIZE + 24);
+    } else if (scenario.id === 'scenario_03_gate_of_cedars') {
       // Scenario 3: Highland fortress safeguarding the Gate of Cedars
       this.gridGraph.setFoundation(pStart.tx, pStart.ty, 4, 4, true);
       this.gridGraph.setFoundation(pStart.tx + 5, pStart.ty, 3, 3, true);
@@ -476,6 +571,119 @@ class GameApp {
       this.canvas.height = parent.clientHeight;
       if (this.camera) {
         this.camera.updateDimensions(this.canvas.width, this.canvas.height);
+      }
+    }
+  }
+
+  private setupNightSiegeMap(w: number, h: number): void {
+    // 1. Topography: Western Sea & Beach + Fortified Citadel Plateau
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        // Deep water on the western margin
+        const isWater = x < 7;
+        // Sandy landing beach
+        const isBeach = x >= 7 && x <= 14;
+
+        // Sea cliff ramparts bounding the beach, with Sea Gate breach at y: 24..33
+        const isSeaCliff = (x >= 15 && x <= 19) && !(y >= 24 && y <= 33);
+
+        // Northern mountain range with North Gorge at x: 27..33
+        const isNorthGorge = (x >= 27 && x <= 33) && y <= 14;
+        const isNorthRidge = y < 5 && !isNorthGorge;
+
+        // Eastern mountain range with East Pass at y: 25..31
+        const isEastPass = (y >= 25 && y <= 31) && x >= 46;
+        const isEastRidge = x >= w - 4 && !isEastPass;
+
+        // Southern mountains
+        const isSouthRidge = y >= h - 4;
+
+        // Internal natural rocky formations flanking the plateau
+        const isNorthPlateauFlank = (x >= 20 && x <= 23 && y >= 8 && y <= 18);
+        const isSouthPlateauFlank = (x >= 18 && x <= 22 && y >= 38 && y <= 48);
+        const isEastPlateauSpur = (x >= 42 && x <= 45 && y >= 12 && y <= 22);
+
+        if (isWater) {
+          this.tileRenderer.setTile(x, y, 'water');
+          this.gridGraph.setTileCost(x, y, 0);
+        } else if (isSeaCliff || isNorthRidge || isEastRidge || isSouthRidge || isNorthPlateauFlank || isSouthPlateauFlank || isEastPlateauSpur) {
+          this.tileRenderer.setTile(x, y, 'cliff');
+          this.gridGraph.setTileCost(x, y, 0);
+        } else if (isBeach) {
+          this.tileRenderer.setTile(x, y, 'sand');
+          this.gridGraph.setTileCost(x, y, 10);
+        } else if (x >= 24 && x <= 33 && y >= 24 && y <= 33) {
+          // Inner fortified sacred courtyard around the Megaron
+          this.tileRenderer.setTile(x, y, 'fertile_soil');
+          this.gridGraph.setTileCost(x, y, 10);
+        } else {
+          // Plateau and approaches: solid dry ground
+          this.tileRenderer.setTile(x, y, 'plain');
+          this.gridGraph.setTileCost(x, y, 10);
+        }
+      }
+    }
+
+    // 2. Resource Veins within the Citadel Periphery
+    // Copper veins near bronze foundry (tx: 35..37, ty: 25..27)
+    for (let dy = 0; dy < 2; dy++) {
+      for (let dx = 0; dx < 3; dx++) {
+        this.tileRenderer.setTile(35 + dx, 25 + dy, 'vein_copper', 750);
+        this.gridGraph.setTileCost(35 + dx, 25 + dy, 0);
+      }
+    }
+
+    // Tin (Cassiterite) veins on southern slope (tx: 35..37, ty: 32..34)
+    for (let dy = 0; dy < 2; dy++) {
+      for (let dx = 0; dx < 2; dx++) {
+        this.tileRenderer.setTile(35 + dx, 32 + dy, 'vein_tin', 450);
+        this.gridGraph.setTileCost(35 + dx, 32 + dy, 0);
+      }
+    }
+
+    // Limestone stone quarries (tx: 23..25, ty: 35..36)
+    for (let dy = 0; dy < 2; dy++) {
+      for (let dx = 0; dx < 3; dx++) {
+        this.tileRenderer.setTile(23 + dx, 35 + dy, 'vein_stone', 900);
+        this.gridGraph.setTileCost(23 + dx, 35 + dy, 0);
+      }
+    }
+
+    // 3. Cedar Groves in Citadel Courtyards & Ravines for Timber
+    this.decorations = [];
+    const treeCoords: Array<{ x: number; y: number }> = [];
+
+    // Inner sacred grove
+    for (let i = 0; i < 16; i++) {
+      const tx = 24 + Math.floor((Math.sin(i * 1.9) * 0.5 + 0.5) * 8);
+      const ty = 20 + Math.floor((Math.cos(i * 2.2) * 0.5 + 0.5) * 6);
+      treeCoords.push({ x: tx, y: ty });
+    }
+
+    // Southern highland grove
+    for (let i = 0; i < 20; i++) {
+      const tx = 30 + Math.floor((Math.sin(i * 1.5) * 0.5 + 0.5) * 12);
+      const ty = 40 + Math.floor((Math.cos(i * 2.5) * 0.5 + 0.5) * 8);
+      treeCoords.push({ x: tx, y: ty });
+    }
+
+    // North gorge grove
+    for (let i = 0; i < 14; i++) {
+      const tx = 24 + Math.floor((Math.sin(i * 2.4) * 0.5 + 0.5) * 10);
+      const ty = 8 + Math.floor((Math.cos(i * 1.8) * 0.5 + 0.5) * 6);
+      treeCoords.push({ x: tx, y: ty });
+    }
+
+    for (const pos of treeCoords) {
+      if (this.gridGraph.isWalkable(pos.x, pos.y)) {
+        this.decorations.push({
+          x: pos.x + 0.5,
+          y: pos.y + 0.5,
+          type: 'tree_pine',
+          max: 200,
+          current: 200
+        });
+        this.gridGraph.setTileCost(pos.x, pos.y, 0);
       }
     }
   }
@@ -2067,6 +2275,65 @@ class GameApp {
       ctx.strokeRect(ghostTx * TILE_SIZE + gw / 2 - textW / 2 - 6, badgeY - 11, textW + 12, 16);
       ctx.fillStyle = badgeTextColor;
       ctx.fillText(badgeText, ghostTx * TILE_SIZE + gw / 2, badgeY + 1);
+      ctx.restore();
+    }
+
+    // Nocturnal Siege Atmosphere (Deep cobalt-indigo night tint with warm torch halo glows)
+    if (this.currentScenario?.id === 'scenario_04_siege_kadesh_sea' || this.currentScenario?.map.biome === 'kadesh_night_siege') {
+      ctx.save();
+      // Night shadow overlay
+      ctx.fillStyle = 'rgba(10, 15, 36, 0.46)';
+      ctx.fillRect(0, 0, this.tileRenderer.width * TILE_SIZE, this.tileRenderer.height * TILE_SIZE);
+
+      // Radial torchlight / brazier glows around key positions
+      ctx.globalCompositeOperation = 'destination-out';
+      // 1. Acropolis / Megaron warm hearth glow
+      const acropolis = this.buildings.find(b => b.defId === 'acropolis' && b.hp > 0);
+      if (acropolis) {
+        const grad = ctx.createRadialGradient(acropolis.centerX, acropolis.centerY, 20, acropolis.centerX, acropolis.centerY, 180);
+        grad.addColorStop(0, 'rgba(0, 0, 0, 0.65)');
+        grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(acropolis.centerX, acropolis.centerY, 180, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      // 2. Watchtowers & war camp torchlight
+      for (const b of this.buildings) {
+        if (b.defId === 'watchtower' && b.hp > 0) {
+          const grad = ctx.createRadialGradient(b.centerX, b.centerY, 10, b.centerX, b.centerY, 140);
+          grad.addColorStop(0, 'rgba(0, 0, 0, 0.55)');
+          grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(b.centerX, b.centerY, 140, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (b.defId === 'sea_camp' && b.hp > 0) {
+          const grad = ctx.createRadialGradient(b.centerX, b.centerY, 15, b.centerX, b.centerY, 150);
+          grad.addColorStop(0, 'rgba(0, 0, 0, 0.60)');
+          grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(b.centerX, b.centerY, 150, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      ctx.restore();
+
+      // Soft warm amber ambient tint over watchtowers
+      ctx.save();
+      ctx.globalCompositeOperation = 'screen';
+      for (const b of this.buildings) {
+        if (b.defId === 'watchtower' && b.hp > 0) {
+          const grad = ctx.createRadialGradient(b.centerX, b.centerY, 5, b.centerX, b.centerY, 90);
+          grad.addColorStop(0, 'rgba(251, 191, 36, 0.18)');
+          grad.addColorStop(1, 'rgba(251, 191, 36, 0)');
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(b.centerX, b.centerY, 90, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
       ctx.restore();
     }
 

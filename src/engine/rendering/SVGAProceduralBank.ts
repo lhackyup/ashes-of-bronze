@@ -2318,6 +2318,180 @@ export class SVGAProceduralBank {
       this.buildingSprites.set(`lion_den_${owner}`, denCanvas);
     }
     this.buildingSprites.set('lion_den', denCanvas);
+
+    // =========================================================================
+    // 9. CYCLOPEAN RAMPART WALL (1x1 megalithic dry-stone wall with battlements)
+    // =========================================================================
+    const wallCanvas = this.makeBuildingSprite(48, (ctx) => {
+      // Megalithic polygonal stone masonry block
+      ctx.fillStyle = '#292524';
+      ctx.fillRect(2, 4, 44, 40);
+
+      // Main stone gradient
+      const wallGrad = ctx.createLinearGradient(2, 4, 46, 44);
+      wallGrad.addColorStop(0, '#57534e');
+      wallGrad.addColorStop(0.5, '#44403c');
+      wallGrad.addColorStop(1, '#292524');
+      ctx.fillStyle = wallGrad;
+      ctx.fillRect(3, 5, 42, 38);
+
+      // Chiseled cyclopean polygonal joints
+      ctx.strokeStyle = '#1c1917';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      // Joint lines
+      ctx.moveTo(3, 18); ctx.lineTo(18, 18); ctx.lineTo(24, 28); ctx.lineTo(45, 26);
+      ctx.moveTo(18, 18); ctx.lineTo(20, 5);
+      ctx.moveTo(34, 5); ctx.lineTo(32, 18); ctx.lineTo(45, 16);
+      ctx.moveTo(12, 18); ctx.lineTo(14, 43);
+      ctx.moveTo(24, 28); ctx.lineTo(26, 43);
+      ctx.moveTo(38, 26); ctx.lineTo(40, 43);
+      ctx.stroke();
+
+      // Battlements / Parapet Crenellations on top
+      ctx.fillStyle = '#78716c';
+      ctx.fillRect(4, 5, 10, 6);
+      ctx.fillRect(19, 5, 10, 6);
+      ctx.fillRect(34, 5, 10, 6);
+      ctx.fillStyle = '#a8a29e'; // Sunlit highlights on capstones
+      ctx.fillRect(4, 5, 10, 1.5);
+      ctx.fillRect(19, 5, 10, 1.5);
+      ctx.fillRect(34, 5, 10, 1.5);
+
+      // Weathering specks & bronze reinforcement spikes
+      ctx.fillStyle = '#1c1917';
+      ctx.fillRect(8, 24, 2, 2);
+      ctx.fillRect(28, 33, 2, 2);
+      ctx.fillRect(36, 12, 2, 2);
+      ctx.fillStyle = '#fbbf24'; // Bronze bracket
+      ctx.fillRect(17, 17, 3, 3);
+      ctx.fillRect(31, 26, 3, 3);
+    });
+
+    for (const owner of ['player', 'sea_peoples', 'neutral']) {
+      this.buildingSprites.set(`cyclopean_wall_${owner}`, wallCanvas);
+    }
+    this.buildingSprites.set('cyclopean_wall', wallCanvas);
+
+    // =========================================================================
+    // 10. SEA PEOPLES WAR CAMP (3x3 raider staging encampment with tents & fire)
+    // =========================================================================
+    const campCanvas = this.makeBuildingSprite(144, (ctx) => {
+      // Trampled ash/dirt ground base
+      ctx.fillStyle = '#1c1917';
+      ctx.fillRect(6, 6, 132, 132);
+
+      const groundGrad = ctx.createRadialGradient(72, 72, 10, 72, 72, 64);
+      groundGrad.addColorStop(0, '#451a03');
+      groundGrad.addColorStop(0.6, '#292524');
+      groundGrad.addColorStop(1, '#1c1917');
+      ctx.fillStyle = groundGrad;
+      ctx.fillRect(8, 8, 128, 128);
+
+      // Perimeter sharpened wooden palisade spikes
+      ctx.strokeStyle = '#78350f';
+      ctx.lineWidth = 2.5;
+      for (let p = 12; p < 132; p += 8) {
+        // North wall spikes
+        ctx.beginPath();
+        ctx.moveTo(p, 16);
+        ctx.lineTo(p + 2, 6);
+        ctx.lineTo(p + 4, 16);
+        ctx.stroke();
+        // South wall spikes
+        ctx.beginPath();
+        ctx.moveTo(p, 128);
+        ctx.lineTo(p + 2, 138);
+        ctx.lineTo(p + 4, 128);
+        ctx.stroke();
+      }
+      for (let p = 20; p < 124; p += 8) {
+        // West spikes
+        ctx.beginPath(); ctx.moveTo(16, p); ctx.lineTo(6, p + 2); ctx.lineTo(16, p + 4); ctx.stroke();
+        // East spikes
+        ctx.beginPath(); ctx.moveTo(128, p); ctx.lineTo(138, p + 2); ctx.lineTo(128, p + 4); ctx.stroke();
+      }
+
+      // Central Chieftain Hide Pavilion Tent (Striped red and black)
+      ctx.fillStyle = '#1e293b'; // Dark hide
+      ctx.beginPath();
+      ctx.moveTo(72, 22);
+      ctx.lineTo(34, 68);
+      ctx.lineTo(110, 68);
+      ctx.closePath();
+      ctx.fill();
+
+      // Bold crimson war stripes
+      ctx.fillStyle = '#dc2626';
+      ctx.beginPath();
+      ctx.moveTo(72, 22); ctx.lineTo(54, 68); ctx.lineTo(62, 68); ctx.lineTo(72, 34); ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(72, 22); ctx.lineTo(90, 68); ctx.lineTo(82, 68); ctx.lineTo(72, 34); ctx.fill();
+
+      // Tent entrance opening
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.moveTo(72, 42); ctx.lineTo(62, 68); ctx.lineTo(82, 68); ctx.closePath(); ctx.fill();
+
+      // Horned skull totem above central pavilion
+      ctx.strokeStyle = '#f8fafc';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(68, 20); ctx.quadraticCurveTo(62, 10, 60, 4);
+      ctx.moveTo(76, 20); ctx.quadraticCurveTo(82, 10, 84, 4);
+      ctx.stroke();
+      ctx.fillStyle = '#fbbf24';
+      ctx.beginPath(); ctx.arc(72, 16, 3, 0, Math.PI * 2); ctx.fill();
+
+      // Flanking Conical Raider Bivouacs (Left & Right)
+      // Left bivouac
+      ctx.fillStyle = '#451a03';
+      ctx.beginPath(); ctx.moveTo(32, 75); ctx.lineTo(16, 115); ctx.lineTo(48, 115); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#b91c1c';
+      ctx.fillRect(26, 92, 12, 3);
+      ctx.fillStyle = '#0f0b08';
+      ctx.beginPath(); ctx.moveTo(32, 95); ctx.lineTo(26, 115); ctx.lineTo(38, 115); ctx.closePath(); ctx.fill();
+
+      // Right bivouac
+      ctx.fillStyle = '#451a03';
+      ctx.beginPath(); ctx.moveTo(112, 75); ctx.lineTo(96, 115); ctx.lineTo(128, 115); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#b91c1c';
+      ctx.fillRect(106, 92, 12, 3);
+      ctx.fillStyle = '#0f0b08';
+      ctx.beginPath(); ctx.moveTo(112, 95); ctx.lineTo(106, 115); ctx.lineTo(118, 115); ctx.closePath(); ctx.fill();
+
+      // Central Blazing War Hearth / Pit
+      ctx.fillStyle = '#1c1917';
+      ctx.beginPath(); ctx.arc(72, 96, 16, 0, Math.PI * 2); ctx.fill();
+      // Stone ring
+      ctx.strokeStyle = '#78716c';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      // Crackling orange/yellow fire
+      const fireGrad = ctx.createRadialGradient(72, 96, 2, 72, 96, 14);
+      fireGrad.addColorStop(0, '#fef08a');
+      fireGrad.addColorStop(0.4, '#f97316');
+      fireGrad.addColorStop(0.8, '#dc2626');
+      fireGrad.addColorStop(1, 'rgba(220, 38, 38, 0)');
+      ctx.fillStyle = fireGrad;
+      ctx.beginPath(); ctx.arc(72, 96, 14, 0, Math.PI * 2); ctx.fill();
+
+      // Weapon rack with spears and broadswords
+      ctx.strokeStyle = '#78350f';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(52, 74, 12, 10);
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.beginPath();
+      ctx.moveTo(54, 86); ctx.lineTo(58, 68);
+      ctx.moveTo(58, 86); ctx.lineTo(62, 68);
+      ctx.moveTo(62, 86); ctx.lineTo(64, 70);
+      ctx.stroke();
+    });
+
+    for (const owner of ['player', 'sea_peoples', 'neutral']) {
+      this.buildingSprites.set(`sea_camp_${owner}`, campCanvas);
+    }
+    this.buildingSprites.set('sea_camp', campCanvas);
   }
 
   public static getBuildingSprite(defId: string, owner: string): HTMLCanvasElement | null {
@@ -3027,6 +3201,163 @@ export class SVGAProceduralBank {
       ctx.fillStyle = '#cbd5e1';
       ctx.beginPath();
       ctx.moveTo(-1.5, -16); ctx.lineTo(0, -20); ctx.lineTo(1.5, -16);
+      ctx.fill();
+      ctx.restore();
+
+    } else if (u.defId === 'shardana_torchbearer') {
+      // --- SHARDANA TORCHBEARER / INCENDIARY SABOTEUR ---
+      const isAttacking = u.state === 'ATTACK_TARGET' && u.attackCooldown > 0;
+      const swingAngle = isAttacking ? Math.sin((u.attackCooldown / (u.def.attackCooldown || 0.85)) * Math.PI) * 1.8 : 0;
+      const flameFlicker = Math.sin(Date.now() / 70) * 2.5;
+
+      // Swift tanned legs
+      ctx.fillStyle = '#a16207';
+      ctx.fillRect(-3.5, 3, 3, 9 + bob);
+      ctx.fillRect(1.5, 3, 3, 9 - bob);
+
+      // Agile short raider kilt
+      ctx.fillStyle = '#451a03';
+      ctx.fillRect(-5, -3 + bob * 0.5, 10, 7);
+      ctx.fillStyle = '#ea580c'; // Fiery orange stripe
+      ctx.fillRect(-5, -1 + bob * 0.5, 10, 2);
+
+      // Bare chest with leather bands
+      ctx.fillStyle = '#b45309';
+      ctx.fillRect(-4.5, -8 + bob * 0.5, 9, 6);
+      ctx.strokeStyle = '#292524';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(-4.5, -8 + bob * 0.5); ctx.lineTo(4.5, -2 + bob * 0.5);
+      ctx.stroke();
+
+      // Banded leather cap with small horn studs
+      ctx.fillStyle = '#78350f';
+      ctx.beginPath(); ctx.arc(0, -10 + bob * 0.5, 4.5, Math.PI, 0); ctx.fill();
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillRect(-3.5, -12 + bob * 0.5, 1.5, 2.5);
+      ctx.fillRect(2, -12 + bob * 0.5, 1.5, 2.5);
+
+      // Left hand: small jagged bronze dagger
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillRect(-6, -2 + bob * 0.5, 2, 7);
+
+      // Right hand: BLAZING PITCH TORCH
+      ctx.save();
+      ctx.translate(5, -6 + bob * 0.5);
+      ctx.rotate(0.3 + swingAngle);
+      // Wooden torch shaft
+      ctx.fillStyle = '#451a03';
+      ctx.fillRect(-1.5, -14, 3, 20);
+      // Wrapped pitch head
+      ctx.fillStyle = '#1c1917';
+      ctx.fillRect(-3, -18, 6, 5);
+      // Blazing Fire Head with dynamic flicker
+      const torchGrad = ctx.createRadialGradient(0, -21, 1, 0, -21, 9 + flameFlicker);
+      torchGrad.addColorStop(0, '#fef08a');
+      torchGrad.addColorStop(0.3, '#f97316');
+      torchGrad.addColorStop(0.7, '#dc2626');
+      torchGrad.addColorStop(1, 'rgba(220, 38, 38, 0)');
+      ctx.fillStyle = torchGrad;
+      ctx.beginPath();
+      ctx.arc(0, -21, 9 + flameFlicker, 0, Math.PI * 2);
+      ctx.fill();
+      // Floating glowing spark embers
+      ctx.fillStyle = '#fef08a';
+      ctx.fillRect(flameFlicker - 2, -26, 1.5, 1.5);
+      ctx.fillRect(-flameFlicker + 1, -29, 1.2, 1.2);
+      ctx.restore();
+
+    } else if (u.defId === 'shardana_warlord') {
+      // --- SHARDANA FLEET WARLORD (Towering Champion, Heavy Horned Cuirass, Radiant Solar Disc, War Cleaver) ---
+      const isAttacking = u.state === 'ATTACK_TARGET' && u.attackCooldown > 0;
+      const cleave = isAttacking ? Math.sin((u.attackCooldown / (u.def.attackCooldown || 1.15)) * Math.PI) * 1.8 : 0;
+
+      // Heavy bronze greaves
+      ctx.fillStyle = '#b45309';
+      ctx.fillRect(-5, 3, 4.5, 10 + bob);
+      ctx.fillRect(2.5, 3, 4.5, 10 - bob);
+      ctx.fillStyle = '#fbbf24'; // Greave bronze rim
+      ctx.fillRect(-5, 4, 1.5, 9 + bob);
+      ctx.fillRect(2.5, 4, 1.5, 9 - bob);
+
+      // Elaborate War Kilt with royal crimson pleats and bronze studs
+      ctx.fillStyle = '#1e1b4b'; // Royal midnight indigo kilt
+      ctx.fillRect(-8, -4 + bob * 0.5, 16, 9);
+      ctx.fillStyle = '#dc2626'; // Red pleats
+      ctx.fillRect(-7, -2 + bob * 0.5, 14, 2.5);
+      ctx.fillRect(-7, 2 + bob * 0.5, 14, 2);
+
+      // EMBOSSED BRONZE BELL-CUIRASS (Muscle-molded bronze torso)
+      const cuirassGrad = ctx.createLinearGradient(-7, -11, 7, -1);
+      cuirassGrad.addColorStop(0, '#f59e0b');
+      cuirassGrad.addColorStop(0.5, '#d97706');
+      cuirassGrad.addColorStop(1, '#92400e');
+      ctx.fillStyle = cuirassGrad;
+      ctx.fillRect(-7, -11 + bob * 0.5, 14, 8);
+      // Pectoral plate highlights
+      ctx.strokeStyle = '#fbbf24';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.arc(-3, -7 + bob * 0.5, 2.5, 0, Math.PI);
+      ctx.arc(3, -7 + bob * 0.5, 2.5, 0, Math.PI);
+      ctx.stroke();
+
+      // MONUMENTAL SHARDANA WARLORD HORNED HELMET WITH LARGE SOLAR DISC & PLUME
+      ctx.fillStyle = '#fbbf24'; // Gilded bronze helmet cap
+      ctx.beginPath();
+      ctx.arc(0, -13 + bob * 0.5, 6.5, Math.PI, 0);
+      ctx.fill();
+      // Massive curving bull horns
+      ctx.strokeStyle = '#f8fafc';
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.moveTo(-5, -14 + bob * 0.5); ctx.quadraticCurveTo(-14, -18 + bob * 0.5, -10, -25 + bob * 0.5);
+      ctx.moveTo(5, -14 + bob * 0.5); ctx.quadraticCurveTo(14, -18 + bob * 0.5, 10, -25 + bob * 0.5);
+      ctx.stroke();
+      // Radiant central solar bronze disc
+      ctx.fillStyle = '#fef08a';
+      ctx.beginPath(); ctx.arc(0, -22 + bob * 0.5, 4.5, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#d97706';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      // Flowing crimson horsehair crest
+      ctx.fillStyle = '#dc2626';
+      ctx.beginPath();
+      ctx.moveTo(0, -26 + bob * 0.5);
+      ctx.quadraticCurveTo(8, -28 + bob * 0.5, 12, -22 + bob * 0.5);
+      ctx.quadraticCurveTo(6, -22 + bob * 0.5, 0, -26 + bob * 0.5);
+      ctx.fill();
+
+      // Massive Bronze Bossed War Shield (Hoplon size)
+      ctx.save();
+      ctx.translate(-9, -4 + bob * 0.5);
+      ctx.fillStyle = '#92400e';
+      ctx.beginPath(); ctx.arc(0, 0, 9, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#fbbf24';
+      ctx.lineWidth = 1.6;
+      ctx.stroke();
+      // Concentric embossed sun rays on shield face
+      ctx.fillStyle = '#fbbf24';
+      ctx.beginPath(); ctx.arc(0, 0, 3.5, 0, Math.PI * 2); ctx.fill();
+      for (let a = 0; a < Math.PI * 2; a += Math.PI / 4) {
+        ctx.fillRect(Math.cos(a) * 6 - 1, Math.sin(a) * 6 - 1, 2, 2);
+      }
+      ctx.restore();
+
+      // Colossal Bronze Cleaver / High-Warlord Broadsword
+      ctx.save();
+      ctx.translate(7, -7 + bob * 0.5);
+      ctx.rotate(0.5 + cleave);
+      ctx.fillStyle = '#451a03'; // Grip
+      ctx.fillRect(-1.5, 0, 3, 6);
+      ctx.fillStyle = '#fbbf24'; // Golden crossguard
+      ctx.fillRect(-4, -1, 8, 2.5);
+      // Heavy wide blade
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(-2, -22, 4.5, 22);
+      ctx.fillStyle = '#cbd5e1';
+      ctx.beginPath();
+      ctx.moveTo(-2, -22); ctx.lineTo(0.5, -28); ctx.lineTo(2.5, -22);
       ctx.fill();
       ctx.restore();
 
