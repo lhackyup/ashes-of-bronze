@@ -400,13 +400,23 @@ export class UnitFSM {
                 u.state = 'IDLE';
                 return;
               }
-              const dmg = u.def.damage || 15;
-              EventBus.get().emit('fx:floating_text', {
-                text: `-${dmg}`,
-                color: '#f59e0b',
-                x: b.centerX + (Math.random() - 0.5) * 16,
-                y: b.centerY - 20
-              });
+              let dmg = u.def.damage || 15;
+              if (u.def.damageType === 'fire') {
+                dmg = Math.floor(dmg * 1.5);
+                EventBus.get().emit('fx:floating_text', {
+                  text: `FIRE! -${dmg}`,
+                  color: '#f97316',
+                  x: b.centerX + (Math.random() - 0.5) * 16,
+                  y: b.centerY - 24
+                });
+              } else {
+                EventBus.get().emit('fx:floating_text', {
+                  text: `-${dmg}`,
+                  color: '#f59e0b',
+                  x: b.centerX + (Math.random() - 0.5) * 16,
+                  y: b.centerY - 20
+                });
+              }
               EventBus.get().emit('fx:combat_hit', {
                 x: b.centerX + (Math.random() - 0.5) * 16,
                 y: b.centerY + (Math.random() - 0.5) * 16,
