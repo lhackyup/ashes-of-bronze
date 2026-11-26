@@ -44,17 +44,24 @@ export class HUDController {
   private inspectorDescEl!: HTMLElement;
   private inspectorHpFillEl!: HTMLElement;
 
+  private buildPanelTitleEl: HTMLElement | null = null;
+  private buildItemsContainerEl: HTMLElement | null = null;
+
   private minimapCanvas!: HTMLCanvasElement;
   private minimapCtx!: CanvasRenderingContext2D;
 
   public onSelectBuildItem?: (defId: string) => void;
   public onTrainUnit?: (unitDefId: string) => void;
+  public onSelectUnitCommand?: (cmd: 'move' | 'stop' | 'attack' | 'harvest') => void;
+  public onAssignHarvest?: () => void;
+
+  private unlockedBuildings: string[] = [];
   private unlockedUnits: string[] = [];
 
   constructor() {
     this.cacheDOMElements();
     this.setupListeners();
-    this.populateBuildMenu();
+    this.renderDefaultBuildPanel();
   }
 
   private cacheDOMElements(): void {
@@ -88,6 +95,9 @@ export class HUDController {
     this.inspectorNameEl = document.getElementById('inspector-name')!;
     this.inspectorDescEl = document.getElementById('inspector-desc')!;
     this.inspectorHpFillEl = document.getElementById('inspector-hp-fill')!;
+
+    this.buildPanelTitleEl = document.getElementById('build-panel-title');
+    this.buildItemsContainerEl = document.getElementById('build-items-container');
 
     this.minimapCanvas = document.getElementById('minimap-canvas')! as HTMLCanvasElement;
     this.minimapCtx = this.minimapCanvas.getContext('2d')!;
@@ -465,12 +475,29 @@ export class HUDController {
 
   public updateWaveTimer(countdown: number | null): void {
     if (!this.trackerTimerEl) return;
-    if (countdown !== null) {
+    if (countdown !== null && countdown > 0) {
       this.trackerTimerEl.textContent = `Wave in: ${countdown}s`;
       this.trackerTimerEl.style.color = countdown <= 15 ? '#ef4444' : '#ffd166';
     } else {
       this.trackerTimerEl.textContent = 'All Waves Beaten';
       this.trackerTimerEl.style.color = '#2de0a5';
+    }
+  }
+
+  public updateWaveStatus(countdown: number | null, isFinalCombat: boolean, isAllBeaten: boolean): void {
+    if (!this.trackerTimerEl) return;
+    if (countdown !== null && countdown > 0) {
+      this.trackerTimerEl.textContent = `Wave in: ${countdown}s`;
+      this.trackerTimerEl.style.color = countdown <= 15 ? '#ef4444' : '#ffd166';
+    } else if (isFinalCombat) {
+      this.trackerTimerEl.textContent = 'Final Assault in Combat!';
+      this.trackerTimerEl.style.color = '#f97316';
+    } else if (isAllBeaten) {
+      this.trackerTimerEl.textContent = 'All Waves Beaten';
+      this.trackerTimerEl.style.color = '#2de0a5';
+    } else {
+      this.trackerTimerEl.textContent = 'Assault in Combat!';
+      this.trackerTimerEl.style.color = '#f59e0b';
     }
   }
 

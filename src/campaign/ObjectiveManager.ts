@@ -274,24 +274,12 @@ export class ObjectiveManager {
           allPrimariesDone = false;
         }
       } else if (obj.id === 'survive_sea_peoples' || obj.id === 'survive_siege') {
-        const remainingWaves = tactical.getRemainingWavesCount();
-        const activeRaiders = units.filter(u => u.owner === 'sea_peoples' && u.hp > 0);
-        const allHoldsEmpty = tactical.landingShips.every(s => s.pendingUnits.every(p => p.count === 0));
+        const targetWaves = obj.targetAmount || tactical.getTotalWavesCount() || this.totalWaves || 1;
+        const repelled = tactical.getRepelledWavesCount();
+        obj.currentAmount = repelled;
 
-        // Total waves configured for this scenario
-        const targetWaves = obj.targetAmount || this.totalWaves || 1;
-        const wavesSpawned = Math.max(0, targetWaves - remainingWaves);
-
-        // A wave is counted as repelled when all its raiders are defeated and holds emptied
-        let wavesRepelled = wavesSpawned;
-        if (activeRaiders.length > 0 || !allHoldsEmpty) {
-          wavesRepelled = Math.max(0, wavesSpawned - 1);
-        }
-
-        obj.currentAmount = wavesRepelled;
-
-        // Objective completes when all waves have spawned, holds are emptied, and all hostile raiders defeated
-        if (remainingWaves === 0 && activeRaiders.length === 0 && allHoldsEmpty) {
+        // Objective completes when all designated assault waves have been completely repelled
+        if (repelled >= targetWaves) {
           obj.currentAmount = targetWaves;
           this.completeObjective(obj);
         } else {

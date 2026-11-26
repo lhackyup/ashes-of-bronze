@@ -592,8 +592,10 @@ class GameApp {
         // Sandy landing beach
         const isBeach = x >= 7 && x <= 14;
 
-        // Sea cliff ramparts bounding the beach, with Sea Gate breach at y: 24..33
-        const isSeaCliff = (x >= 15 && x <= 19) && !(y >= 24 && y <= 33);
+        // Natural breaches and ascents connecting the western beach to the plateau:
+        // Northern beach ascent (y: 10..16), central Sea Gate breach (y: 22..35), southern coastal defile (y: 40..46)
+        const isBeachAscent = (y >= 10 && y <= 16) || (y >= 22 && y <= 35) || (y >= 40 && y <= 46);
+        const isSeaCliff = (x >= 15 && x <= 19) && !isBeachAscent;
 
         // Northern mountain range with North Gorge at x: 25..37
         const isNorthGorge = (x >= 25 && x <= 37) && y <= 15;
@@ -1987,8 +1989,12 @@ class GameApp {
       });
     }
 
-    // Update live HUD countdown timer for enemy waves
-    this.hud.updateWaveTimer(this.tacticalDirector.getNextWaveCountdown());
+    // Update live HUD countdown timer and status for enemy waves
+    this.hud.updateWaveStatus(
+      this.tacticalDirector.getNextWaveCountdown(),
+      this.tacticalDirector.isFinalAssaultActive(),
+      this.tacticalDirector.isAllWavesDefeated()
+    );
 
     // Update Fog of War
     this.updateFogOfWar();

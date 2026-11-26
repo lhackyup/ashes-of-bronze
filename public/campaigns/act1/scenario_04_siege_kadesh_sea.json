@@ -46,7 +46,7 @@
       "aiProfile": "aggressive_raider",
       "waves": [
         {
-          "triggerTimeSeconds": 160,
+          "triggerTimeSeconds": 100,
           "spawnEdge": "west",
           "units": [
             { "type": "sea_raider", "count": 2 },
@@ -55,7 +55,7 @@
           "advisorWarning": "Zalpa: Night sails off the western shore! A landing galley has hit the sand and an incendiary team is scouting our lower approaches!"
         },
         {
-          "triggerTimeSeconds": 320,
+          "triggerTimeSeconds": 210,
           "spawnEdge": "north",
           "units": [
             { "type": "sea_raider", "count": 3 },
@@ -64,16 +64,16 @@
           "advisorWarning": "Zalpa: Torches descending from the northern gorge! Man the ramparts and repel the raiders!"
         },
         {
-          "triggerTimeSeconds": 480,
+          "triggerTimeSeconds": 320,
           "spawnEdge": "west",
           "units": [
-            { "type": "sea_raider", "count": 4 },
+            { "type": "sea_raider", "count": 3 },
             { "type": "shardana_torchbearer", "count": 2 }
           ],
           "advisorWarning": "Tarkhunta: Second naval wave landing on the beach! Form the phalanx and loose arrows from the towers!"
         },
         {
-          "triggerTimeSeconds": 640,
+          "triggerTimeSeconds": 430,
           "spawnEdge": "north",
           "units": [
             { "type": "sea_raider", "count": 4 },
@@ -82,7 +82,7 @@
           "advisorWarning": "Zalpa: Major overland push through the northern ravines! Deploy our Royal War Chariots to sweep their flanks!"
         },
         {
-          "triggerTimeSeconds": 800,
+          "triggerTimeSeconds": 540,
           "spawnEdge": "west",
           "units": [
             { "type": "shardana_warlord", "count": 1 },

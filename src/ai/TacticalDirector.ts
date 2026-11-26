@@ -34,6 +34,9 @@ export class TacticalDirector {
   public landingShips: LandingShip[] = [];
   public totalShipsLanded: number = 0;
   public totalWavesSpawned: number = 0;
+  public totalWavesCount: number = 0;
+  private waveUnitIds: Map<number, Set<number>> = new Map();
+  private waveRepelled: Set<number> = new Set();
   private campSpawnTimers: Map<number, number> = new Map();
 
   constructor(scenario: ScenarioData, width: number, height: number) {
@@ -45,6 +48,7 @@ export class TacticalDirector {
     }
     // Ordina per tempo di innesco
     this.waves.sort((a, b) => a.triggerTimeSeconds - b.triggerTimeSeconds);
+    this.totalWavesCount = this.waves.length;
   }
 
   public update(
@@ -186,6 +190,10 @@ export class TacticalDirector {
               spawnTy * TILE_SIZE + 24
             );
             units.push(spawned);
+            if (!this.waveUnitIds.has(ship.waveNum)) {
+              this.waveUnitIds.set(ship.waveNum, new Set());
+            }
+            this.waveUnitIds.get(ship.waveNum)!.add(spawned.id);
 
             // Give newly spawned raider immediate marching orders towards player target
             const marchPath = AStar.findPath(graph, { tx: spawnTx, ty: spawnTy }, { tx: Math.floor(targetTx), ty: Math.floor(targetTy) }, 2000);
@@ -195,6 +203,31 @@ export class TacticalDirector {
                 y: c.ty * TILE_SIZE + 24
               }));
               spawned.state = 'MOVE_TO';
+            } else if (buildings) {
+              // Direct path to Megaron blocked by walls: find closest player building/wall to attack
+              let closestB: BuildingEntity | null = null;
+              let closestDist = Infinity;
+              for (const b of buildings) {
+                if (b.owner === 'player' && b.hp > 0 && b.defId !== 'cyclopean_slab') {
+                  const d = Math.hypot(b.centerX - (spawnTx * TILE_SIZE + 24), b.centerY - (spawnTy * TILE_SIZE + 24));
+                  if (d < closestDist) {
+                    closestDist = d;
+                    closestB = b;
+                  }
+                }
+              }
+              if (closestB) {
+                const bTx = closestB.tx + Math.floor(closestB.def.width / 2);
+                const bTy = closestB.ty + Math.floor(closestB.def.height / 2);
+                const wallPath = AStar.findPath(graph, { tx: spawnTx, ty: spawnTy }, { tx: bTx, ty: bTy }, 2000);
+                if (wallPath.length > 1) {
+                  spawned.path = wallPath.slice(1, 10).map(c => ({
+                    x: c.tx * TILE_SIZE + 24,
+                    y: c.ty * TILE_SIZE + 24
+                  }));
+                  spawned.state = 'MOVE_TO';
+                }
+              }
             }
 
             EventBus.get().emit('fx:floating_text', {
@@ -231,6 +264,33 @@ export class TacticalDirector {
       }
     }
 
+    // Controlla lo stato di completamento di ciascuna ondata attiva
+    for (let w = 1; w <= this.totalWavesSpawned; w++) {
+      if (!this.waveRepelled.has(w)) {
+        const shipPending = this.landingShips.some(
+          s => s.waveNum === w && (s.state === 'ARRIVING' || s.state === 'UNLOADING' || s.pendingUnits.some(p => p.count > 0))
+        );
+        const unitIds = this.waveUnitIds.get(w);
+        const unitsAlive = unitIds ? units.some(u => unitIds.has(u.id) && u.hp > 0) : false;
+
+        // Se tutti gli sbarchi sono terminati e tutte le truppe dell'ondata sono state sconfitte
+        if (!shipPending && !unitsAlive && unitIds && unitIds.size > 0) {
+          this.waveRepelled.add(w);
+          EventBus.get().emit('fx:floating_text', {
+            text: `ASSAULT WAVE ${w} REPELLED!`,
+            color: '#2de0a5',
+            x: targetTx * TILE_SIZE,
+            y: targetTy * TILE_SIZE - 40
+          });
+          EventBus.get().emit('advisor:message', {
+            speaker: 'burna_khabir',
+            text: `Assault wave ${w} broken! Stand firm before the sacred Megaron!`,
+            isAlert: false
+          });
+        }
+      }
+    }
+
     // Applica aggressione attiva e spinta del Flow Field alle unità nemiche
     for (const u of units) {
       if (u.owner === 'sea_peoples' && (u.state === 'IDLE' || u.state === 'MOVE_TO')) {
@@ -248,12 +308,14 @@ export class TacticalDirector {
           }
         }
 
+        // Per gli edifici e fortificazioni, estendi il raggio di aggro a 420px (~9 caselle) per evitare che i predoni stazionino davanti alle mura
         if (!nearestPlayerTarget && buildings) {
+          let bDist = 420;
           for (const b of buildings) {
             if (b.owner === 'player' && b.hp > 0 && b.defId !== 'cyclopean_slab') {
               const d = Math.hypot(b.centerX - u.x, b.centerY - u.y);
-              if (d < nearestDist) {
-                nearestDist = d;
+              if (d < bDist) {
+                bDist = d;
                 nearestPlayerTarget = b;
               }
             }
@@ -307,6 +369,31 @@ export class TacticalDirector {
                 y: c.ty * TILE_SIZE + 24
               }));
               u.state = 'MOVE_TO';
+            } else if (buildings) {
+              // Direct path blocked by fortifications: seek nearest player building/wall perimeter
+              let closestB: BuildingEntity | null = null;
+              let closestDist = Infinity;
+              for (const b of buildings) {
+                if (b.owner === 'player' && b.hp > 0 && b.defId !== 'cyclopean_slab') {
+                  const d = Math.hypot(b.centerX - u.x, b.centerY - u.y);
+                  if (d < closestDist) {
+                    closestDist = d;
+                    closestB = b;
+                  }
+                }
+              }
+              if (closestB) {
+                const bTx = closestB.tx + Math.floor(closestB.def.width / 2);
+                const bTy = closestB.ty + Math.floor(closestB.def.height / 2);
+                const bPath = AStar.findPath(graph, { tx, ty }, { tx: bTx, ty: bTy }, 2000);
+                if (bPath.length > 1) {
+                  u.path = bPath.slice(1, 10).map((c: GridCoord) => ({
+                    x: c.tx * TILE_SIZE + 24,
+                    y: c.ty * TILE_SIZE + 24
+                  }));
+                  u.state = 'MOVE_TO';
+                }
+              }
             }
           }
         }
@@ -385,16 +472,17 @@ export class TacticalDirector {
       let shoreTy = targetTy;
       const candidateRows = [
         targetTy,
+        28, 27, 29, 26, 30, 25, 31, // Prime Sea Gate breach corridors
         targetTy - 1, targetTy + 1,
         targetTy - 2, targetTy + 2,
         targetTy - 3, targetTy + 3,
         targetTy - 4, targetTy + 4,
-        27, 14, 42 // Guaranteed tidal causeways in shallows maps
+        14, 42 // Guaranteed tidal causeways in shallows maps
       ];
 
       for (const row of candidateRows) {
         if (row < 2 || row >= graph.height - 2) continue;
-        for (let x = 3; x < Math.min(graph.width - 5, 28); x++) {
+        for (let x = 7; x < Math.min(graph.width - 5, 28); x++) {
           if (graph.isWalkable(x, row)) {
             // Verify path to player settlement actually exists (avoid landing on isolated water-locked reefs)
             const testPath = AStar.findPath(graph, { tx: x, ty: row }, { tx: Math.floor(targetTx), ty: Math.floor(targetTy) }, 2000);
@@ -402,15 +490,19 @@ export class TacticalDirector {
               shoreTx = x;
               shoreTy = row;
               break;
+            } else if (shoreTx === -1) {
+              // Valid walkable beach tile fallback in case of perimeter enclosure
+              shoreTx = x;
+              shoreTy = row;
             }
           }
         }
-        if (shoreTx !== -1) break;
+        if (shoreTx !== -1 && graph.isWalkable(shoreTx, shoreTy)) break;
       }
 
       if (shoreTx === -1) {
         // Fallback: search for any walkable tile along the row
-        for (let x = 6; x < 28; x++) {
+        for (let x = 7; x < 28; x++) {
           if (graph.isWalkable(x, targetTy)) {
             shoreTx = x;
             shoreTy = targetTy;
@@ -418,7 +510,7 @@ export class TacticalDirector {
           }
         }
         if (shoreTx === -1) {
-          shoreTx = 7;
+          shoreTx = 8;
           shoreTy = targetTy;
         }
       }
@@ -435,8 +527,8 @@ export class TacticalDirector {
         tx: startX / TILE_SIZE,
         ty: shoreTy,
         targetDockX,
-        speed: 75,
-        waveNum: this.totalShipsLanded + 1,
+        speed: 80,
+        waveNum: this.totalWavesSpawned,
         state: 'ARRIVING',
         pendingUnits: wave.units.map(u => ({ type: u.type, count: u.count })),
         totalUnitsCount: totalUnits,
@@ -501,6 +593,10 @@ export class TacticalDirector {
             spawnTy * TILE_SIZE + 24
           );
           units.push(spawned);
+          if (!this.waveUnitIds.has(this.totalWavesSpawned)) {
+            this.waveUnitIds.set(this.totalWavesSpawned, new Set());
+          }
+          this.waveUnitIds.get(this.totalWavesSpawned)!.add(spawned.id);
 
           // Give overland raider immediate marching orders towards target
           const marchPath = AStar.findPath(graph, { tx: spawnTx, ty: spawnTy }, { tx: Math.floor(targetTx), ty: Math.floor(targetTy) }, 2000);
@@ -510,6 +606,31 @@ export class TacticalDirector {
               y: c.ty * TILE_SIZE + 24
             }));
             spawned.state = 'MOVE_TO';
+          } else if (buildings) {
+            // Direct path to Megaron blocked by walls: find closest player building/wall to attack
+            let closestB: BuildingEntity | null = null;
+            let closestDist = Infinity;
+            for (const b of buildings) {
+              if (b.owner === 'player' && b.hp > 0 && b.defId !== 'cyclopean_slab') {
+                const d = Math.hypot(b.centerX - (spawnTx * TILE_SIZE + 24), b.centerY - (spawnTy * TILE_SIZE + 24));
+                if (d < closestDist) {
+                  closestDist = d;
+                  closestB = b;
+                }
+              }
+            }
+            if (closestB) {
+              const bTx = closestB.tx + Math.floor(closestB.def.width / 2);
+              const bTy = closestB.ty + Math.floor(closestB.def.height / 2);
+              const wallPath = AStar.findPath(graph, { tx: spawnTx, ty: spawnTy }, { tx: bTx, ty: bTy }, 2000);
+              if (wallPath.length > 1) {
+                spawned.path = wallPath.slice(1, 10).map(c => ({
+                  x: c.tx * TILE_SIZE + 24,
+                  y: c.ty * TILE_SIZE + 24
+                }));
+                spawned.state = 'MOVE_TO';
+              }
+            }
           }
         }
       }
@@ -525,6 +646,22 @@ export class TacticalDirector {
 
   public getRemainingWavesCount(): number {
     return this.waves.length;
+  }
+
+  public getTotalWavesCount(): number {
+    return this.totalWavesCount;
+  }
+
+  public getRepelledWavesCount(): number {
+    return this.waveRepelled.size;
+  }
+
+  public isAllWavesDefeated(): boolean {
+    return this.waves.length === 0 && this.waveRepelled.size >= this.totalWavesCount;
+  }
+
+  public isFinalAssaultActive(): boolean {
+    return this.waves.length === 0 && this.waveRepelled.size < this.totalWavesCount;
   }
 
   public getElapsedTime(): number {

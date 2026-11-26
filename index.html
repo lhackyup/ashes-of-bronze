@@ -238,7 +238,8 @@
       display: flex;
       flex-direction: column;
       gap: 4px;
-      min-height: 110px;
+      min-height: 75px;
+      max-height: 140px;
     }
 
     #inspector-name {
@@ -270,10 +271,7 @@
     }
 
     #inspector-actions {
-      display: flex;
-      gap: 4px;
-      flex-wrap: wrap;
-      margin-top: 4px;
+      display: none;
     }
 
     #build-panel {
@@ -292,6 +290,9 @@
       color: var(--bronze-gold);
       border-bottom: 1px solid #4a3e33;
       padding-bottom: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     #build-items-container {
@@ -300,11 +301,60 @@
       gap: 6px;
       overflow-y: auto;
       padding: 4px 2px;
+      align-content: start;
+    }
+
+    .panel-section-header {
+      grid-column: 1 / -1;
+      font-family: 'Cinzel', serif;
+      font-size: 10px;
+      font-weight: bold;
+      color: #ffd166;
+      padding: 4px 0 2px 0;
+      border-bottom: 1px solid #4a3e33;
+      margin-top: 3px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
     }
 
     .build-btn {
       text-align: center;
       padding: 6px 4px;
+    }
+
+    .svga-btn.active {
+      background: linear-gradient(180deg, #996515 0%, #6b4412 50%, #452b0b 100%) !important;
+      border-color: #ffd166 !important;
+      color: #ffffff !important;
+      box-shadow: 0 0 8px rgba(255, 209, 102, 0.45);
+    }
+
+    .unit-cmd-btn {
+      padding: 7px 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      text-align: center;
+      min-height: 48px;
+    }
+
+    .unit-cmd-btn .cmd-icon {
+      font-size: 15px;
+      line-height: 1;
+    }
+
+    .unit-cmd-btn .cmd-label {
+      font-size: 10px;
+      font-weight: bold;
+      line-height: 1.1;
+    }
+
+    .unit-cmd-btn .cmd-sub {
+      font-size: 8px;
+      color: #b5a691;
+      font-weight: normal;
     }
   </style>
 </head>
@@ -464,7 +514,7 @@
 
       <!-- BUILD PANEL -->
       <div id="build-panel" class="stone-panel">
-        <div class="panel-title">Cyclopean Works & Forge</div>
+        <div class="panel-title" id="build-panel-title">Cyclopean Works & Forge</div>
         <div id="build-items-container"></div>
       </div>
     </aside>
