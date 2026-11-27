@@ -178,13 +178,6 @@ class GameApp {
         redoubt.customDescription = 'Fortified stone compound sheltering the renegade metallurgical sanctuary and the secrets of forced-draft smelting.';
       }
 
-      // The Revolutionary Twin-Bellows Primitive Bloomery!
-      const bloomery = this.spawnBuilding('primitive_bloomery', 'player', pStart.tx + 5, pStart.ty - 2, true);
-      if (bloomery) {
-        bloomery.customName = 'Twin-Bellows Primitive Bloomery';
-        bloomery.customDescription = 'Clay and dry-stone shaft furnace with twin goatskin foot bellows. Smelts raw hematite into workable iron blooms, provides mineral storage, and equips Black Blade Iron Warriors.';
-      }
-
       this.spawnBuilding('granary', 'player', pStart.tx - 5, pStart.ty, true);
       this.spawnBuilding('barracks', 'player', pStart.tx, pStart.ty - 6, true);
 
@@ -203,15 +196,15 @@ class GameApp {
         this.spawnBuilding('cyclopean_wall', 'player', w.tx, w.ty, true);
       }
 
-      // Starting Defenders (Featuring the new Black Blade Iron Warriors!)
+      // Starting Defenders (Player constructs the Bloomery and trains Black Blade Warriors during the mission!)
       this.spawnUnit('donkey_caravan', 'player', (pStart.tx + 2) * TILE_SIZE + 24, (pStart.ty + 3) * TILE_SIZE + 24);
       this.spawnUnit('donkey_caravan', 'player', (pStart.tx + 3) * TILE_SIZE + 24, (pStart.ty + 3) * TILE_SIZE + 24);
-      this.spawnUnit('black_blade_warrior', 'player', (pStart.tx + 4) * TILE_SIZE + 24, (pStart.ty + 1) * TILE_SIZE + 24);
-      this.spawnUnit('black_blade_warrior', 'player', (pStart.tx + 2) * TILE_SIZE + 24, (pStart.ty - 7) * TILE_SIZE + 24);
-      this.spawnUnit('highland_skirmisher', 'player', (pStart.tx - 2) * TILE_SIZE + 24, (pStart.ty - 6) * TILE_SIZE + 24);
-      this.spawnUnit('highland_skirmisher', 'player', (pStart.tx + 4) * TILE_SIZE + 24, (pStart.ty - 5) * TILE_SIZE + 24);
       this.spawnUnit('spear_militia', 'player', (pStart.tx + 1) * TILE_SIZE + 24, (pStart.ty - 7) * TILE_SIZE + 24);
+      this.spawnUnit('spear_militia', 'player', (pStart.tx + 2) * TILE_SIZE + 24, (pStart.ty - 7) * TILE_SIZE + 24);
+      this.spawnUnit('skirmisher', 'player', (pStart.tx - 2) * TILE_SIZE + 24, (pStart.ty - 6) * TILE_SIZE + 24);
+      this.spawnUnit('skirmisher', 'player', (pStart.tx + 4) * TILE_SIZE + 24, (pStart.ty - 5) * TILE_SIZE + 24);
       this.spawnUnit('composite_bowman', 'player', (pStart.tx - 3) * TILE_SIZE + 24, (pStart.ty - 1) * TILE_SIZE + 24);
+      this.spawnUnit('bronze_swordsman', 'player', (pStart.tx + 4) * TILE_SIZE + 24, (pStart.ty + 1) * TILE_SIZE + 24);
 
       // Rich Hematite Iron Veins right adjacent to the bloomery furnace yard!
       for (let dy = 0; dy < 2; dy++) {
@@ -279,13 +272,13 @@ class GameApp {
         this.spawnBuilding('cyclopean_wall', 'player', w.tx, w.ty, true);
       }
 
-      // Starting Expedition Defenders (including our brand-new Highland Skirmishers!)
+      // Starting Expedition Defenders (Player trains Highland Skirmishers at the Barracks!)
       this.spawnUnit('donkey_caravan', 'player', (pStart.tx + 2) * TILE_SIZE + 24, (pStart.ty + 3) * TILE_SIZE + 24);
       this.spawnUnit('donkey_caravan', 'player', (pStart.tx + 3) * TILE_SIZE + 24, (pStart.ty + 3) * TILE_SIZE + 24);
       this.spawnUnit('spear_militia', 'player', (pStart.tx + 1) * TILE_SIZE + 24, (pStart.ty - 7) * TILE_SIZE + 24);
       this.spawnUnit('spear_militia', 'player', (pStart.tx + 2) * TILE_SIZE + 24, (pStart.ty - 7) * TILE_SIZE + 24);
-      this.spawnUnit('highland_skirmisher', 'player', (pStart.tx - 2) * TILE_SIZE + 24, (pStart.ty - 6) * TILE_SIZE + 24);
-      this.spawnUnit('highland_skirmisher', 'player', (pStart.tx + 4) * TILE_SIZE + 24, (pStart.ty - 5) * TILE_SIZE + 24);
+      this.spawnUnit('skirmisher', 'player', (pStart.tx - 2) * TILE_SIZE + 24, (pStart.ty - 6) * TILE_SIZE + 24);
+      this.spawnUnit('spear_militia', 'player', (pStart.tx + 4) * TILE_SIZE + 24, (pStart.ty - 5) * TILE_SIZE + 24);
       this.spawnUnit('composite_bowman', 'player', (pStart.tx - 3) * TILE_SIZE + 24, (pStart.ty - 1) * TILE_SIZE + 24);
       this.spawnUnit('bronze_swordsman', 'player', (pStart.tx + 1) * TILE_SIZE + 24, (pStart.ty + 2) * TILE_SIZE + 24);
 
@@ -328,7 +321,6 @@ class GameApp {
       this.spawnBuilding('bronze_foundry', 'player', pStart.tx + 6, pStart.ty - 2, true);
       this.spawnBuilding('granary', 'player', pStart.tx - 5, pStart.ty, true);
       this.spawnBuilding('barracks', 'player', pStart.tx, pStart.ty + 6, true);
-      this.spawnBuilding('chariot_stable', 'player', pStart.tx + 5, pStart.ty + 5, true);
 
       // Two Watchtowers guarding southern avenue and river approaches
       this.spawnBuilding('watchtower', 'player', pStart.tx - 6, pStart.ty - 4, true);
@@ -354,7 +346,7 @@ class GameApp {
       this.spawnUnit('spear_militia', 'player', (pStart.tx + 4) * TILE_SIZE + 24, (pStart.ty - 5) * TILE_SIZE + 24);
       this.spawnUnit('composite_bowman', 'player', (pStart.tx - 4) * TILE_SIZE + 24, (pStart.ty - 2) * TILE_SIZE + 24);
       this.spawnUnit('bronze_swordsman', 'player', (pStart.tx - 2) * TILE_SIZE + 24, (pStart.ty + 3) * TILE_SIZE + 24);
-      this.spawnUnit('war_chariot', 'player', (pStart.tx + 6) * TILE_SIZE + 24, (pStart.ty + 8) * TILE_SIZE + 24);
+      this.spawnUnit('spear_militia', 'player', (pStart.tx + 6) * TILE_SIZE + 24, (pStart.ty + 8) * TILE_SIZE + 24);
 
       // Two Hostile Rival Coalition Forward Camps across the river:
       // Camp 1: Northern Riverbank Siege Camp (tx: 42, ty: 12)
