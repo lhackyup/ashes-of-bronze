@@ -69,6 +69,11 @@ export class EconomySystem {
           newMax.tin += 500;
           newMax.iron += 500;
           newMax.stone += 350;
+        } else if (b.defId === 'primitive_bloomery') {
+          // Twin-Bellows Primitive Bloomery: expands iron, stone, copper storage
+          newMax.iron += 350;
+          newMax.stone += 300;
+          newMax.copper += 200;
         }
       }
     }

@@ -278,6 +278,22 @@ export class ObjectiveManager {
         } else {
           allPrimariesDone = false;
         }
+      } else if (obj.id === 'train_black_blades' || (obj.type === 'train_units' && obj.targetId === 'black_blade_warrior')) {
+        const warriors = units.filter(u => u.owner === 'player' && u.defId === 'black_blade_warrior');
+        obj.currentAmount = warriors.length;
+        if (warriors.length >= (obj.targetAmount || 4)) {
+          this.completeObjective(obj);
+        } else {
+          allPrimariesDone = false;
+        }
+      } else if (obj.id === 'build_bloomery' || (obj.type === 'build_building' && obj.targetId === 'primitive_bloomery')) {
+        const bloomeries = buildings.filter(b => b.owner === 'player' && b.defId === 'primitive_bloomery' && b.buildProgress >= 1.0);
+        obj.currentAmount = bloomeries.length;
+        if (bloomeries.length >= (obj.targetAmount || 1)) {
+          this.completeObjective(obj);
+        } else {
+          allPrimariesDone = false;
+        }
       } else if (obj.id === 'gather_timber' || (obj.type === 'gather_resource' && obj.targetId === 'timber')) {
         obj.currentAmount = Math.floor(resources.timber);
         if (resources.timber >= (obj.targetAmount || 350)) {

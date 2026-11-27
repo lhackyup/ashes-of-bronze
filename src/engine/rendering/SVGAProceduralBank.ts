@@ -2186,6 +2186,326 @@ export class SVGAProceduralBank {
         ctx.fillStyle = fireG;
         ctx.fillRect(48, 60, 48, 48);
       }));
+
+      // 7b. Twin-Bellows Primitive Bloomery (Authentic 1200 BC Taurus Mountain Shaft Furnace, 3x3 tiles = 144x144)
+      this.buildingSprites.set(`primitive_bloomery_${owner}`, this.makeBuildingSprite(144, (ctx) => {
+        // --- 1. Working Yard Apron & Scorched Foundation Ground ---
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.52)';
+        ctx.beginPath();
+        ctx.ellipse(72, 80, 68, 56, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Burnt earth and coal dust working floor
+        const yardG = ctx.createRadialGradient(72, 80, 16, 72, 80, 66);
+        yardG.addColorStop(0, '#1c140e');
+        yardG.addColorStop(0.4, '#291e17');
+        yardG.addColorStop(0.8, '#443428');
+        yardG.addColorStop(1, '#5a4636');
+        ctx.fillStyle = yardG;
+        ctx.beginPath();
+        ctx.ellipse(72, 80, 64, 52, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Scattered limestone cobbles and dark slag chunks around apron
+        const slagStones = [
+          { x: 20, y: 72, r: 3, c: '#0f172a' },
+          { x: 30, y: 92, r: 2.5, c: '#1e293b' },
+          { x: 50, y: 118, r: 3.5, c: '#334155' },
+          { x: 74, y: 124, r: 4, c: '#1c1917' },
+          { x: 96, y: 116, r: 3, c: '#0f172a' },
+          { x: 120, y: 88, r: 3.5, c: '#1e293b' },
+          { x: 114, y: 64, r: 2.5, c: '#334155' }
+        ];
+        for (const st of slagStones) {
+          ctx.fillStyle = st.c;
+          ctx.beginPath();
+          ctx.ellipse(st.x, st.y, st.r, st.r * 0.7, 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // --- 2. Central Conical Shaft Bloomery (Clay & Mountain Sandstone) ---
+        // Shadow behind the shaft
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+        ctx.fillRect(44, 28, 56, 62);
+
+        // Conical clay-and-stone shaft body (sloping from top 34px to bottom 58px)
+        const shaftG = ctx.createLinearGradient(44, 24, 100, 86);
+        shaftG.addColorStop(0, '#855132'); // Sunny side clay
+        shaftG.addColorStop(0.3, '#603822');
+        shaftG.addColorStop(0.7, '#3d2416');
+        shaftG.addColorStop(1, '#1f120a'); // Shadowed clay base
+        ctx.fillStyle = shaftG;
+        ctx.beginPath();
+        ctx.moveTo(55, 24);
+        ctx.lineTo(89, 24);
+        ctx.lineTo(101, 88);
+        ctx.lineTo(43, 88);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#27170e';
+        ctx.lineWidth = 1.8;
+        ctx.stroke();
+
+        // Stone masonry joints / cracks in the dried baked clay
+        ctx.strokeStyle = 'rgba(30, 16, 9, 0.7)';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(50, 42); ctx.lineTo(94, 42);
+        ctx.moveTo(47, 58); ctx.lineTo(97, 58);
+        ctx.moveTo(45, 74); ctx.lineTo(99, 74);
+        // Vertical brick lines
+        ctx.moveTo(68, 24); ctx.lineTo(66, 42);
+        ctx.moveTo(80, 24); ctx.lineTo(82, 42);
+        ctx.moveTo(58, 42); ctx.lineTo(56, 58);
+        ctx.moveTo(86, 42); ctx.lineTo(88, 58);
+        ctx.moveTo(70, 58); ctx.lineTo(68, 74);
+        ctx.stroke();
+
+        // Three Heavy Hammered Iron Reinforcing Hoops (clamping shaft against heat fractures)
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(52, 38, 40, 3.5);
+        ctx.fillRect(48, 54, 48, 3.5);
+        ctx.fillRect(44, 70, 56, 3.5);
+        // Rivet heads on hoops
+        ctx.fillStyle = '#94a3b8';
+        for (const hx of [56, 68, 80, 88]) {
+          ctx.fillRect(hx, 39, 1.8, 1.8);
+          ctx.fillRect(hx - 2, 55, 1.8, 1.8);
+          ctx.fillRect(hx - 4, 71, 1.8, 1.8);
+        }
+
+        // --- 3. Chimney Top Opening with Incandescent Core Glow & Sparks ---
+        // Chimney lip rim
+        ctx.fillStyle = '#452615';
+        ctx.beginPath();
+        ctx.ellipse(72, 24, 18, 6, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#1a0f08';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // Blazing white/orange chimney aperture
+        const topFireG = ctx.createRadialGradient(72, 24, 2, 72, 24, 14);
+        topFireG.addColorStop(0, '#ffffff');
+        topFireG.addColorStop(0.3, '#fde047');
+        topFireG.addColorStop(0.7, '#ea580c');
+        topFireG.addColorStop(1, 'rgba(127, 29, 29, 0)');
+        ctx.fillStyle = topFireG;
+        ctx.beginPath();
+        ctx.ellipse(72, 24, 15, 5, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Rising spark embers
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(66, 14, 2, 2);
+        ctx.fillRect(75, 11, 2.5, 2.5);
+        ctx.fillRect(71, 5, 2, 2);
+        ctx.fillRect(80, 2, 2.5, 2.5);
+        ctx.fillStyle = '#f97316';
+        ctx.fillRect(68, 8, 1.8, 1.8);
+        ctx.fillRect(76, -1, 2, 2);
+
+        // Billowing charcoal smoke puffs
+        ctx.fillStyle = 'rgba(75, 85, 99, 0.45)';
+        ctx.beginPath(); ctx.arc(72, 10, 7, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(78, 2, 9, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(68, -4, 11, 0, Math.PI * 2); ctx.fill();
+
+        // --- 4. Lower Arched Hearth / Tuyere Chamber & Slag Tap (Incandescent Blast Heart) ---
+        // Arched tuyere entrance at front base
+        ctx.fillStyle = '#1c100a';
+        ctx.beginPath();
+        ctx.arc(72, 77, 13, Math.PI, 0);
+        ctx.lineTo(85, 89);
+        ctx.lineTo(59, 89);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#120a06';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // Blazing fiery heart inside hearth
+        const hearthG = ctx.createRadialGradient(72, 82, 2, 72, 82, 12);
+        hearthG.addColorStop(0, '#ffffff');
+        hearthG.addColorStop(0.3, '#ffedd5');
+        hearthG.addColorStop(0.6, '#f97316');
+        hearthG.addColorStop(0.9, '#dc2626');
+        hearthG.addColorStop(1, 'rgba(153, 27, 27, 0)');
+        ctx.fillStyle = hearthG;
+        ctx.beginPath();
+        ctx.arc(72, 80, 11, Math.PI, 0);
+        ctx.lineTo(83, 89);
+        ctx.lineTo(61, 89);
+        ctx.closePath();
+        ctx.fill();
+
+        // Slag Run-off Channel extending out the front
+        ctx.fillStyle = '#1c1917';
+        ctx.fillRect(66, 88, 12, 16);
+        // Glowing hot slag stream
+        ctx.fillStyle = '#ea580c';
+        ctx.fillRect(69, 89, 6, 12);
+        ctx.fillStyle = '#fde047';
+        ctx.fillRect(71, 91, 2.5, 7);
+
+        // --- 5. Twin Goatskin Foot Bellows & Ceramic Tuyere Blowpipes ---
+        // Left Bellows (x: 22..38, y: 58..78)
+        // Timber treadle base
+        ctx.fillStyle = '#452b17';
+        ctx.fillRect(16, 68, 22, 6);
+        ctx.fillStyle = '#27170b';
+        ctx.fillRect(16, 74, 22, 2);
+        // Goatskin leather accordion bag
+        ctx.fillStyle = '#92400e';
+        ctx.beginPath();
+        ctx.ellipse(27, 63, 11, 8, -0.2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#713f12';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        // Pleat folds
+        ctx.strokeStyle = '#451a03';
+        ctx.beginPath();
+        ctx.moveTo(20, 60); ctx.lineTo(24, 66);
+        ctx.moveTo(27, 57); ctx.lineTo(30, 67);
+        ctx.stroke();
+        // Ceramic blowpipe (tuyere) angling into left furnace wall
+        ctx.fillStyle = '#c2410c';
+        ctx.beginPath();
+        ctx.moveTo(36, 64);
+        ctx.lineTo(54, 76);
+        ctx.lineTo(53, 80);
+        ctx.lineTo(34, 68);
+        ctx.closePath();
+        ctx.fill();
+        // Operator balance handrail
+        ctx.strokeStyle = '#78350f';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(18, 48); ctx.lineTo(18, 70);
+        ctx.moveTo(15, 48); ctx.lineTo(28, 48);
+        ctx.stroke();
+
+        // Right Bellows (x: 106..122, y: 58..78)
+        // Timber treadle base
+        ctx.fillStyle = '#452b17';
+        ctx.fillRect(106, 68, 22, 6);
+        ctx.fillStyle = '#27170b';
+        ctx.fillRect(106, 74, 22, 2);
+        // Goatskin leather accordion bag
+        ctx.fillStyle = '#92400e';
+        ctx.beginPath();
+        ctx.ellipse(117, 63, 11, 8, 0.2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#713f12';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        // Pleat folds
+        ctx.strokeStyle = '#451a03';
+        ctx.beginPath();
+        ctx.moveTo(114, 66); ctx.lineTo(118, 60);
+        ctx.moveTo(121, 67); ctx.lineTo(124, 57);
+        ctx.stroke();
+        // Ceramic blowpipe angling into right furnace wall
+        ctx.fillStyle = '#c2410c';
+        ctx.beginPath();
+        ctx.moveTo(108, 64);
+        ctx.lineTo(90, 76);
+        ctx.lineTo(91, 80);
+        ctx.lineTo(110, 68);
+        ctx.closePath();
+        ctx.fill();
+        // Operator balance handrail
+        ctx.strokeStyle = '#78350f';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(126, 48); ctx.lineTo(126, 70);
+        ctx.moveTo(116, 48); ctx.lineTo(129, 48);
+        ctx.stroke();
+
+        // --- 6. Front Left: Basalt Anvil, Quench Tub & Smithing Tools ---
+        // Oak stump
+        ctx.fillStyle = '#543d2b';
+        ctx.fillRect(24, 94, 18, 16);
+        ctx.fillStyle = '#2e1f14';
+        ctx.fillRect(24, 110, 18, 2);
+        // Basalt anvil block
+        ctx.fillStyle = '#334155';
+        ctx.fillRect(22, 88, 22, 8);
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(20, 89, 4, 6); // Horn
+        ctx.fillStyle = '#64748b'; // Specular top of anvil
+        ctx.fillRect(24, 88, 18, 2);
+        // Smithing bronze hammer on anvil
+        ctx.fillStyle = '#d97706';
+        ctx.fillRect(30, 86, 7, 3);
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(34, 87, 8, 1.5);
+        // Quench wooden water trough
+        ctx.fillStyle = '#3f2e20';
+        ctx.fillRect(10, 102, 16, 12);
+        ctx.fillStyle = '#0284c7'; // Water reflection
+        ctx.fillRect(12, 104, 12, 8);
+
+        // --- 7. Front Right: Hematite Ore Pile, Charcoal, and Porous Black Iron Blooms ---
+        // Raw red/black hematite rocks
+        const hematite = [
+          { x: 104, y: 98, r: 5, c: '#451a03' },
+          { x: 112, y: 95, r: 6, c: '#1c1917' },
+          { x: 118, y: 100, r: 5, c: '#7f1d1d' },
+          { x: 110, y: 105, r: 4.5, c: '#292524' }
+        ];
+        for (const h of hematite) {
+          ctx.fillStyle = h.c;
+          ctx.beginPath();
+          ctx.arc(h.x, h.y, h.r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Freshly hammered porous Black Iron Blooms (spongy metallic lumps)
+        const blooms = [
+          { x: 92, y: 108, r: 4.5 },
+          { x: 99, y: 112, r: 4.0 },
+          { x: 88, y: 115, r: 3.5 }
+        ];
+        for (const bl of blooms) {
+          ctx.fillStyle = '#0f172a';
+          ctx.beginPath(); ctx.arc(bl.x, bl.y, bl.r, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = '#475569';
+          ctx.fillRect(bl.x - 1, bl.y - 2, 2, 2);
+          ctx.fillStyle = '#94a3b8';
+          ctx.fillRect(bl.x + 1, bl.y - 1, 1, 1);
+        }
+
+        // Weapon rack with forged Black Blades
+        ctx.fillStyle = '#543d2b';
+        ctx.fillRect(118, 108, 18, 3);
+        ctx.fillRect(120, 111, 2, 10);
+        ctx.fillRect(132, 111, 2, 10);
+        // Straight black iron swords leaning
+        for (let sw = 0; sw < 3; sw++) {
+          const sx = 122 + sw * 4;
+          ctx.fillStyle = '#0f172a'; // Black iron blade core
+          ctx.fillRect(sx, 96, 2, 15);
+          ctx.fillStyle = '#e2e8f0'; // Whetted silver cutting edge
+          ctx.fillRect(sx + 1.5, 96, 0.8, 14);
+          ctx.fillStyle = '#fbbf24'; // Crossguard
+          ctx.fillRect(sx - 1.5, 108, 5, 1.5);
+        }
+
+        // --- 8. Faction Pennant on Corner Flagpole ---
+        ctx.fillStyle = '#543d2b';
+        ctx.fillRect(12, 28, 2.5, 34);
+        ctx.fillStyle = cMain;
+        ctx.beginPath();
+        ctx.moveTo(14.5, 29);
+        ctx.lineTo(32, 35);
+        ctx.lineTo(14.5, 41);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = cTrim;
+        ctx.fillRect(14, 29, 2, 12);
+      }));
     }
 
     // 8. Natural Wildlife Lair: Lion's Rocky Den (2x2 tiles = 96x96)
@@ -3385,6 +3705,183 @@ export class SVGAProceduralBank {
       // Polished bronze blade highlight
       ctx.fillStyle = '#fef08a';
       ctx.fillRect(0, -9, 1, 7);
+      ctx.restore();
+
+    } else if (u.defId === 'black_blade_warrior') {
+      // --- BLACK BLADE IRON WARRIOR (Heavy Taurus assault vanguard, dark iron plate, studded shield, straight forged black iron broadsword) ---
+      const isAttacking = u.state === 'ATTACK_TARGET' && u.attackCooldown > 0;
+      const slashAngle = isAttacking ? Math.sin((u.attackCooldown / (u.def.attackCooldown || 1.0)) * Math.PI) * 1.6 : 0;
+
+      // 1. Dark Iron Greaves & Laced Mountain Boots
+      ctx.fillStyle = '#1e293b'; // Dark forged iron greaves
+      ctx.fillRect(-5, 3, 3.5, 9 + bob);
+      ctx.fillRect(2, 3, 3.5, 9 - bob);
+      ctx.fillStyle = '#475569'; // Iron shin specular highlight
+      ctx.fillRect(-5, 4 + bob, 1.2, 7);
+      ctx.fillRect(2, 4 - bob, 1.2, 7);
+      ctx.fillStyle = '#334155'; // Greave rivet studs
+      ctx.fillRect(-4, 3 + bob, 1.5, 1.5);
+      ctx.fillRect(3, 3 - bob, 1.5, 1.5);
+      ctx.fillStyle = '#292524'; // Mountain boots
+      ctx.fillRect(-5.5, 11 + bob, 4.5, 2.5);
+      ctx.fillRect(1.5, 11 - bob, 4.5, 2.5);
+
+      // 2. Studded Iron-Scale Armored Kilt & Tunic
+      ctx.fillStyle = '#0f172a'; // Heavy blackened rawhide kilt
+      ctx.fillRect(-6, -4 + bob * 0.5, 12, 8);
+      // Faction waist sash & buckle
+      ctx.fillStyle = cMain;
+      ctx.fillRect(-6, -2 + bob * 0.5, 12, 2.5);
+      ctx.fillStyle = cTrim;
+      ctx.fillRect(-1.5, -2 + bob * 0.5, 3, 2.5);
+      // Riveted iron scales on kilt
+      ctx.fillStyle = '#334155';
+      for (let sc = -5; sc <= 3; sc += 2.5) {
+        ctx.fillRect(sc, 1 + bob * 0.5, 2, 2.5);
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillRect(sc + 0.5, 1.5 + bob * 0.5, 1, 1);
+        ctx.fillStyle = '#334155';
+      }
+
+      // 3. Wrought-Iron Muscle Cuirass & Heavy Pauldrons
+      ctx.fillStyle = '#1e293b'; // Dark hammered iron breastplate
+      ctx.fillRect(-5.5, -10 + bob * 0.5, 11, 8.5);
+      ctx.fillStyle = '#475569'; // Pectoral plate ridge
+      ctx.fillRect(-4, -9 + bob * 0.5, 3, 3);
+      ctx.fillRect(1, -9 + bob * 0.5, 3, 3);
+      ctx.fillStyle = '#64748b'; // Metallic glint
+      ctx.fillRect(-3, -8.5 + bob * 0.5, 1.2, 1.2);
+      ctx.fillRect(2, -8.5 + bob * 0.5, 1.2, 1.2);
+
+      // Articulated Iron Shoulder Pauldrons
+      ctx.fillStyle = '#334155';
+      ctx.beginPath(); ctx.ellipse(-6.5, -9 + bob * 0.5, 2.5, 4, -0.2, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(6.5, -9 + bob * 0.5, 2.5, 4, 0.2, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillRect(-7, -10 + bob * 0.5, 1.5, 1.5);
+      ctx.fillRect(5.5, -10 + bob * 0.5, 1.5, 1.5);
+
+      // 4. Conical Iron Helmet with Nasal Bar & Cheek Guards
+      ctx.fillStyle = '#1e293b'; // Conical iron cap
+      ctx.beginPath();
+      ctx.moveTo(-5, -11 + bob * 0.5);
+      ctx.lineTo(0, -18 + bob * 0.5);
+      ctx.lineTo(5, -11 + bob * 0.5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+
+      // Specular ridge along the center of helmet
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, -17.5 + bob * 0.5); ctx.lineTo(0, -11 + bob * 0.5);
+      ctx.stroke();
+
+      // Lower helmet band
+      ctx.fillStyle = '#475569';
+      ctx.fillRect(-5, -12 + bob * 0.5, 10, 2);
+
+      // Face & Fierce Eyes under the brow
+      ctx.fillStyle = '#a88267'; // Weathered skin
+      ctx.fillRect(-3.5, -10 + bob * 0.5, 7, 3);
+      ctx.fillStyle = '#0f172a'; // Eyes
+      ctx.fillRect(-2.5, -9 + bob * 0.5, 1.2, 1);
+      ctx.fillRect(1.5, -9 + bob * 0.5, 1.2, 1);
+
+      // Riveted Iron Nasal Bar extending down
+      ctx.fillStyle = '#64748b';
+      ctx.fillRect(-0.8, -12 + bob * 0.5, 1.6, 5);
+      ctx.fillStyle = '#cbd5e1';
+      ctx.fillRect(-0.5, -11 + bob * 0.5, 1, 1);
+
+      // Cheek guards
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(-4.5, -9.5 + bob * 0.5, 1.5, 3.5);
+      ctx.fillRect(3, -9.5 + bob * 0.5, 1.5, 3.5);
+
+      // 5. Heavy Iron-Rimmed Hexagonal Shield (Left Arm)
+      ctx.save();
+      ctx.translate(-7.5, -3 + bob * 0.5);
+      // Hexagonal wooden/leather body
+      ctx.fillStyle = '#1e293b';
+      ctx.beginPath();
+      ctx.moveTo(0, -9);
+      ctx.lineTo(5.5, -5);
+      ctx.lineTo(5.5, 5);
+      ctx.lineTo(0, 9);
+      ctx.lineTo(-5.5, 5);
+      ctx.lineTo(-5.5, -5);
+      ctx.closePath();
+      ctx.fill();
+      // Heavy iron reinforcing rim
+      ctx.strokeStyle = '#475569';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      // Faction emblem stripe across shield face
+      ctx.fillStyle = cMain;
+      ctx.fillRect(-4, -1.5, 8, 3);
+      // Central Iron Boss & Spike
+      ctx.fillStyle = '#64748b';
+      ctx.beginPath(); ctx.arc(0, 0, 3, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(-0.8, -0.8, 1.6, 1.6); // Sharp glinting point
+      ctx.restore();
+
+      // 6. THE STRAIGHT BLACK IRON BROADSWORD (THE BLACK BLADE) (Right Arm)
+      ctx.save();
+      ctx.translate(5.5, -6 + bob * 0.5);
+      ctx.rotate(0.25 + slashAngle);
+
+      // Hilt: Pommel & Leather-wrapped grip
+      ctx.fillStyle = '#1c1917'; // Dark wrapped grip
+      ctx.fillRect(-1.2, 0, 2.4, 7);
+      ctx.fillStyle = '#475569'; // Octagonal iron pommel
+      ctx.fillRect(-2, 7, 4, 2.5);
+      // Straight Iron Crossguard
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(-4.5, -1.5, 9, 2.5);
+      ctx.fillStyle = '#64748b';
+      ctx.fillRect(-4.5, -1.5, 9, 0.8); // Top bevel
+
+      // THE BLADE: Straight, Long, Double-Edged Wrought Iron
+      // Dark iron core
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(-1.5, -22, 3, 21);
+      // Tapered diamond point
+      ctx.beginPath();
+      ctx.moveTo(-1.5, -22);
+      ctx.lineTo(0, -26);
+      ctx.lineTo(1.5, -22);
+      ctx.closePath();
+      ctx.fill();
+
+      // Tempered Sharp Silvery Cutting Edges (Contrast against the black iron!)
+      ctx.fillStyle = '#e2e8f0'; // Left sharp edge
+      ctx.fillRect(-2.2, -22, 0.8, 20.5);
+      ctx.fillStyle = '#f8fafc'; // Right sharp edge (catching sunlight)
+      ctx.fillRect(1.4, -22, 0.8, 20.5);
+      // Point edge highlights
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(-2.2, -22); ctx.lineTo(0, -26); ctx.lineTo(2.2, -22);
+      ctx.stroke();
+
+      // Central Fuller / Blood Groove down the blade spine
+      ctx.fillStyle = '#020617';
+      ctx.fillRect(-0.5, -18, 1, 14);
+
+      // Dynamic attack slash trail / sparks
+      if (isAttacking) {
+        ctx.strokeStyle = 'rgba(248, 250, 252, 0.6)';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.arc(0, -24, 6, -Math.PI * 0.4, Math.PI * 0.4);
+        ctx.stroke();
+      }
       ctx.restore();
 
     } else if (u.defId === 'sea_raider') {

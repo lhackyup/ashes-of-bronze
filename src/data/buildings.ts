@@ -82,6 +82,23 @@ export const BUILDINGS: Record<string, BuildingDef> = {
     dropsOffResources: ['iron']
   },
 
+  primitive_bloomery: {
+    id: 'primitive_bloomery',
+    name: 'Twin-Bellows Primitive Bloomery',
+    category: 'technology',
+    width: 3,
+    height: 3,
+    maxHp: 1200,
+    cost: { stone: 180, timber: 120, copper: 50 },
+    buildTime: 14,
+    description: 'Clay and dry-stone shaft furnace with twin goatskin foot bellows. Smelts raw hematite into workable iron blooms, provides mineral storage (+350 Iron, +300 Stone, +200 Copper), and equips Black Blade Iron Warriors.',
+    requiresFoundation: true,
+    foundationPenaltyHpRatio: 0.5,
+    storageProvided: 300,
+    dropsOffResources: ['iron', 'stone', 'copper'],
+    producesUnits: ['black_blade_warrior']
+  },
+
   barracks: {
     id: 'barracks',
     name: 'Militia Barracks & Forge',
@@ -91,10 +108,10 @@ export const BUILDINGS: Record<string, BuildingDef> = {
     maxHp: 1000,
     cost: { copper: 150, timber: 100 },
     buildTime: 12,
-    description: 'Trains tower-shield spearmen, Levantine slingers, Highland skirmishers, Cypriot composite bowmen, and assault infantry.',
+    description: 'Trains tower-shield spearmen, Levantine slingers, Highland skirmishers, Cypriot composite bowmen, Black Blade warriors, and assault infantry.',
     requiresFoundation: true,
     foundationPenaltyHpRatio: 0.5,
-    producesUnits: ['spear_militia', 'skirmisher', 'highland_skirmisher', 'composite_bowman', 'bronze_swordsman', 'iron_infantry']
+    producesUnits: ['spear_militia', 'skirmisher', 'highland_skirmisher', 'composite_bowman', 'bronze_swordsman', 'black_blade_warrior', 'iron_infantry']
   },
 
   watchtower: {

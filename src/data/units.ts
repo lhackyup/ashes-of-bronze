@@ -101,6 +101,23 @@ export const UNITS: Record<string, UnitDef> = {
     damageType: 'slash'
   },
 
+  black_blade_warrior: {
+    id: 'black_blade_warrior',
+    name: 'Black Blade Iron Warrior',
+    category: 'infantry',
+    maxHp: 290,
+    speed: 1.12,
+    cost: { iron: 55, copper: 30, grain: 20 },
+    trainTime: 6.5,
+    description: 'Heavy assault vanguard armed with a forged straight black iron broadsword, iron-plated nasal helmet, and studded wooden shield. Forged without scarce tin, its dark iron edge cleaves through bronze cuirasses.',
+    supplyCost: 1,
+    attackRange: 1.25,
+    damage: 34,
+    attackCooldown: 1.05,
+    armor: 4,
+    damageType: 'slash'
+  },
+
   war_chariot: {
     id: 'war_chariot',
     name: 'Royal War Chariot (2 Horses)',

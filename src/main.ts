@@ -162,7 +162,90 @@ class GameApp {
 
     // Position starting buildings and units
     const pStart = scenario.player.startPosition;
-    if (scenario.id === 'scenario_07_into_stone_gorges') {
+    if (scenario.id === 'scenario_08_secret_black_blade') {
+      // Scenario 8: The Secret of the Black Blade - Cilician Taurus Bloomery Sanctuary (64x64)
+      this.gridGraph.setFoundation(pStart.tx, pStart.ty, 4, 4, true);
+      this.gridGraph.setFoundation(pStart.tx + 5, pStart.ty - 2, 3, 3, true); // Bloomery
+      this.gridGraph.setFoundation(pStart.tx - 5, pStart.ty, 2, 2, true);     // Granary
+      this.gridGraph.setFoundation(pStart.tx, pStart.ty - 6, 3, 3, true);     // Barracks
+      this.gridGraph.setFoundation(pStart.tx + 5, pStart.ty + 4, 2, 2, true); // East Watchtower
+      this.gridGraph.setFoundation(pStart.tx - 4, pStart.ty - 6, 2, 2, true); // West Watchtower
+
+      // Core Sanctuary Buildings
+      const redoubt = this.spawnBuilding('acropolis', 'player', pStart.tx, pStart.ty, true);
+      if (redoubt) {
+        redoubt.customName = 'Secret Forge Redoubt';
+        redoubt.customDescription = 'Fortified stone compound sheltering the renegade metallurgical sanctuary and the secrets of forced-draft smelting.';
+      }
+
+      // The Revolutionary Twin-Bellows Primitive Bloomery!
+      const bloomery = this.spawnBuilding('primitive_bloomery', 'player', pStart.tx + 5, pStart.ty - 2, true);
+      if (bloomery) {
+        bloomery.customName = 'Twin-Bellows Primitive Bloomery';
+        bloomery.customDescription = 'Clay and dry-stone shaft furnace with twin goatskin foot bellows. Smelts raw hematite into workable iron blooms, provides mineral storage, and equips Black Blade Iron Warriors.';
+      }
+
+      this.spawnBuilding('granary', 'player', pStart.tx - 5, pStart.ty, true);
+      this.spawnBuilding('barracks', 'player', pStart.tx, pStart.ty - 6, true);
+
+      // Guard Watchtowers
+      this.spawnBuilding('watchtower', 'player', pStart.tx + 5, pStart.ty + 4, true);
+      this.spawnBuilding('watchtower', 'player', pStart.tx - 4, pStart.ty - 6, true);
+
+      // Cyclopean Rampart Walls creating chokepoint barriers
+      const wallCoords = [
+        { tx: pStart.tx + 3, ty: pStart.ty - 7 },
+        { tx: pStart.tx + 4, ty: pStart.ty - 7 },
+        { tx: pStart.tx - 5, ty: pStart.ty - 4 },
+        { tx: pStart.tx - 5, ty: pStart.ty - 3 }
+      ];
+      for (const w of wallCoords) {
+        this.spawnBuilding('cyclopean_wall', 'player', w.tx, w.ty, true);
+      }
+
+      // Starting Defenders (Featuring the new Black Blade Iron Warriors!)
+      this.spawnUnit('donkey_caravan', 'player', (pStart.tx + 2) * TILE_SIZE + 24, (pStart.ty + 3) * TILE_SIZE + 24);
+      this.spawnUnit('donkey_caravan', 'player', (pStart.tx + 3) * TILE_SIZE + 24, (pStart.ty + 3) * TILE_SIZE + 24);
+      this.spawnUnit('black_blade_warrior', 'player', (pStart.tx + 4) * TILE_SIZE + 24, (pStart.ty + 1) * TILE_SIZE + 24);
+      this.spawnUnit('black_blade_warrior', 'player', (pStart.tx + 2) * TILE_SIZE + 24, (pStart.ty - 7) * TILE_SIZE + 24);
+      this.spawnUnit('highland_skirmisher', 'player', (pStart.tx - 2) * TILE_SIZE + 24, (pStart.ty - 6) * TILE_SIZE + 24);
+      this.spawnUnit('highland_skirmisher', 'player', (pStart.tx + 4) * TILE_SIZE + 24, (pStart.ty - 5) * TILE_SIZE + 24);
+      this.spawnUnit('spear_militia', 'player', (pStart.tx + 1) * TILE_SIZE + 24, (pStart.ty - 7) * TILE_SIZE + 24);
+      this.spawnUnit('composite_bowman', 'player', (pStart.tx - 3) * TILE_SIZE + 24, (pStart.ty - 1) * TILE_SIZE + 24);
+
+      // Rich Hematite Iron Veins right adjacent to the bloomery furnace yard!
+      for (let dy = 0; dy < 2; dy++) {
+        for (let dx = 0; dx < 2; dx++) {
+          this.tileRenderer.setTile(22 + dx, 48 + dy, 'vein_iron', 850);
+          this.gridGraph.setTileCost(22 + dx, 48 + dy, 0);
+          this.tileRenderer.setTile(8 + dx, 43 + dy, 'vein_iron', 750);
+          this.gridGraph.setTileCost(8 + dx, 43 + dy, 0);
+          this.tileRenderer.setTile(17 + dx, 40 + dy, 'vein_iron', 650);
+          this.gridGraph.setTileCost(17 + dx, 40 + dy, 0);
+        }
+      }
+
+      // Two Hostile Mountain Raider/Brigand Outposts:
+      // Outpost 1: Northern Gorge Lookout (tx: 30, ty: 22)
+      const camp1Tx = 30;
+      const camp1Ty = 22;
+      this.gridGraph.setFoundation(camp1Tx, camp1Ty, 3, 3, true);
+      this.spawnBuilding('sea_camp', 'sea_peoples', camp1Tx, camp1Ty, true);
+      this.gridGraph.setFoundation(camp1Tx + 4, camp1Ty, 2, 2, true);
+      this.spawnBuilding('watchtower', 'sea_peoples', camp1Tx + 4, camp1Ty, true);
+      this.spawnUnit('skirmisher', 'sea_peoples', (camp1Tx + 1) * TILE_SIZE + 24, (camp1Ty + 3) * TILE_SIZE + 24);
+      this.spawnUnit('sea_raider', 'sea_peoples', (camp1Tx + 2) * TILE_SIZE + 24, (camp1Ty + 4) * TILE_SIZE + 24);
+
+      // Outpost 2: Eastern Defile Warband (tx: 48, ty: 30)
+      const camp2Tx = 48;
+      const camp2Ty = 30;
+      this.gridGraph.setFoundation(camp2Tx, camp2Ty, 3, 3, true);
+      this.spawnBuilding('sea_camp', 'sea_peoples', camp2Tx, camp2Ty, true);
+      this.gridGraph.setFoundation(camp2Tx - 4, camp2Ty, 3, 3, true);
+      this.spawnBuilding('barracks', 'sea_peoples', camp2Tx - 4, camp2Ty, true);
+      this.spawnUnit('spear_militia', 'sea_peoples', (camp2Tx - 1) * TILE_SIZE + 24, (camp2Ty + 2) * TILE_SIZE + 24);
+      this.spawnUnit('sea_raider', 'sea_peoples', (camp2Tx + 1) * TILE_SIZE + 24, (camp2Ty + 3) * TILE_SIZE + 24);
+    } else if (scenario.id === 'scenario_07_into_stone_gorges') {
       // Scenario 7: Into the Stone Gorges - Taurus Mountains Expedition (64x64)
       this.gridGraph.setFoundation(pStart.tx, pStart.ty, 4, 4, true);
       this.gridGraph.setFoundation(pStart.tx + 5, pStart.ty - 2, 3, 3, true);
@@ -2315,7 +2398,7 @@ class GameApp {
         targetFriendlyBuilding &&
         u.def.category === 'worker' &&
         (u.currentCargoAmount > 0 || u.state === 'WAITING_STORAGE') &&
-        (targetFriendlyBuilding.defId === 'acropolis' || targetFriendlyBuilding.defId === 'granary' || targetFriendlyBuilding.defId === 'bronze_foundry' || targetFriendlyBuilding.defId === 'iron_smelter')
+        (targetFriendlyBuilding.defId === 'acropolis' || targetFriendlyBuilding.defId === 'granary' || targetFriendlyBuilding.defId === 'bronze_foundry' || targetFriendlyBuilding.defId === 'iron_smelter' || targetFriendlyBuilding.defId === 'primitive_bloomery')
       ) {
         // Player directed donkey caravan to unload at a Granary, Megaron, or Foundry!
         const harvestTarget = u.targetMineCoord || u.lastHarvestCoord;
