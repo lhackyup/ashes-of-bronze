@@ -1093,6 +1093,17 @@ class GameApp {
         this.decorations.push({ x: tx + 0.5, y: ty + 0.5, type: 'cedar', current: 240, max: 240 });
       }
     }
+
+    // Scatter Natural Mountain Limestone Boulders along canyon floors and scree shelves
+    for (let i = 0; i < 40; i++) {
+      const tx = Math.floor((Math.sin(i * 31.7 + 2.1) * 0.5 + 0.5) * (w - 10)) + 5;
+      const ty = Math.floor((Math.cos(i * 43.3 + 1.9) * 0.5 + 0.5) * (h - 10)) + 5;
+      const distBase = Math.hypot(tx - 14, ty - 48);
+      const tile = this.tileRenderer.getTile(tx, ty);
+      if ((tile === 'sand' || tile === 'plain') && distBase > 5) {
+        this.decorations.push({ x: tx + 0.5, y: ty + 0.5, type: 'boulder', current: 0, max: 0 });
+      }
+    }
   }
 
   private setupOrontesBorderlandsMap(w: number, h: number): void {
@@ -2997,6 +3008,10 @@ class GameApp {
           const stumpWx = Math.round(d.x * TILE_SIZE - 32);
           const stumpWy = Math.round(d.y * TILE_SIZE - 36);
           ctx.drawImage(this.tileRenderer.cedarStumpCanvas, stumpWx, stumpWy);
+        } else if (d.type === 'boulder') {
+          const boulderWx = Math.round(d.x * TILE_SIZE - 27);
+          const boulderWy = Math.round(d.y * TILE_SIZE - 25);
+          ctx.drawImage(this.tileRenderer.boulderCanvas, boulderWx, boulderWy);
         }
       }
     }

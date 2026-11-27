@@ -31,6 +31,7 @@ export class TileRenderer {
   private veinReserves: Map<string, VeinReserve> = new Map();
   public cedarTreeCanvas!: HTMLCanvasElement;
   public cedarStumpCanvas!: HTMLCanvasElement;
+  public boulderCanvas!: HTMLCanvasElement;
 
   constructor(width: number, height: number, initialTerrain: TerrainType = 'plain') {
     this.width = width;
@@ -175,33 +176,30 @@ export class TileRenderer {
       });
     }));
 
-    // 4. Rocky Cliff Outcrop
-    this.tileCache.set('cliff', makeCanvas(TILE_SIZE, TILE_SIZE, (ctx) => {
-      ctx.fillStyle = '#4a4238';
-      ctx.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+    // 4. Photorealistic Geological Mountain Cliffs (Authentic Mediterranean Limestone & Sandstone)
+    // 11 Adjacency-Aware Structural Formations x 4 Variations = 44 Autotiled Geological Sprites
+    const cliffTypes = [
+      'cliff_interior',
+      'cliff_wall_s',
+      'cliff_wall_n',
+      'cliff_wall_w',
+      'cliff_wall_e',
+      'cliff_corner_sw',
+      'cliff_corner_se',
+      'cliff_corner_nw',
+      'cliff_corner_ne',
+      'cliff_prow_s',
+      'cliff_spire'
+    ];
 
-      ctx.fillStyle = 'rgba(0,0,0,0.5)';
-      ctx.beginPath(); ctx.ellipse(26, 28, 21, 17, 0, 0, Math.PI * 2); ctx.fill();
+    cliffTypes.forEach((ctype) => {
+      for (let v = 0; v < 4; v++) {
+        this.tileCache.set(`${ctype}_${v}`, this.createCliffTile(ctype, v));
+      }
+    });
+    this.tileCache.set('cliff', this.tileCache.get('cliff_interior_0')!);
 
-      const rGrad = ctx.createLinearGradient(6, 4, 42, 42);
-      rGrad.addColorStop(0, '#9c8e7e');
-      rGrad.addColorStop(0.5, '#6e6254');
-      rGrad.addColorStop(1, '#3b332b');
-      ctx.fillStyle = rGrad;
-      ctx.beginPath();
-      ctx.moveTo(8, 36); ctx.lineTo(6, 16); ctx.lineTo(20, 6);
-      ctx.lineTo(38, 10); ctx.lineTo(43, 30); ctx.lineTo(28, 42);
-      ctx.closePath();
-      ctx.fill();
-
-      ctx.fillStyle = 'rgba(255,245,230,0.22)';
-      ctx.beginPath();
-      ctx.moveTo(10, 18); ctx.lineTo(20, 8); ctx.lineTo(32, 14); ctx.lineTo(20, 24);
-      ctx.closePath();
-      ctx.fill();
-    }));
-
-    // 5. Shimmering Ore Veins: Copper (Malachite), Tin (Cassiterite), Stone (Limestone), Iron (Hematite)
+    // 5. Shimmering Ore Veins: Copper (Malachite), Tin (Cassiterite), Stone (Limestone Quarry), Iron (Hematite)
     const oreTypes = [
       { id: 'vein_copper', cCenter: '#a7f3d0', cMid: '#10b981', cDark: '#064e3b' },
       { id: 'vein_tin',    cCenter: '#ffffff', cMid: '#94a3b8', cDark: '#334155' },
@@ -211,10 +209,10 @@ export class TileRenderer {
 
     oreTypes.forEach((ore) => {
       // 4 progressive depletion stages:
-      // stage 4 (75-100%): 4 nodules (rich vein)
-      // stage 3 (50-75%): 3 nodules + slight pickaxe fissures
-      // stage 2 (25-50%): 2 nodules + quarry rubble
-      // stage 1 (1-25%): 1 nodule + deep excavation pit
+      // stage 4 (75-100%): 4 nodules / quarried megaliths (rich vein)
+      // stage 3 (50-75%): 3 nodules / megaliths + pickaxe fissures
+      // stage 2 (25-50%): 2 nodules / megaliths + quarry rubble
+      // stage 1 (1-25%): 1 nodule / megalith + deep excavation pit
       for (let stage = 1; stage <= 4; stage++) {
         this.tileCache.set(`${ore.id}_${stage}`, makeCanvas(TILE_SIZE, TILE_SIZE, (ctx) => {
           ctx.fillStyle = '#5c4d3c';
@@ -241,24 +239,84 @@ export class TileRenderer {
             ctx.fillRect(12, 12, 10, 8);
           }
 
-          const allNodes = [
-            { x: 15, y: 16, r: 7 },
-            { x: 31, y: 19, r: 8 },
-            { x: 21, y: 31, r: 7 },
-            { x: 34, y: 32, r: 5 }
-          ];
-          const activeNodes = allNodes.slice(0, stage);
-          activeNodes.forEach(n => {
-            ctx.fillStyle = 'rgba(0,0,0,0.45)';
-            ctx.beginPath(); ctx.arc(n.x + 2, n.y + 2, n.r, 0, Math.PI * 2); ctx.fill();
+          if (ore.id === 'vein_stone') {
+            // Authentic Bronze Age Cyclopean Limestone Quarry & Bedrock Outcrop
+            // Stepped megalithic stone blocks, pickaxe wedge clefts, and chisel rubble
+            const blocks = [
+              { x: 5, y: 6, w: 18, h: 16 },
+              { x: 25, y: 7, w: 18, h: 14 },
+              { x: 8, y: 24, w: 19, h: 17 },
+              { x: 28, y: 23, w: 16, h: 19 }
+            ];
+            const activeBlocks = blocks.slice(0, stage);
+            for (const bl of activeBlocks) {
+              // Block cast shadow
+              ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+              ctx.fillRect(bl.x + 2, bl.y + 2, bl.w, bl.h);
 
-            const g = ctx.createRadialGradient(n.x - 2, n.y - 2, 1, n.x, n.y, n.r);
-            g.addColorStop(0, ore.cCenter);
-            g.addColorStop(0.45, ore.cMid);
-            g.addColorStop(1, ore.cDark);
-            ctx.fillStyle = g;
-            ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2); ctx.fill();
-          });
+              // Angular block body with warm limestone gradient
+              const bg = ctx.createLinearGradient(bl.x, bl.y, bl.x + bl.w, bl.y + bl.h);
+              bg.addColorStop(0, '#f5f5f4');
+              bg.addColorStop(0.35, '#d6d3d1');
+              bg.addColorStop(0.8, '#a8a29e');
+              bg.addColorStop(1, '#57534e');
+              ctx.fillStyle = bg;
+              ctx.fillRect(bl.x, bl.y, bl.w, bl.h);
+
+              // Beveled sunlit top/left edges
+              ctx.strokeStyle = '#ffffff';
+              ctx.lineWidth = 1.2;
+              ctx.beginPath();
+              ctx.moveTo(bl.x, bl.y + bl.h); ctx.lineTo(bl.x, bl.y); ctx.lineTo(bl.x + bl.w, bl.y);
+              ctx.stroke();
+
+              // Shadowed bottom/right edges
+              ctx.strokeStyle = '#292524';
+              ctx.lineWidth = 1;
+              ctx.beginPath();
+              ctx.moveTo(bl.x + bl.w, bl.y); ctx.lineTo(bl.x + bl.w, bl.y + bl.h); ctx.lineTo(bl.x, bl.y + bl.h);
+              ctx.stroke();
+
+              // Pickaxe quarry cleft fracture
+              ctx.strokeStyle = '#1c1917';
+              ctx.lineWidth = 0.9;
+              ctx.beginPath();
+              ctx.moveTo(bl.x + 4, bl.y + Math.floor(bl.h * 0.45));
+              ctx.lineTo(bl.x + bl.w - 4, bl.y + Math.floor(bl.h * 0.55));
+              ctx.stroke();
+            }
+
+            // Chiseled limestone scree flakes and rubble scattered on the quarry floor
+            const rubble = [
+              { x: 12, y: 22, w: 3, h: 2 },
+              { x: 23, y: 21, w: 4, h: 3 },
+              { x: 38, y: 20, w: 3, h: 2.5 },
+              { x: 24, y: 39, w: 4, h: 3 }
+            ];
+            for (const r of rubble) {
+              ctx.fillStyle = '#e7e5e4';
+              ctx.fillRect(r.x, r.y, r.w, r.h);
+            }
+          } else {
+            const allNodes = [
+              { x: 15, y: 16, r: 7 },
+              { x: 31, y: 19, r: 8 },
+              { x: 21, y: 31, r: 7 },
+              { x: 34, y: 32, r: 5 }
+            ];
+            const activeNodes = allNodes.slice(0, stage);
+            activeNodes.forEach(n => {
+              ctx.fillStyle = 'rgba(0,0,0,0.45)';
+              ctx.beginPath(); ctx.arc(n.x + 2, n.y + 2, n.r, 0, Math.PI * 2); ctx.fill();
+
+              const g = ctx.createRadialGradient(n.x - 2, n.y - 2, 1, n.x, n.y, n.r);
+              g.addColorStop(0, ore.cCenter);
+              g.addColorStop(0.45, ore.cMid);
+              g.addColorStop(1, ore.cDark);
+              ctx.fillStyle = g;
+              ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2); ctx.fill();
+            });
+          }
         }));
       }
       this.tileCache.set(ore.id, this.tileCache.get(`${ore.id}_4`)!);
@@ -425,6 +483,420 @@ export class TileRenderer {
       ctx.fillRect(26, 37, 4, 2);
       ctx.fillRect(36, 36, 3, 1.5);
     });
+
+    // 8. Natural Mountain Limestone Boulder (54x42 px)
+    this.boulderCanvas = makeCanvas(54, 42, (ctx) => {
+      // Ground cast shadow
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.42)';
+      ctx.beginPath();
+      ctx.ellipse(27, 29, 22, 9, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Main angular multifaceted limestone boulder
+      // Back/shaded facet
+      ctx.fillStyle = '#45382b';
+      ctx.beginPath();
+      ctx.moveTo(9, 25);
+      ctx.lineTo(16, 12);
+      ctx.lineTo(34, 10);
+      ctx.lineTo(46, 20);
+      ctx.lineTo(44, 30);
+      ctx.lineTo(26, 33);
+      ctx.closePath();
+      ctx.fill();
+
+      // Main front facet with warm limestone gradient
+      const bGrad = ctx.createLinearGradient(16, 10, 40, 32);
+      bGrad.addColorStop(0, '#c7b79f');
+      bGrad.addColorStop(0.4, '#998771');
+      bGrad.addColorStop(1, '#5c4d3b');
+      ctx.fillStyle = bGrad;
+      ctx.beginPath();
+      ctx.moveTo(11, 26);
+      ctx.lineTo(18, 12);
+      ctx.lineTo(35, 11);
+      ctx.lineTo(39, 23);
+      ctx.lineTo(25, 32);
+      ctx.closePath();
+      ctx.fill();
+
+      // Top sunlit facet catching grazing sunlight
+      ctx.fillStyle = '#dfd5c3';
+      ctx.beginPath();
+      ctx.moveTo(18, 12);
+      ctx.lineTo(28, 9);
+      ctx.lineTo(36, 11);
+      ctx.lineTo(27, 16);
+      ctx.closePath();
+      ctx.fill();
+
+      // Sharp chiseled facet ridges
+      ctx.strokeStyle = '#ede4d4';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(18, 12); ctx.lineTo(25, 32);
+      ctx.moveTo(18, 12); ctx.lineTo(27, 16); ctx.lineTo(39, 23);
+      ctx.stroke();
+
+      // Deep fracture cleft running across rock
+      ctx.strokeStyle = '#261e15';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(22, 14); ctx.lineTo(28, 22); ctx.lineTo(26, 31);
+      ctx.stroke();
+
+      // Alpine green lichen spot
+      ctx.fillStyle = '#55633b';
+      ctx.beginPath(); ctx.ellipse(32, 18, 3.5, 2.5, 0.3, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#6f8050';
+      ctx.beginPath(); ctx.ellipse(32, 18, 1.8, 1.2, 0.3, 0, Math.PI * 2); ctx.fill();
+
+      // Loose scree pebbles around base
+      const pebbles = [
+        { x: 10, y: 29, r: 2.2, c: '#7a6954' },
+        { x: 15, y: 32, r: 1.8, c: '#524333' },
+        { x: 42, y: 29, r: 2.5, c: '#8c7a64' },
+        { x: 46, y: 32, r: 1.5, c: '#45382b' }
+      ];
+      for (const pb of pebbles) {
+        ctx.fillStyle = pb.c;
+        ctx.beginPath(); ctx.arc(pb.x, pb.y, pb.r, 0, Math.PI * 2); ctx.fill();
+      }
+    });
+  }
+
+  private createCliffTile(type: string, v: number): HTMLCanvasElement {
+    return makeCanvas(TILE_SIZE, TILE_SIZE, (ctx) => {
+      // 1. Deep earthen rock base with natural grain
+      const baseCol = v % 2 === 0 ? '#635341' : '#5c4d3b';
+      ctx.fillStyle = baseCol;
+      ctx.fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+
+      // Micro-texture of weathered limestone grain & mineral speckles
+      for (let i = 0; i < 20; i++) {
+        const rx = hash2D(v * 41 + i, i * 19) * TILE_SIZE;
+        const ry = hash2D(i * 29, v * 37 + i) * TILE_SIZE;
+        const rad = 1.5 + hash2D(i, v) * 3;
+        ctx.fillStyle = i % 3 === 0 ? '#7d6c57' : (i % 2 === 0 ? '#42372c' : '#2b231b');
+        ctx.globalAlpha = 0.35;
+        ctx.beginPath();
+        ctx.arc(rx, ry, rad, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1.0;
+
+      // 2. Horizontal Sedimentary Bedding Planes (Taurus limestone strata)
+      const strataY = [11 + (v % 3), 23 - (v % 2), 35 + (v % 3)];
+      for (const sy of strataY) {
+        ctx.strokeStyle = '#231b13';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(0, sy);
+        ctx.bezierCurveTo(14, sy - 1.5, 30, sy + 1.5, TILE_SIZE, sy);
+        ctx.stroke();
+
+        // Sunlit top edge highlight of the bedding layer
+        ctx.strokeStyle = 'rgba(214, 200, 176, 0.35)';
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        ctx.moveTo(0, sy - 1);
+        ctx.bezierCurveTo(14, sy - 2.5, 30, sy + 0.5, TILE_SIZE, sy - 1);
+        ctx.stroke();
+      }
+
+      // Vertical cross-joints (tectonic relief fissures)
+      const jointX1 = 12 + ((v * 7) % 16);
+      const jointX2 = 28 + ((v * 11) % 14);
+      ctx.strokeStyle = 'rgba(28, 20, 13, 0.7)';
+      ctx.lineWidth = 1.0;
+      ctx.beginPath();
+      ctx.moveTo(jointX1, 0); ctx.lineTo(jointX1 - 2, 18);
+      ctx.moveTo(jointX2, 16); ctx.lineTo(jointX2 + 3, 36);
+      ctx.stroke();
+
+      // 3. Formation-Specific 3D Geological Sculpting
+      if (type === 'cliff_interior') {
+        // High mountain plateau bedrock - massive stratified slabs with weathered fractures
+        const slabs = [
+          { x: 3, y: 4, w: 22, h: 16, c: '#a3927b' },
+          { x: 23, y: 7, w: 22, h: 18, c: '#968670' },
+          { x: 5, y: 22, w: 24, h: 20, c: '#8c7d68' },
+          { x: 26, y: 24, w: 19, h: 20, c: '#7f715d' }
+        ];
+        for (const sl of slabs) {
+          ctx.fillStyle = sl.c;
+          ctx.fillRect(sl.x, sl.y, sl.w, sl.h);
+
+          // Sunlit upper-left beveled facet edges
+          ctx.strokeStyle = '#ded3c1';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(sl.x, sl.y + sl.h); ctx.lineTo(sl.x, sl.y); ctx.lineTo(sl.x + sl.w, sl.y);
+          ctx.stroke();
+
+          // Recessed shadow on lower-right facet
+          ctx.strokeStyle = '#21180f';
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          ctx.moveTo(sl.x + sl.w, sl.y); ctx.lineTo(sl.x + sl.w, sl.y + sl.h); ctx.lineTo(sl.x, sl.y + sl.h);
+          ctx.stroke();
+        }
+
+        // Alpine hardy lichen colonies tucked in joints
+        ctx.fillStyle = '#4d5937';
+        ctx.beginPath(); ctx.ellipse(18, 14, 3, 2, 0.4, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#65734b';
+        ctx.beginPath(); ctx.ellipse(32, 28, 3.5, 2.2, -0.3, 0, Math.PI * 2); ctx.fill();
+
+      } else if (type === 'cliff_wall_s') {
+        // Grand vertical sheer south-facing escarpment overlooking canyon floor
+        // Plateau top lip (y: 0..12)
+        const topLipG = ctx.createLinearGradient(0, 0, 0, 12);
+        topLipG.addColorStop(0, '#e5d9c7');
+        topLipG.addColorStop(1, '#a6957e');
+        ctx.fillStyle = topLipG;
+        ctx.fillRect(0, 0, TILE_SIZE, 12);
+
+        // Sheer escarpment face with 3D vertical buttress columns (y: 12..36)
+        const faceG = ctx.createLinearGradient(0, 12, 0, 36);
+        faceG.addColorStop(0, '#9e8c76');
+        faceG.addColorStop(0.5, '#695a47');
+        faceG.addColorStop(1, '#362a1e');
+        ctx.fillStyle = faceG;
+        ctx.fillRect(0, 12, TILE_SIZE, 24);
+
+        // 3 Vertical Rock Buttress Ribs
+        for (const bx of [6 + (v % 3) * 2, 22 + (v % 2) * 3, 36]) {
+          const bw = 10;
+          ctx.fillStyle = 'rgba(235, 225, 210, 0.28)'; // Sunlit western facet of rib
+          ctx.fillRect(bx, 12, bw * 0.45, 24);
+          ctx.fillStyle = 'rgba(25, 18, 12, 0.55)';    // Shadowed eastern facet of rib
+          ctx.fillRect(bx + bw * 0.45, 12, bw * 0.55, 24);
+
+          ctx.strokeStyle = '#ded2be';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(bx + bw * 0.45, 12); ctx.lineTo(bx + bw * 0.45, 36);
+          ctx.stroke();
+        }
+
+        // Terracotta mineral leaching streaks
+        ctx.fillStyle = 'rgba(128, 65, 46, 0.4)';
+        ctx.fillRect(14 + ((v * 5) % 18), 12, 2.5, 18);
+        ctx.fillRect(32, 14, 2, 15);
+
+        // Talus scree apron and ground shadow (y: 36..48)
+        const talusG = ctx.createLinearGradient(0, 36, 0, 48);
+        talusG.addColorStop(0, 'rgba(0, 0, 0, 0.55)');
+        talusG.addColorStop(0.7, 'rgba(0, 0, 0, 0.25)');
+        talusG.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = talusG;
+        ctx.fillRect(0, 36, TILE_SIZE, 12);
+
+        // Crumbled fallen scree stones & pebbles scattering into the canyon floor
+        const scree = [
+          { x: 5, y: 39, r: 3, c: '#7d6c58' },
+          { x: 12, y: 44, r: 2.2, c: '#544636' },
+          { x: 18, y: 40, r: 3.5, c: '#8c7b66' },
+          { x: 26, y: 45, r: 2, c: '#45382b' },
+          { x: 33, y: 41, r: 3.8, c: '#806f5b' },
+          { x: 41, y: 43, r: 2.5, c: '#5c4e3e' }
+        ];
+        for (const sc of scree) {
+          ctx.fillStyle = sc.c;
+          ctx.beginPath();
+          ctx.arc(sc.x, sc.y, sc.r, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#c7baa5';
+          ctx.fillRect(sc.x - 1, sc.y - 1, 1.2, 1.2);
+        }
+
+      } else if (type === 'cliff_wall_n') {
+        // North-facing cliff edge (plateau dropping off into northern abyss)
+        ctx.fillStyle = '#1c150e';
+        ctx.fillRect(0, 0, TILE_SIZE, 12);
+        const nGrad = ctx.createLinearGradient(0, 12, 0, 48);
+        nGrad.addColorStop(0, '#5a4b3b');
+        nGrad.addColorStop(1, '#8f7e69');
+        ctx.fillStyle = nGrad;
+        ctx.fillRect(0, 12, TILE_SIZE, 36);
+
+        // Northern rim crest
+        ctx.strokeStyle = '#ded3bf';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(0, 12); ctx.lineTo(TILE_SIZE, 12);
+        ctx.stroke();
+
+      } else if (type === 'cliff_wall_w') {
+        // West-facing escarpment shoulder (catching bright afternoon grazing sun)
+        const wGrad = ctx.createLinearGradient(0, 0, 18, 0);
+        wGrad.addColorStop(0, '#e5d9c7');
+        wGrad.addColorStop(0.4, '#baa891');
+        wGrad.addColorStop(1, '#786854');
+        ctx.fillStyle = wGrad;
+        ctx.fillRect(0, 0, 18, TILE_SIZE);
+
+        ctx.fillStyle = '#7a6a56';
+        ctx.fillRect(18, 0, 30, TILE_SIZE);
+
+        // Western shoulder ridge line
+        ctx.strokeStyle = '#fff8eb';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(18, 0); ctx.lineTo(18, TILE_SIZE);
+        ctx.stroke();
+
+        // Talus gravel along western slope
+        for (let y = 6; y < TILE_SIZE; y += 10) {
+          ctx.fillStyle = '#4a3d30';
+          ctx.beginPath(); ctx.arc(4, y, 2, 0, Math.PI * 2); ctx.fill();
+        }
+
+      } else if (type === 'cliff_wall_e') {
+        // East-facing escarpment shoulder (deep contrast shadow)
+        ctx.fillStyle = '#786955';
+        ctx.fillRect(0, 0, 32, TILE_SIZE);
+
+        const eGrad = ctx.createLinearGradient(32, 0, 48, 0);
+        eGrad.addColorStop(0, '#544636');
+        eGrad.addColorStop(0.5, '#33271c');
+        eGrad.addColorStop(1, '#18110b');
+        ctx.fillStyle = eGrad;
+        ctx.fillRect(32, 0, 16, TILE_SIZE);
+
+        ctx.strokeStyle = '#291f16';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(32, 0); ctx.lineTo(32, TILE_SIZE);
+        ctx.stroke();
+
+      } else if (type === 'cliff_corner_sw') {
+        // Southwestern Promontory Bastion - sharp sunlit limestone prow!
+        const swG = ctx.createLinearGradient(0, 0, 36, 36);
+        swG.addColorStop(0, '#ded3bf');
+        swG.addColorStop(0.4, '#a89780');
+        swG.addColorStop(0.8, '#574837');
+        swG.addColorStop(1, '#261c12');
+        ctx.fillStyle = swG;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(TILE_SIZE, 0);
+        ctx.lineTo(TILE_SIZE, 32);
+        ctx.lineTo(24, 38);
+        ctx.lineTo(0, 22);
+        ctx.closePath();
+        ctx.fill();
+
+        // Prow ridge highlight
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(0, 0); ctx.lineTo(24, 38);
+        ctx.stroke();
+
+        // Scree apron curving around SW base
+        ctx.fillStyle = 'rgba(0,0,0,0.45)';
+        ctx.beginPath();
+        ctx.ellipse(14, 40, 16, 7, -0.3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#7a6a56';
+        ctx.fillRect(6, 38, 4, 3);
+        ctx.fillRect(16, 42, 3, 2);
+
+      } else if (type === 'cliff_corner_se') {
+        // Southeastern Promontory Bastion - south wall meeting east shadow
+        ctx.fillStyle = '#96856f';
+        ctx.fillRect(0, 0, 30, 28);
+        ctx.fillStyle = '#261c12'; // East shadow
+        ctx.fillRect(30, 0, 18, 40);
+        // South face
+        const seG = ctx.createLinearGradient(0, 28, 0, 42);
+        seG.addColorStop(0, '#756450');
+        seG.addColorStop(1, '#33271c');
+        ctx.fillStyle = seG;
+        ctx.fillRect(0, 28, 30, 14);
+
+        ctx.strokeStyle = '#e5d9c7';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(0, 28); ctx.lineTo(30, 28); ctx.lineTo(30, 0);
+        ctx.stroke();
+
+      } else if (type === 'cliff_corner_nw') {
+        // Northwest corner drop-off
+        ctx.fillStyle = '#1c150e';
+        ctx.fillRect(0, 0, 18, 16);
+        ctx.fillStyle = '#8f7f6a';
+        ctx.fillRect(18, 16, 30, 32);
+        ctx.strokeStyle = '#ded3c1';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(18, 0); ctx.lineTo(18, 16); ctx.lineTo(TILE_SIZE, 16);
+        ctx.stroke();
+
+      } else if (type === 'cliff_corner_ne') {
+        // Northeast corner drop-off
+        ctx.fillStyle = '#1c150e';
+        ctx.fillRect(28, 0, 20, 16);
+        ctx.fillStyle = '#7a6a57';
+        ctx.fillRect(0, 16, 28, 32);
+        ctx.strokeStyle = '#c4b49e';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(0, 16); ctx.lineTo(28, 16); ctx.lineTo(28, 0);
+        ctx.stroke();
+
+      } else if (type === 'cliff_prow_s') {
+        // Narrow limestone spur protruding south (open on W, S, E)
+        const pG = ctx.createLinearGradient(8, 0, 40, 40);
+        pG.addColorStop(0, '#e5dac7');
+        pG.addColorStop(0.4, '#a18f77');
+        pG.addColorStop(1, '#2b2116');
+        ctx.fillStyle = pG;
+        ctx.beginPath();
+        ctx.moveTo(12, 0);
+        ctx.lineTo(36, 0);
+        ctx.lineTo(34, 34);
+        ctx.lineTo(24, 40);
+        ctx.lineTo(14, 34);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(24, 0); ctx.lineTo(24, 40);
+        ctx.stroke();
+
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        ctx.beginPath(); ctx.ellipse(24, 42, 14, 5, 0, 0, Math.PI * 2); ctx.fill();
+
+      } else if (type === 'cliff_spire') {
+        // Solitary needle crag rising from canyon bed
+        ctx.fillStyle = 'rgba(0,0,0,0.48)';
+        ctx.beginPath(); ctx.ellipse(24, 38, 18, 8, 0, 0, Math.PI * 2); ctx.fill();
+
+        const sG = ctx.createLinearGradient(12, 8, 36, 36);
+        sG.addColorStop(0, '#e5dac7');
+        sG.addColorStop(0.3, '#ab9b83');
+        sG.addColorStop(0.7, '#635340');
+        sG.addColorStop(1, '#241a11');
+        ctx.fillStyle = sG;
+        ctx.beginPath();
+        ctx.moveTo(24, 6);
+        ctx.lineTo(38, 36);
+        ctx.lineTo(10, 36);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(24, 6); ctx.lineTo(19, 36);
+        ctx.stroke();
+      }
+    });
   }
 
   public render(
@@ -446,16 +918,48 @@ export class TileRenderer {
         let tileImg = this.tileCache.get(tileType);
         let veinRes: VeinReserve | null = null;
 
-        if (tileType.startsWith('vein_')) {
+        if (tileType === 'cliff') {
+          // Autotile cliff formations based on 4-neighbor adjacency & hash2D variation
+          const nCliff = this.getTile(tx, ty - 1) === 'cliff';
+          const sCliff = this.getTile(tx, ty + 1) === 'cliff';
+          const wCliff = this.getTile(tx - 1, ty) === 'cliff';
+          const eCliff = this.getTile(tx + 1, ty) === 'cliff';
+          const v = Math.floor(hash2D(tx, ty) * 4);
+
+          let cliffKey = 'cliff_interior';
+          if (!nCliff && !sCliff && !wCliff && !eCliff) {
+            cliffKey = 'cliff_spire';
+          } else if (!sCliff && !wCliff && !eCliff) {
+            cliffKey = 'cliff_prow_s';
+          } else if (!sCliff && !wCliff) {
+            cliffKey = 'cliff_corner_sw';
+          } else if (!sCliff && !eCliff) {
+            cliffKey = 'cliff_corner_se';
+          } else if (!sCliff) {
+            cliffKey = 'cliff_wall_s';
+          } else if (!nCliff && !wCliff) {
+            cliffKey = 'cliff_corner_nw';
+          } else if (!nCliff && !eCliff) {
+            cliffKey = 'cliff_corner_ne';
+          } else if (!nCliff) {
+            cliffKey = 'cliff_wall_n';
+          } else if (!wCliff) {
+            cliffKey = 'cliff_wall_w';
+          } else if (!eCliff) {
+            cliffKey = 'cliff_wall_e';
+          } else {
+            cliffKey = 'cliff_interior';
+          }
+
+          tileImg = this.tileCache.get(`${cliffKey}_${v}`) || this.tileCache.get('cliff');
+        } else if (tileType.startsWith('vein_')) {
           veinRes = this.getVeinReserve(tx, ty);
           if (veinRes) {
             const ratio = Math.max(0, Math.min(1, veinRes.current / veinRes.max));
             const stage = Math.max(1, Math.min(4, Math.ceil(ratio * 4)));
             tileImg = this.tileCache.get(`${tileType}_${stage}`) || tileImg;
           }
-        }
-
-        if (!tileImg) {
+        } else if (!tileImg) {
           // Plain / Sand terrain uses organic hash2D multi-variant tiles
           const bIdx = tileType === 'sand' ? 1 : 0;
           const v = Math.floor(hash2D(tx, ty) * 4);
