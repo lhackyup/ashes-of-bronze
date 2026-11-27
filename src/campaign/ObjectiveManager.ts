@@ -42,6 +42,7 @@ export class ObjectiveManager {
   private hadAmbushCampAtStart: boolean = false;
   public warlordSlain: boolean = false;
   public totalWaves: number = 3;
+  private unitsTrainedCount: Map<string, number> = new Map();
 
   constructor(scenario: ScenarioData) {
     this.initFromScenario(scenario);
@@ -134,6 +135,35 @@ export class ObjectiveManager {
     this.stats.friendlyCasualties++;
   }
 
+  public recordUnitTrained(defId: string): void {
+    const prev = this.unitsTrainedCount.get(defId) || 0;
+    this.unitsTrainedCount.set(defId, prev + 1);
+
+    for (const obj of this.objectives) {
+      if (obj.isCompleted) continue;
+      if (
+        (obj.type === 'train_units' && obj.targetId === defId) ||
+        (defId === 'iron_phalangite' && (obj.id === 'train_phalangites' || obj.id === 'form_iron_phalanx')) ||
+        (defId === 'composite_bowman' && obj.id === 'train_bowmen') ||
+        (defId === 'highland_skirmisher' && obj.id === 'train_skirmishers') ||
+        (defId === 'war_chariot' && obj.id === 'train_chariots') ||
+        (defId === 'black_blade_warrior' && obj.id === 'train_black_blades') ||
+        (defId === 'iron_champion' && obj.id === 'train_iron_champions')
+      ) {
+        const trained = this.unitsTrainedCount.get(defId) || 0;
+        obj.currentAmount = Math.max(obj.currentAmount || 0, trained);
+        if (obj.currentAmount >= (obj.targetAmount || 1)) {
+          this.completeObjective(obj);
+        }
+      }
+    }
+    EventBus.get().emit('objectives:updated', this.objectives);
+  }
+
+  public getTrainedCount(defId: string): number {
+    return this.unitsTrainedCount.get(defId) || 0;
+  }
+
   public update(
     dt: number,
     buildings: BuildingEntity[],
@@ -147,10 +177,15 @@ export class ObjectiveManager {
     const resources = economy.resources;
     this.stats.tinHarvested = Math.max(this.stats.tinHarvested, Math.floor(resources.tin));
 
-    // 1. Check Defeat: Loss of Acropolis / Royal Cuneiform Library
+    // 1. Check Defeat: Loss of Acropolis / Primary Stronghold
     const playerAcropolis = buildings.find(b => b.owner === 'player' && b.defId === 'acropolis');
     if (!playerAcropolis || playerAcropolis.hp <= 0) {
-      this.triggerDefeat('The Royal Cuneiform Library & Acropolis has been destroyed! The wisdom and history of the Bronze Age is lost forever.');
+      const defendObj = this.objectives.find(o => o.id === 'defend_megaron' || o.id === 'keep_acropolis_alive' || (o.type === 'protect_entity' && o.targetId === 'acropolis'));
+      if (defendObj) {
+        defendObj.isFailed = true;
+      }
+      const strongholdName = playerAcropolis?.customName || defendObj?.description || 'The Megaron Acropolis Stronghold';
+      this.triggerDefeat(`${strongholdName} has been destroyed! The central sanctuary has fallen to the enemy.`);
       return;
     }
 
@@ -255,33 +290,37 @@ export class ObjectiveManager {
           allPrimariesDone = false;
         }
       } else if (obj.id === 'train_bowmen' || (obj.type === 'train_units' && obj.targetId === 'composite_bowman')) {
-        const bowmen = units.filter(u => u.owner === 'player' && u.defId === 'composite_bowman');
-        obj.currentAmount = bowmen.length;
-        if (bowmen.length >= (obj.targetAmount || 3)) {
+        const bowmen = units.filter(u => u.owner === 'player' && u.defId === 'composite_bowman').length;
+        const trained = this.getTrainedCount('composite_bowman');
+        obj.currentAmount = Math.max(obj.currentAmount || 0, bowmen, trained);
+        if (obj.currentAmount >= (obj.targetAmount || 3)) {
           this.completeObjective(obj);
         } else {
           allPrimariesDone = false;
         }
       } else if (obj.id === 'train_skirmishers' || (obj.type === 'train_units' && obj.targetId === 'highland_skirmisher')) {
-        const skirmishers = units.filter(u => u.owner === 'player' && u.defId === 'highland_skirmisher');
-        obj.currentAmount = skirmishers.length;
-        if (skirmishers.length >= (obj.targetAmount || 4)) {
+        const skirmishers = units.filter(u => u.owner === 'player' && u.defId === 'highland_skirmisher').length;
+        const trained = this.getTrainedCount('highland_skirmisher');
+        obj.currentAmount = Math.max(obj.currentAmount || 0, skirmishers, trained);
+        if (obj.currentAmount >= (obj.targetAmount || 4)) {
           this.completeObjective(obj);
         } else {
           allPrimariesDone = false;
         }
       } else if (obj.id === 'train_chariots' || (obj.type === 'train_units' && obj.targetId === 'war_chariot')) {
-        const chariots = units.filter(u => u.owner === 'player' && u.defId === 'war_chariot');
-        obj.currentAmount = chariots.length;
-        if (chariots.length >= (obj.targetAmount || 2)) {
+        const chariots = units.filter(u => u.owner === 'player' && u.defId === 'war_chariot').length;
+        const trained = this.getTrainedCount('war_chariot');
+        obj.currentAmount = Math.max(obj.currentAmount || 0, chariots, trained);
+        if (obj.currentAmount >= (obj.targetAmount || 2)) {
           this.completeObjective(obj);
         } else {
           allPrimariesDone = false;
         }
       } else if (obj.id === 'train_black_blades' || (obj.type === 'train_units' && obj.targetId === 'black_blade_warrior')) {
-        const warriors = units.filter(u => u.owner === 'player' && u.defId === 'black_blade_warrior');
-        obj.currentAmount = warriors.length;
-        if (warriors.length >= (obj.targetAmount || 4)) {
+        const warriors = units.filter(u => u.owner === 'player' && u.defId === 'black_blade_warrior').length;
+        const trained = this.getTrainedCount('black_blade_warrior');
+        obj.currentAmount = Math.max(obj.currentAmount || 0, warriors, trained);
+        if (obj.currentAmount >= (obj.targetAmount || 4)) {
           this.completeObjective(obj);
         } else {
           allPrimariesDone = false;
@@ -311,17 +350,19 @@ export class ObjectiveManager {
           allPrimariesDone = false;
         }
       } else if (obj.id === 'train_iron_champions' || (obj.type === 'train_units' && obj.targetId === 'iron_champion')) {
-        const champions = units.filter(u => u.owner === 'player' && u.defId === 'iron_champion');
-        obj.currentAmount = champions.length;
-        if (champions.length >= (obj.targetAmount || 4)) {
+        const champions = units.filter(u => u.owner === 'player' && u.defId === 'iron_champion').length;
+        const trained = this.getTrainedCount('iron_champion');
+        obj.currentAmount = Math.max(obj.currentAmount || 0, champions, trained);
+        if (obj.currentAmount >= (obj.targetAmount || 4)) {
           this.completeObjective(obj);
         } else if (obj.isPrimary) {
           allPrimariesDone = false;
         }
       } else if (obj.id === 'train_phalangites' || obj.id === 'form_iron_phalanx' || (obj.type === 'train_units' && obj.targetId === 'iron_phalangite')) {
-        const phalangites = units.filter(u => u.owner === 'player' && u.defId === 'iron_phalangite');
-        obj.currentAmount = phalangites.length;
-        if (phalangites.length >= (obj.targetAmount || 6)) {
+        const phalangites = units.filter(u => u.owner === 'player' && u.defId === 'iron_phalangite').length;
+        const trained = this.getTrainedCount('iron_phalangite');
+        obj.currentAmount = Math.max(obj.currentAmount || 0, phalangites, trained);
+        if (obj.currentAmount >= (obj.targetAmount || 6)) {
           this.completeObjective(obj);
         } else {
           allPrimariesDone = false;
@@ -369,7 +410,7 @@ export class ObjectiveManager {
         } else {
           allPrimariesDone = false;
         }
-      } else if (obj.id === 'defend_megaron' || (obj.id === 'keep_acropolis_alive')) {
+      } else if (obj.id === 'defend_megaron' || (obj.id === 'keep_acropolis_alive') || (obj.type === 'protect_entity' && obj.targetId === 'acropolis')) {
         const acropolis = buildings.find(b => b.owner === 'player' && b.defId === 'acropolis' && b.hp > 0);
         if (acropolis) {
           obj.currentAmount = 1;
@@ -406,9 +447,9 @@ export class ObjectiveManager {
 
     // 4. Check Victory Condition
     if (allPrimariesDone && this.objectives.some(o => o.isPrimary)) {
-      const megaronObj = this.objectives.find(o => o.id === 'defend_megaron');
-      if (megaronObj && !megaronObj.isFailed) {
-        megaronObj.isCompleted = true;
+      const defendPrimaryObj = this.objectives.find(o => (o.id === 'defend_megaron' || (o.type === 'protect_entity' && o.targetId === 'acropolis')) && o.isPrimary);
+      if (defendPrimaryObj && !defendPrimaryObj.isFailed) {
+        defendPrimaryObj.isCompleted = true;
       }
       if (foundryObj && !foundryObj.isFailed) {
         foundryObj.isCompleted = true;

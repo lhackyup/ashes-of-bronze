@@ -85,9 +85,11 @@ export class TacticalDirector {
       }
     }
 
+    const walkableTarget = this.getWalkableTarget(graph, Math.floor(targetTx), Math.floor(targetTy));
+
     // Ricalcola il Flow Field periodicamente verso il bersaglio tattico
-    if (Math.floor(this.elapsedTime) % 4 === 0 && (!this.flowField.target || this.flowField.target.tx !== targetTx || this.flowField.target.ty !== targetTy)) {
-      this.flowField.compute(graph, { tx: targetTx, ty: targetTy });
+    if (Math.floor(this.elapsedTime) % 4 === 0 && (!this.flowField.target || this.flowField.target.tx !== walkableTarget.tx || this.flowField.target.ty !== walkableTarget.ty)) {
+      this.flowField.compute(graph, walkableTarget);
     }
 
     // Controlla attivazione forzata immediata dell'assalto finale (es. distruzione accampamenti nemici)
@@ -215,7 +217,7 @@ export class TacticalDirector {
             this.waveUnitIds.get(ship.waveNum)!.add(spawned.id);
 
             // Give newly spawned raider immediate marching orders towards player target
-            const marchPath = AStar.findPath(graph, { tx: spawnTx, ty: spawnTy }, { tx: Math.floor(targetTx), ty: Math.floor(targetTy) }, 2000);
+            const marchPath = AStar.findPath(graph, { tx: spawnTx, ty: spawnTy }, walkableTarget, 2000);
             if (marchPath.length > 1) {
               spawned.path = marchPath.slice(1, 10).map(c => ({
                 x: c.tx * TILE_SIZE + 24,
@@ -236,9 +238,8 @@ export class TacticalDirector {
                 }
               }
               if (closestB) {
-                const bTx = closestB.tx + Math.floor(closestB.def.width / 2);
-                const bTy = closestB.ty + Math.floor(closestB.def.height / 2);
-                const wallPath = AStar.findPath(graph, { tx: spawnTx, ty: spawnTy }, { tx: bTx, ty: bTy }, 2000);
+                const bTarget = this.getWalkableTarget(graph, closestB.tx + Math.floor(closestB.def.width / 2), closestB.ty + Math.floor(closestB.def.height / 2));
+                const wallPath = AStar.findPath(graph, { tx: spawnTx, ty: spawnTy }, bTarget, 2000);
                 if (wallPath.length > 1) {
                   spawned.path = wallPath.slice(1, 10).map(c => ({
                     x: c.tx * TILE_SIZE + 24,
@@ -298,8 +299,8 @@ export class TacticalDirector {
           EventBus.get().emit('fx:floating_text', {
             text: `ASSAULT WAVE ${w} REPELLED!`,
             color: '#2de0a5',
-            x: targetTx * TILE_SIZE,
-            y: targetTy * TILE_SIZE - 40
+            x: walkableTarget.tx * TILE_SIZE,
+            y: walkableTarget.ty * TILE_SIZE - 40
           });
           EventBus.get().emit('advisor:message', {
             speaker: 'burna_khabir',
@@ -381,7 +382,7 @@ export class TacticalDirector {
             u.state = 'MOVE_TO';
           } else {
             // Flow field neutral or stalled: plan direct march towards player target
-            const pathCoords = AStar.findPath(graph, { tx, ty }, { tx: targetTx, ty: targetTy }, 2000);
+            const pathCoords = AStar.findPath(graph, { tx, ty }, walkableTarget, 2000);
             if (pathCoords.length > 1) {
               u.path = pathCoords.slice(1, 10).map((c: GridCoord) => ({
                 x: c.tx * TILE_SIZE + 24,
@@ -402,9 +403,8 @@ export class TacticalDirector {
                 }
               }
               if (closestB) {
-                const bTx = closestB.tx + Math.floor(closestB.def.width / 2);
-                const bTy = closestB.ty + Math.floor(closestB.def.height / 2);
-                const bPath = AStar.findPath(graph, { tx, ty }, { tx: bTx, ty: bTy }, 2000);
+                const bTarget = this.getWalkableTarget(graph, closestB.tx + Math.floor(closestB.def.width / 2), closestB.ty + Math.floor(closestB.def.height / 2));
+                const bPath = AStar.findPath(graph, { tx, ty }, bTarget, 2000);
                 if (bPath.length > 1) {
                   u.path = bPath.slice(1, 10).map((c: GridCoord) => ({
                     x: c.tx * TILE_SIZE + 24,
@@ -567,40 +567,108 @@ export class TacticalDirector {
       });
     } else {
       // Incursione terrestre da altro bordo mappa
-      for (const unitReq of wave.units) {
-        for (let c = 0; c < unitReq.count; c++) {
-          let spawnTx = 7;
-          let spawnTy = Math.floor(targetTy + (c - unitReq.count / 2) * 2);
+      const walkableTarget = this.getWalkableTarget(graph, Math.floor(targetTx), Math.floor(targetTy));
+      const edge = wave.spawnEdge || 'north';
 
-          if (wave.spawnEdge === 'east') spawnTx = graph.width - 3;
-          if (wave.spawnEdge === 'north') {
-            spawnTx = Math.floor(graph.width / 2) + c * 2;
-            spawnTy = 2;
+      // 1. Raccoglie caselle candidate sul bordo specificato
+      const candidateSpawnTiles: GridCoord[] = [];
+      if (edge === 'north') {
+        for (let y = 1; y <= 4; y++) {
+          for (let x = 2; x < graph.width - 2; x++) {
+            if (graph.isWalkable(x, y)) {
+              candidateSpawnTiles.push({ tx: x, ty: y });
+            }
           }
-          if (wave.spawnEdge === 'south') {
-            spawnTx = Math.floor(graph.width / 2) + c * 2;
-            spawnTy = graph.height - 3;
+        }
+      } else if (edge === 'east') {
+        for (let x = graph.width - 2; x >= graph.width - 5; x--) {
+          for (let y = 2; y < graph.height - 2; y++) {
+            if (graph.isWalkable(x, y)) {
+              candidateSpawnTiles.push({ tx: x, ty: y });
+            }
+          }
+        }
+      } else if (edge === 'south') {
+        for (let y = graph.height - 2; y >= graph.height - 5; y--) {
+          for (let x = 2; x < graph.width - 2; x++) {
+            if (graph.isWalkable(x, y)) {
+              candidateSpawnTiles.push({ tx: x, ty: y });
+            }
+          }
+        }
+      } else {
+        // sea_coast or western inland edge
+        for (let x = 1; x <= 4; x++) {
+          for (let y = 2; y < graph.height - 2; y++) {
+            if (graph.isWalkable(x, y)) {
+              candidateSpawnTiles.push({ tx: x, ty: y });
+            }
+          }
+        }
+      }
+
+      // 2. Filtra i punti di spawn che possiedono un percorso verificabile verso il bersaglio
+      let validSpawnPoints = candidateSpawnTiles.filter(pt => {
+        const testPath = AStar.findPath(graph, pt, walkableTarget, 1500);
+        return testPath.length > 0;
+      });
+
+      // 3. Fallback: se il bordo è completamente bloccato da scogliere o mura, spawna da un avamposto nemico attivo
+      if (validSpawnPoints.length === 0 && buildings) {
+        const hostileCamps = buildings.filter(b => b.owner === 'sea_peoples' && b.hp > 0);
+        if (hostileCamps.length > 0) {
+          let chosenCamp = hostileCamps[0];
+          if (edge === 'north') {
+            chosenCamp = hostileCamps.reduce((best, b) => (b.ty < best.ty ? b : best), hostileCamps[0]);
+          } else if (edge === 'east') {
+            chosenCamp = hostileCamps.reduce((best, b) => (b.tx > best.tx ? b : best), hostileCamps[0]);
+          } else if (edge === 'south') {
+            chosenCamp = hostileCamps.reduce((best, b) => (b.ty > best.ty ? b : best), hostileCamps[0]);
           }
 
-          // Ensure spawn tile is walkable
-          if (!graph.isWalkable(spawnTx, spawnTy)) {
-            let foundWalkable = false;
-            for (let step = 1; step <= 8; step++) {
-              const offsets = [
-                { dx: 0, dy: step }, { dx: 0, dy: -step },
-                { dx: step, dy: 0 }, { dx: -step, dy: 0 }
-              ];
-              for (const off of offsets) {
-                const nx = spawnTx + off.dx;
-                const ny = spawnTy + off.dy;
+          for (let r = 1; r <= 4; r++) {
+            for (let dx = -r; dx <= r; dx++) {
+              for (let dy = -r; dy <= r; dy++) {
+                const nx = chosenCamp.tx + dx;
+                const ny = chosenCamp.ty + dy;
                 if (graph.isInBounds(nx, ny) && graph.isWalkable(nx, ny)) {
-                  spawnTx = nx;
-                  spawnTy = ny;
-                  foundWalkable = true;
-                  break;
+                  validSpawnPoints.push({ tx: nx, ty: ny });
                 }
               }
-              if (foundWalkable) break;
+            }
+            if (validSpawnPoints.length >= 6) break;
+          }
+        }
+      }
+
+      // Se ancora nessun punto valido, usa candidateSpawnTiles o centro mappa
+      if (validSpawnPoints.length === 0) {
+        validSpawnPoints = candidateSpawnTiles.length > 0 ? candidateSpawnTiles : [{ tx: Math.floor(graph.width / 2), ty: 4 }];
+      }
+
+      let spawnIndex = 0;
+      for (const unitReq of wave.units) {
+        for (let c = 0; c < unitReq.count; c++) {
+          const pt = validSpawnPoints[spawnIndex % validSpawnPoints.length];
+          spawnIndex++;
+
+          // Cerca una casella adiacente libera per evitare sovrapposizioni rigide
+          let finalSpawnTx = pt.tx;
+          let finalSpawnTy = pt.ty;
+          const offsets = [
+            { dx: 0, dy: 0 }, { dx: 1, dy: 0 }, { dx: -1, dy: 0 },
+            { dx: 0, dy: 1 }, { dx: 0, dy: -1 }, { dx: 1, dy: 1 }, { dx: -1, dy: 1 }
+          ];
+          for (const off of offsets) {
+            const nx = pt.tx + off.dx;
+            const ny = pt.ty + off.dy;
+            if (graph.isInBounds(nx, ny) && graph.isWalkable(nx, ny)) {
+              const occupied = units.some(u => u.hp > 0 && Math.hypot(u.x - (nx * TILE_SIZE + 24), u.y - (ny * TILE_SIZE + 24)) < 20);
+              if (!occupied) {
+                finalSpawnTx = nx;
+                finalSpawnTy = ny;
+                break;
+              }
             }
           }
 
@@ -608,8 +676,8 @@ export class TacticalDirector {
             this.nextEntityId++,
             unitReq.type,
             'sea_peoples',
-            spawnTx * TILE_SIZE + 24,
-            spawnTy * TILE_SIZE + 24
+            finalSpawnTx * TILE_SIZE + 24,
+            finalSpawnTy * TILE_SIZE + 24
           );
           units.push(spawned);
           if (!this.waveUnitIds.has(this.totalWavesSpawned)) {
@@ -617,21 +685,20 @@ export class TacticalDirector {
           }
           this.waveUnitIds.get(this.totalWavesSpawned)!.add(spawned.id);
 
-          // Give overland raider immediate marching orders towards target
-          const marchPath = AStar.findPath(graph, { tx: spawnTx, ty: spawnTy }, { tx: Math.floor(targetTx), ty: Math.floor(targetTy) }, 2000);
+          // Ordine immediato di avanzata verso il bersaglio
+          const marchPath = AStar.findPath(graph, { tx: finalSpawnTx, ty: finalSpawnTy }, walkableTarget, 2000);
           if (marchPath.length > 1) {
-            spawned.path = marchPath.slice(1, 10).map(c => ({
-              x: c.tx * TILE_SIZE + 24,
-              y: c.ty * TILE_SIZE + 24
+            spawned.path = marchPath.slice(1, 10).map(coord => ({
+              x: coord.tx * TILE_SIZE + 24,
+              y: coord.ty * TILE_SIZE + 24
             }));
             spawned.state = 'MOVE_TO';
           } else if (buildings) {
-            // Direct path to Megaron blocked by walls: find closest player building/wall to attack
             let closestB: BuildingEntity | null = null;
             let closestDist = Infinity;
             for (const b of buildings) {
               if (b.owner === 'player' && b.hp > 0 && b.defId !== 'cyclopean_slab') {
-                const d = Math.hypot(b.centerX - (spawnTx * TILE_SIZE + 24), b.centerY - (spawnTy * TILE_SIZE + 24));
+                const d = Math.hypot(b.centerX - (finalSpawnTx * TILE_SIZE + 24), b.centerY - (finalSpawnTy * TILE_SIZE + 24));
                 if (d < closestDist) {
                   closestDist = d;
                   closestB = b;
@@ -639,13 +706,12 @@ export class TacticalDirector {
               }
             }
             if (closestB) {
-              const bTx = closestB.tx + Math.floor(closestB.def.width / 2);
-              const bTy = closestB.ty + Math.floor(closestB.def.height / 2);
-              const wallPath = AStar.findPath(graph, { tx: spawnTx, ty: spawnTy }, { tx: bTx, ty: bTy }, 2000);
+              const bTarget = this.getWalkableTarget(graph, closestB.tx + Math.floor(closestB.def.width / 2), closestB.ty + Math.floor(closestB.def.height / 2));
+              const wallPath = AStar.findPath(graph, { tx: finalSpawnTx, ty: finalSpawnTy }, bTarget, 2000);
               if (wallPath.length > 1) {
-                spawned.path = wallPath.slice(1, 10).map(c => ({
-                  x: c.tx * TILE_SIZE + 24,
-                  y: c.ty * TILE_SIZE + 24
+                spawned.path = wallPath.slice(1, 10).map(coord => ({
+                  x: coord.tx * TILE_SIZE + 24,
+                  y: coord.ty * TILE_SIZE + 24
                 }));
                 spawned.state = 'MOVE_TO';
               }
@@ -657,8 +723,8 @@ export class TacticalDirector {
       EventBus.get().emit('fx:floating_text', {
         text: 'OVERLAND RAIDERS ASSAULT!',
         color: '#f97316',
-        x: Math.floor(graph.width / 2) * TILE_SIZE,
-        y: 3 * TILE_SIZE
+        x: validSpawnPoints[0].tx * TILE_SIZE + 24,
+        y: validSpawnPoints[0].ty * TILE_SIZE - 20
       });
     }
   }
@@ -740,7 +806,8 @@ export class TacticalDirector {
       );
       units.push(spawned);
 
-      const marchPath = AStar.findPath(graph, { tx: spawnTx, ty: spawnTy }, { tx: Math.floor(targetTx), ty: Math.floor(targetTy) }, 2000);
+      const walkableTarget = this.getWalkableTarget(graph, Math.floor(targetTx), Math.floor(targetTy));
+      const marchPath = AStar.findPath(graph, { tx: spawnTx, ty: spawnTy }, walkableTarget, 2000);
       if (marchPath.length > 1) {
         spawned.path = marchPath.slice(1, 10).map(c => ({
           x: c.tx * TILE_SIZE + 24,
@@ -757,5 +824,24 @@ export class TacticalDirector {
       x: camp.centerX,
       y: camp.centerY - 25
     });
+  }
+
+  private getWalkableTarget(graph: GridGraph, tx: number, ty: number): GridCoord {
+    if (graph.isInBounds(tx, ty) && graph.isWalkable(tx, ty)) {
+      return { tx, ty };
+    }
+    for (let r = 1; r <= 6; r++) {
+      for (let dx = -r; dx <= r; dx++) {
+        for (let dy = -r; dy <= r; dy++) {
+          if (Math.abs(dx) !== r && Math.abs(dy) !== r) continue;
+          const nx = tx + dx;
+          const ny = ty + dy;
+          if (graph.isInBounds(nx, ny) && graph.isWalkable(nx, ny)) {
+            return { tx: nx, ty: ny };
+          }
+        }
+      }
+    }
+    return { tx: Math.max(0, Math.min(graph.width - 1, tx)), ty: Math.max(0, Math.min(graph.height - 1, ty)) };
   }
 }

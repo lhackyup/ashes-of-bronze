@@ -5,6 +5,8 @@ import { CAMPAIGN_SCENARIOS } from '../data/campaignActs.ts';
 export class TitleScreen {
   private overlayEl: HTMLElement | null = null;
   public onContinue?: () => void;
+  public onOpenPrologue?: () => void;
+  public onOpenEpilogue?: () => void;
   public onOpenMap?: () => void;
   public onOpenChronicle?: () => void;
   public onOpenSettings?: () => void;
@@ -117,6 +119,32 @@ export class TitleScreen {
             ▶ CONTINUE CAMPAIGN
           </button>
 
+          <button id="title-btn-prologue" class="svga-btn" style="
+            padding: 11px 20px;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            background: linear-gradient(180deg, #523a1e 0%, #2e1f10 100%);
+            border-color: #b37e22;
+            color: #ffd166;
+          ">
+            📜 HISTORICAL PROLOGUE (1200 BC)
+          </button>
+
+          <button id="title-btn-epilogue" class="svga-btn" style="
+            display: none;
+            padding: 11px 20px;
+            font-size: 13px;
+            font-weight: 900;
+            letter-spacing: 1px;
+            background: linear-gradient(180deg, #8c5e21 0%, #4a2e0a 100%);
+            border-color: #ffd166;
+            color: #fff8e8;
+            box-shadow: 0 0 14px rgba(255, 209, 102, 0.35);
+          ">
+            ☀ THE IRON DAWN: EPILOGUE (1110 BC)
+          </button>
+
           <button id="title-btn-map" class="svga-btn" style="padding: 11px 20px; font-size: 14px; font-weight: 700; letter-spacing: 1px;">
             🗺 STRATEGIC CAMPAIGN MAP
           </button>
@@ -160,6 +188,16 @@ export class TitleScreen {
       if (this.onContinue) this.onContinue();
     });
 
+    document.getElementById('title-btn-prologue')?.addEventListener('click', () => {
+      EventBus.get().emit('audio:click');
+      if (this.onOpenPrologue) this.onOpenPrologue();
+    });
+
+    document.getElementById('title-btn-epilogue')?.addEventListener('click', () => {
+      EventBus.get().emit('audio:click');
+      if (this.onOpenEpilogue) this.onOpenEpilogue();
+    });
+
     document.getElementById('title-btn-map')?.addEventListener('click', () => {
       EventBus.get().emit('audio:click');
       if (this.onOpenMap) this.onOpenMap();
@@ -195,6 +233,12 @@ export class TitleScreen {
       } else {
         continueBtn.textContent = '▶ START CAMPAIGN';
       }
+    }
+
+    const epilogueBtn = document.getElementById('title-btn-epilogue');
+    if (epilogueBtn) {
+      const isWon = save.completedScenarios.includes('scenario_10_the_iron_dawn');
+      epilogueBtn.style.display = isWon ? 'flex' : 'none';
     }
   }
 

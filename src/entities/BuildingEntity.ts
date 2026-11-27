@@ -1,6 +1,7 @@
 import { BuildingDef, FactionId } from '../data/types.ts';
 import { BUILDINGS } from '../data/buildings.ts';
 import { TILE_SIZE } from '../data/terrain.ts';
+import { EventBus } from '../core/EventBus.ts';
 
 export interface TrainingQueueItem {
   unitDefId: string;
@@ -92,6 +93,7 @@ export class BuildingEntity {
       return false;
     }
     this.hp -= amount;
+    EventBus.get().emit('combat:building_damaged', { building: this, damage: amount });
     return this.hp <= 0;
   }
 }

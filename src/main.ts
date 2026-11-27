@@ -27,6 +27,8 @@ import { CampaignMapModal } from './ui/CampaignMapModal.ts';
 import { ChronicleModal } from './ui/ChronicleModal.ts';
 import { SettingsModal } from './ui/SettingsModal.ts';
 import { NarrativeInterludeModal } from './ui/NarrativeInterludeModal.ts';
+import { PrologueModal } from './ui/PrologueModal.ts';
+import { EpilogueModal } from './ui/EpilogueModal.ts';
 import { SaveManager } from './services/SaveManager.ts';
 
 class GameApp {
@@ -53,12 +55,16 @@ class GameApp {
   private objectiveManager!: ObjectiveManager;
   private councilModal!: CouncilModal;
   private debriefingModal!: DebriefingModal;
+  private prologueModal!: PrologueModal;
+  private epilogueModal!: EpilogueModal;
 
   private hasGameStarted: boolean = false;
   private isGamePaused: boolean = true;
   private gameSpeedMultiplier: number = 1.0;
   private hasHarvestedFirstTin: boolean = false;
   private hasWarnedWatchtower: boolean = false;
+  private strongholdAttackAlertTimer: number = 0;
+  private strongholdCriticalAlertGiven: boolean = false;
 
   private units: UnitEntity[] = [];
   private buildings: BuildingEntity[] = [];
@@ -343,6 +349,7 @@ class GameApp {
       this.gridGraph.setFoundation(pStart.tx + 5, pStart.ty - 2, 3, 3, true); // Bloomery
       this.gridGraph.setFoundation(pStart.tx - 5, pStart.ty, 2, 2, true);     // Granary
       this.gridGraph.setFoundation(pStart.tx, pStart.ty - 6, 3, 3, true);     // Barracks
+      this.gridGraph.setFoundation(pStart.tx - 5, pStart.ty + 4, 3, 3, true); // Chariot Stables terrace
       this.gridGraph.setFoundation(pStart.tx + 5, pStart.ty + 4, 2, 2, true); // East Watchtower
       this.gridGraph.setFoundation(pStart.tx - 4, pStart.ty - 6, 2, 2, true); // West Watchtower
 
@@ -419,6 +426,7 @@ class GameApp {
       this.gridGraph.setFoundation(pStart.tx + 5, pStart.ty - 2, 3, 3, true);
       this.gridGraph.setFoundation(pStart.tx - 5, pStart.ty, 2, 2, true);
       this.gridGraph.setFoundation(pStart.tx, pStart.ty - 6, 3, 3, true);
+      this.gridGraph.setFoundation(pStart.tx - 5, pStart.ty + 4, 3, 3, true); // Chariot Stables terrace
       this.gridGraph.setFoundation(pStart.tx + 5, pStart.ty + 4, 2, 2, true);
       this.gridGraph.setFoundation(pStart.tx - 4, pStart.ty - 6, 2, 2, true);
 
@@ -967,10 +975,61 @@ class GameApp {
       }
     );
 
+    this.prologueModal = new PrologueModal();
+    this.prologueModal.onBegin = () => {
+      SaveManager.get().setHasSeenPrologue(true);
+      this.closeAllModals();
+      this.councilModal.show();
+    };
+    this.prologueModal.onOpenMap = () => {
+      this.closeAllModals();
+      this.campaignMapModal.show();
+    };
+    this.prologueModal.onClose = () => {
+      this.closeAllModals();
+      if (this.hasGameStarted) {
+        this.isGamePaused = false;
+        this.updateFogOfWar();
+      } else {
+        this.titleScreen.show();
+      }
+    };
+
+    this.epilogueModal = new EpilogueModal();
+    this.epilogueModal.onOpenChronicle = () => {
+      this.closeAllModals();
+      this.chronicleModal.show();
+    };
+    this.epilogueModal.onOpenMap = () => {
+      this.closeAllModals();
+      this.campaignMapModal.show();
+    };
+    this.epilogueModal.onReplay = () => {
+      window.location.reload();
+    };
+    this.epilogueModal.onReturnToTitle = () => {
+      this.closeAllModals();
+      this.isGamePaused = true;
+      this.titleScreen.show();
+    };
+
     // Title Screen button actions
     this.titleScreen.onContinue = () => {
       this.closeAllModals();
-      this.councilModal.show();
+      const save = SaveManager.get();
+      if (save.getCurrentScenarioId() === 'scenario_01_horned_sails' && !save.hasSeenPrologue()) {
+        this.prologueModal.show();
+      } else {
+        this.councilModal.show();
+      }
+    };
+    this.titleScreen.onOpenPrologue = () => {
+      this.closeAllModals();
+      this.prologueModal.show();
+    };
+    this.titleScreen.onOpenEpilogue = () => {
+      this.closeAllModals();
+      this.epilogueModal.show();
     };
     this.titleScreen.onOpenMap = () => {
       this.closeAllModals();
@@ -996,6 +1055,14 @@ class GameApp {
     this.campaignMapModal.onShowInterlude = (fromScenarioId: string, toScenarioId: string) => {
       this.closeAllModals();
       this.narrativeInterludeModal.show(fromScenarioId, toScenarioId);
+    };
+    this.campaignMapModal.onOpenPrologue = () => {
+      this.closeAllModals();
+      this.prologueModal.show();
+    };
+    this.campaignMapModal.onOpenEpilogue = () => {
+      this.closeAllModals();
+      this.epilogueModal.show();
     };
     this.campaignMapModal.onClose = () => {
       this.closeAllModals();
@@ -1126,10 +1193,63 @@ class GameApp {
       });
     });
 
+    // Wire building damaged warnings (particularly for central Acropolis / Megaron / Citadel)
+    EventBus.get().on('combat:building_damaged', (data: { building: BuildingEntity; damage: number }) => {
+      const b = data.building;
+      if (b.owner === 'player' && b.defId === 'acropolis') {
+        const buildingName = b.customName || 'The Megaron Acropolis';
+        const now = performance.now();
+        if (now - this.strongholdAttackAlertTimer > 6000) {
+          this.strongholdAttackAlertTimer = now;
+          EventBus.get().emit('audio:horn_alert');
+          EventBus.get().emit('fx:floating_text', {
+            text: `⚠ ${buildingName.toUpperCase()} UNDER ATTACK! ⚠`,
+            color: '#ef4444',
+            x: b.centerX,
+            y: b.centerY - (b.def.height * TILE_SIZE) / 2 - 28
+          });
+          EventBus.get().emit('advisor:message', {
+            speaker: 'tarkhunta',
+            text: `Wanax! Hostile forces are assaulting ${buildingName}! Rally our defenders to the sanctuary at once!`,
+            isAlert: true
+          });
+        }
+
+        // Critical HP threshold alert (< 35% HP)
+        if (b.hp > 0 && b.hp <= b.maxHp * 0.35 && !this.strongholdCriticalAlertGiven) {
+          this.strongholdCriticalAlertGiven = true;
+          EventBus.get().emit('audio:horn_alert');
+          EventBus.get().emit('fx:floating_text', {
+            text: `🔥 CRITICAL: ${buildingName.toUpperCase()} STRUCTURAL COLLAPSE IMMINENT! 🔥`,
+            color: '#dc2626',
+            x: b.centerX,
+            y: b.centerY - (b.def.height * TILE_SIZE) / 2 - 40
+          });
+          EventBus.get().emit('advisor:message', {
+            speaker: 'burna_khabir',
+            text: `The foundations of ${buildingName} are crumbling under enemy fire! If the sanctuary falls, all is lost!`,
+            isAlert: true
+          });
+        }
+      }
+    });
+
     // Wire Victory / Defeat events
     EventBus.get().on('scenario:victory', (data: any) => {
       this.isGamePaused = true;
-      this.debriefingModal.showVictory(data.stats, data.objectives, scenario.id);
+      if (scenario.id === 'scenario_10_the_iron_dawn') {
+        SaveManager.get().markScenarioCompleted(scenario.id, null, {
+          scenarioId: scenario.id,
+          title: scenario.title,
+          act: 3,
+          entry: "The Iron Dawn has arrived! The supreme armada of the Sea Peoples coalition has been crushed beneath the bolts of the Iron-Plated Bastion and the cleaving blades of the Iron Champions. The Grand Warlord has fallen, his horned banner sinking into the surf. Civilization has endured the catastrophe: from this day forward, humanity belongs to the Age of Iron!",
+          bestTimeSeconds: data.stats.elapsedSeconds
+        });
+        this.closeAllModals();
+        this.epilogueModal.show(data.stats, data.objectives);
+      } else {
+        this.debriefingModal.showVictory(data.stats, data.objectives, scenario.id);
+      }
     });
     EventBus.get().on('scenario:defeat', (data: any) => {
       this.isGamePaused = true;
@@ -1182,16 +1302,16 @@ class GameApp {
         const isMainCanyon = distFromCanyon <= 4;
         const isCanyonShelf = distFromCanyon > 4 && distFromCanyon <= 7;
 
-        // Secondary eastern tributary defile (where miners got ambushed)
-        const isEastDefile = y >= 20 && y <= 26 && x >= 30 && x <= 56;
+        // Secondary eastern tributary defile (connecting eastern border and Bastion Camp 2 at tx: 52, ty: 36)
+        const isEastDefile = y >= 18 && y <= 40 && x >= 25 && x <= 62;
         // Secondary western ridge path for agile skirmishers
         const isWestPass = x >= 4 && x <= 8 && y >= 32 && y <= 48;
 
-        // Northern Sacred Iron Sanctuary plateau
-        const isIronPlateau = y <= 16 && x >= 38 && x <= 58;
+        // Northern Sacred Iron Sanctuary plateau (connecting northern border and Camp 1 at tx: 42, ty: 12)
+        const isIronPlateau = y <= 16 && x >= 36 && x <= 60;
 
         // Southern Expedition base plateau
-        const isBasePlateau = y >= 46 && y <= 58 && x >= 6 && x <= 22;
+        const isBasePlateau = y >= 44 && y <= 60 && x >= 5 && x <= 24;
 
         // Mountain stream meandering along the canyon bed
         const isStream = isMainCanyon && Math.abs(x - canyonX) <= 1 && y % 4 !== 0;
@@ -2216,6 +2336,8 @@ class GameApp {
     if (this.chronicleModal) this.chronicleModal.hide();
     if (this.settingsModal) this.settingsModal.hide();
     if (this.narrativeInterludeModal) this.narrativeInterludeModal.hide();
+    if (this.prologueModal) this.prologueModal.hide();
+    if (this.epilogueModal) this.epilogueModal.hide();
   }
 
   private setupInputHandlers(): void {
@@ -3041,6 +3163,9 @@ class GameApp {
           }
 
           this.spawnUnit(trainedId, b.owner, spawnTx * TILE_SIZE + 24, spawnTy * TILE_SIZE + 24);
+          if (b.owner === 'player' && this.objectiveManager) {
+            this.objectiveManager.recordUnitTrained(trainedId);
+          }
           EventBus.get().emit('audio:command');
           EventBus.get().emit('fx:floating_text', {
             text: `${uDef?.name.split(' ')[0].toUpperCase() || 'UNIT'} READY`,
@@ -3582,15 +3707,15 @@ class GameApp {
       }
       ctx.restore();
 
-      // Render dedicated Golden Title Banner above the Royal Cuneiform Library in Scenario 5
-      const library = this.buildings.find(b => b.owner === 'player' && b.defId === 'acropolis' && b.hp > 0);
-      if (library) {
+      // Render dedicated Golden Title Banner above the Central Stronghold / Acropolis
+      const stronghold = this.buildings.find(b => b.owner === 'player' && b.defId === 'acropolis' && b.hp > 0);
+      if (stronghold) {
         ctx.save();
-        const bx = library.centerX;
-        const by = library.centerY - (library.def.height * TILE_SIZE) / 2 - 16;
+        const bx = stronghold.centerX;
+        const by = stronghold.centerY - (stronghold.def.height * TILE_SIZE) / 2 - 16;
         ctx.font = 'bold 12px "Cinzel", serif';
         ctx.textAlign = 'center';
-        const title = '📜 ROYAL CUNEIFORM LIBRARY';
+        const title = `🏛️ ${(stronghold.customName || 'CENTRAL ACROPOLIS').toUpperCase()}`;
         const tw = ctx.measureText(title).width;
         ctx.fillStyle = 'rgba(16, 11, 7, 0.90)';
         ctx.fillRect(bx - tw / 2 - 10, by - 14, tw + 20, 20);
@@ -3602,22 +3727,24 @@ class GameApp {
         ctx.restore();
       }
 
-      // Render dedicated Cyan Title Banner above the Ruined Merchant Tin Vault at (34, 18)
-      ctx.save();
-      const vx = (34 + 1) * TILE_SIZE;
-      const vy = 18 * TILE_SIZE - 12;
-      ctx.font = 'bold 11px "Cinzel", serif';
-      ctx.textAlign = 'center';
-      const vTitle = '🏺 RUINED MERCHANT VAULT (TIN)';
-      const vtw = ctx.measureText(vTitle).width;
-      ctx.fillStyle = 'rgba(10, 18, 25, 0.90)';
-      ctx.fillRect(vx - vtw / 2 - 8, vy - 13, vtw + 16, 18);
-      ctx.strokeStyle = '#38bdf8';
-      ctx.lineWidth = 1.2;
-      ctx.strokeRect(vx - vtw / 2 - 8, vy - 13, vtw + 16, 18);
-      ctx.fillStyle = '#38bdf8';
-      ctx.fillText(vTitle, vx, vy);
-      ctx.restore();
+      if (this.currentScenario?.id === 'scenario_05_silence_great_kings') {
+        // Render dedicated Cyan Title Banner above the Ruined Merchant Tin Vault at (34, 18)
+        ctx.save();
+        const vx = (34 + 1) * TILE_SIZE;
+        const vy = 18 * TILE_SIZE - 12;
+        ctx.font = 'bold 11px "Cinzel", serif';
+        ctx.textAlign = 'center';
+        const vTitle = '🏺 RUINED MERCHANT VAULT (TIN)';
+        const vtw = ctx.measureText(vTitle).width;
+        ctx.fillStyle = 'rgba(10, 18, 25, 0.90)';
+        ctx.fillRect(vx - vtw / 2 - 8, vy - 13, vtw + 16, 18);
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 1.2;
+        ctx.strokeRect(vx - vtw / 2 - 8, vy - 13, vtw + 16, 18);
+        ctx.fillStyle = '#38bdf8';
+        ctx.fillText(vTitle, vx, vy);
+        ctx.restore();
+      }
     }
 
     // 6. Floating text visual FX (World coordinates)

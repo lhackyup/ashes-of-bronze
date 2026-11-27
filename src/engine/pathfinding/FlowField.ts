@@ -30,9 +30,35 @@ export class FlowField {
 
     // 1. Dijkstra BFS per calcolare i costi integrati
     const queue: GridCoord[] = [];
-    const targetIdx = this.index(target.tx, target.ty);
-    this.integrationField[targetIdx] = 0;
-    queue.push(target);
+
+    // Se il target è calpestabile, inizializza direttamente da esso
+    if (graph.isWalkable(target.tx, target.ty)) {
+      const targetIdx = this.index(target.tx, target.ty);
+      this.integrationField[targetIdx] = 0;
+      queue.push(target);
+    } else {
+      // Se il target cade all'interno di un edificio o tessera bloccata,
+      // raccoglie le tessere perimetrali calpestabili (raggio 1..5) e le imposta a costo 0
+      for (let r = 1; r <= 5; r++) {
+        for (let dy = -r; dy <= r; dy++) {
+          for (let dx = -r; dx <= r; dx++) {
+            if (Math.abs(dx) !== r && Math.abs(dy) !== r) continue;
+            const nx = target.tx + dx;
+            const ny = target.ty + dy;
+            if (graph.isInBounds(nx, ny) && graph.isWalkable(nx, ny)) {
+              const idx = this.index(nx, ny);
+              if (this.integrationField[idx] === INF) {
+                this.integrationField[idx] = 0;
+                queue.push({ tx: nx, ty: ny });
+              }
+            }
+          }
+        }
+        if (queue.length > 0) break;
+      }
+    }
+
+    if (queue.length === 0) return;
 
     while (queue.length > 0) {
       const cur = queue.shift()!;

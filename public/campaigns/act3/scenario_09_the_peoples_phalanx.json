@@ -14,7 +14,7 @@
     "startPosition": { "tx": 18, "ty": 44 },
     "initialResources": {
       "copper": 500,
-      "tin": 30,
+      "tin": 70,
       "iron": 450,
       "grain": 400,
       "stone": 400,
@@ -29,6 +29,7 @@
       "primitive_bloomery",
       "peoples_armory",
       "barracks",
+      "chariot_stable",
       "watchtower",
       "signal_beacon"
     ],
@@ -39,6 +40,7 @@
       "highland_skirmisher",
       "composite_bowman",
       "bronze_swordsman",
+      "war_chariot",
       "black_blade_warrior",
       "iron_phalangite"
     ]
@@ -108,7 +110,7 @@
       {
         "id": "form_iron_phalanx",
         "type": "train_units",
-        "description": "The People's Phalanx: Train at least 6 Iron-Spiked Phalangites at the Armory or Barracks.",
+        "description": "The People's Phalanx: Train at least 6 Iron-Spiked Phalangites at the People's Levy Armory.",
         "targetId": "iron_phalangite",
         "targetAmount": 6,
         "isPrimary": true

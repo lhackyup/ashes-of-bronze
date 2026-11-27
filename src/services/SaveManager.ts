@@ -21,6 +21,7 @@ export interface CampaignSaveData {
   completedScenarios: string[];
   chronicles: ChronicleRecord[];
   settings: GameSettings;
+  hasSeenPrologue?: boolean;
 }
 
 const STORAGE_KEY = 'ashes_of_bronze_save_v1';
@@ -110,6 +111,15 @@ export class SaveManager {
 
   public isScenarioCompleted(scenarioId: string): boolean {
     return this.data.completedScenarios.includes(scenarioId);
+  }
+
+  public hasSeenPrologue(): boolean {
+    return !!this.data.hasSeenPrologue;
+  }
+
+  public setHasSeenPrologue(seen: boolean): void {
+    this.data.hasSeenPrologue = seen;
+    this.save();
   }
 
   public markScenarioCompleted(

@@ -57,20 +57,21 @@ export class DebriefingModal {
     const titleColor = isVictory ? '#2de0a5' : '#ef4444';
     const titleText = isVictory ? `VICTORY: ${curMeta.title.toUpperCase()}` : 'DEFEAT: ASHES AND RUIN';
 
+    const victoryChronicles: Record<string, string> = {
+      scenario_10_the_iron_dawn: "The Iron Dawn has arrived! The supreme armada of the Sea Peoples coalition has been crushed beneath the bolts of the Iron-Plated Bastion and the cleaving blades of the Iron Champions. The Grand Warlord has fallen, his horned banner sinking into the surf. Civilization has endured the catastrophe: from this day forward, humanity belongs to the Age of Iron!",
+      scenario_09_the_peoples_phalanx: "The floodplains of the Orontes are secured! Where aristocratic chariots once rode alone, the united commoners of the Levant have formed an impenetrable wall of 4-meter iron pikes. The raiding waves of the Sea Peoples broke like water against the People's Phalanx! The granaries are liberated, and our army marches toward the final battle!",
+      scenario_08_secret_black_blade: "The bellows roar amidst the snows of the Taurus! Behind our mountain redoubts, the renegade bloomery has achieved what the palace smiths deemed impossible: forced-draft smelting has born the Black Iron Blade. Armed with dark broadswords, our vanguard cut down the Lukka marauders. The monopoly of bronze is broken forever!",
+      scenario_07_into_stone_gorges: "The limestone jaws of the Taurus echo with victory! By the fierce agility of our Highland Skirmishers and the courage of our expeditionary vanguard, the Lukka mountain warbands have been repelled and their chieftain slain. High within the northern defiles, the sacred hematite veins are secured: heavy dark iron ore fills our donkey panniers. The dawn of a new metal is at hand!",
+      scenario_06_war_of_rags: "The waters of the Orontes run red with fratricidal blood. King Benteshina has fallen, his shattered bronze armor sinking into the river mud, and the desperate warlord coalition is routed! The Signal Beacon Spire shines upon the borderlands, but our tin vaults are virtually empty: no more than 35 ingots remain. Tarkhunta sounds the march into the northern mountains!",
+      scenario_05_silence_great_kings: "The flames of Ugarit flicker and fade across a sea of gray ash. From the burning ruins of the royal library, the heavily laden wagons of cuneiform tablets and the last oxhide ingots have reached safety behind our lines! The Supreme Warlord of the sea coalition lies broken upon the bluffs. Act I is fulfilled: the golden empires of the Bronze Age have fallen, but the torch of Kadesh burns bright in the dark!",
+      scenario_04_siege_kadesh_sea: "Dawn breaks upon the smoking ramparts of Kadesh-on-Sea! The supreme nocturnal assault of the Sea Peoples has broken against our cyclopean walls. Their forward war camps have been reduced to smoldering ash, and the horned helmet of the Shardana Fleet Warlord lies shattered upon our sands. The Megaron stands unbroken, but as messengers arrive bearing dark news from across the sea, a chilling reality sets in: Hattusa has fallen, Mycenae is ashes, and Egypt has sealed its Delta... we are the last kingdom standing.",
+      scenario_03_gate_of_cedars: "The Lebanon mountain passes echo with the thunder of royal chariot wheels! By the swift archery of our two-horse war chariots and the discipline of our mountain militia, the Shardana arsonists have been cut down. The sacred cedar groves stand unharmed, our foundries overflow with charcoal and timber, and the secret raider ambush camp has been burned to ash. The Gate of Cedars is barred against the sea invaders!",
+      scenario_02_last_cargo_alashiya: "The reefs of Ugarit run quiet. By the lethal range of our Cypriot bowmen and the courage of our donkey teams, the precious oxhide ingots of Alashiya have been hauled to safety! The Shardana raiding skiffs drift burning on the tide. Our foundries have secured the tin to forge our destiny!",
+      scenario_01_horned_sails: "The sea churns red with the blood of the horned raiders. By blade, bow, and the unyielding strength of our cyclopean foundations, Kadesh-on-Sea has held fast! The cassiterite is secured in our storehouses, and the fires of our foundries will keep our people armed through the collapsing age."
+    };
+
     const chronicleText = isVictory
-      ? (curScenarioId === 'scenario_07_into_stone_gorges'
-          ? "The limestone jaws of the Taurus echo with victory! By the fierce agility of our Highland Skirmishers and the courage of our expeditionary vanguard, the Lukka mountain warbands have been repelled and their chieftain slain. High within the northern defiles, the sacred hematite veins are secured: heavy dark iron ore fills our donkey panniers. The dawn of a new metal is at hand!"
-          : (curScenarioId === 'scenario_06_war_of_rags'
-              ? "The waters of the Orontes run red with fratricidal blood. King Benteshina has fallen, his shattered bronze armor sinking into the river mud, and the desperate warlord coalition is routed! The Signal Beacon Spire shines upon the borderlands, but our tin vaults are virtually empty: no more than 35 ingots remain. Tarkhunta sounds the march into the northern mountains!"
-              : (curScenarioId === 'scenario_05_silence_great_kings'
-                  ? "The flames of Ugarit flicker and fade across a sea of gray ash. From the burning ruins of the royal library, the heavily laden wagons of cuneiform tablets and the last oxhide ingots have reached safety behind our lines! The Supreme Warlord of the sea coalition lies broken upon the bluffs. Act I is fulfilled: the golden empires of the Bronze Age have fallen, but the torch of Kadesh burns bright in the dark!"
-                  : (curScenarioId === 'scenario_04_siege_kadesh_sea'
-                      ? 'Dawn breaks upon the smoking ramparts of Kadesh-on-Sea! The supreme nocturnal assault of the Sea Peoples has broken against our cyclopean walls. Their forward war camps have been reduced to smoldering ash, and the horned helmet of the Shardana Fleet Warlord lies shattered upon our sands. The Megaron stands unbroken, but as messengers arrive bearing dark news from across the sea, a chilling reality sets in: Hattusa has fallen, Mycenae is ashes, and Egypt has sealed its Delta... we are the last kingdom standing.'
-                      : (curScenarioId === 'scenario_03_gate_of_cedars'
-                          ? 'The Lebanon mountain passes echo with the thunder of royal chariot wheels! By the swift archery of our two-horse war chariots and the discipline of our mountain militia, the Shardana arsonists have been cut down. The sacred cedar groves stand unharmed, our foundries overflow with charcoal and timber, and the secret raider ambush camp has been burned to ash. The Gate of Cedars is barred against the sea invaders!'
-                          : (curScenarioId === 'scenario_02_last_cargo_alashiya'
-                              ? 'The reefs of Ugarit run quiet. By the lethal range of our Cypriot bowmen and the courage of our donkey teams, the precious oxhide ingots of Alashiya have been hauled to safety! The Shardana raiding skiffs drift burning on the tide. Our foundries have secured the tin to forge our destiny!'
-                              : 'The sea churns red with the blood of the horned raiders. By blade, bow, and the unyielding strength of our cyclopean foundations, Kadesh-on-Sea has held fast! The cassiterite is secured in our storehouses, and the fires of our foundries will keep our people armed through the collapsing age.'))))))
+      ? (victoryChronicles[curScenarioId] || victoryChronicles['scenario_01_horned_sails'])
       : 'The walls of our settlement have crumbled into dust. The sea raiders have overrun our hearths, and our people scatter into the wilderness. The memory of our colony dissolves into the ashes of bronze...';
 
     if (isVictory) {
@@ -87,14 +88,22 @@ export class DebriefingModal {
     const seconds = Math.floor(stats.elapsedSeconds % 60);
     const timeFormatted = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
 
+    // Find the critical failed primary objective that triggered collapse
+    const criticalFailedObj = !isVictory
+      ? (objectives.find(o => o.isPrimary && o.isFailed) || objectives.find(o => o.isFailed))
+      : null;
+
     let objectivesHtml = '';
     for (const obj of objectives) {
+      const isCriticalFail = !isVictory && obj === criticalFailedObj;
       const mark = obj.isCompleted
         ? '<span style="color: #2de0a5; font-weight: bold;">[COMPLETED]</span>'
-        : (obj.isFailed ? '<span style="color: #ef4444; font-weight: bold;">[FAILED]</span>' : '<span style="color: #ffd166;">[INCOMPLETE]</span>');
+        : (obj.isFailed
+            ? `<span style="color: #ef4444; font-weight: bold;">[FAILED${isCriticalFail ? ' - FATAL' : ''}]</span>`
+            : '<span style="color: #ffd166;">[INCOMPLETE]</span>');
       objectivesHtml += `
-        <div style="display: flex; justify-content: space-between; font-size: 13px; border-bottom: 1px solid #2a221a; padding: 4px 0;">
-          <span>${obj.description}</span>
+        <div style="display: flex; justify-content: space-between; font-size: 13px; border-bottom: 1px solid #2a221a; padding: 6px 0; ${isCriticalFail ? 'background: rgba(239, 68, 68, 0.12); padding-left: 6px; border-left: 3px solid #ef4444;' : ''}">
+          <span style="${isCriticalFail ? 'color: #fca5a5; font-weight: bold;' : ''}">${obj.isPrimary ? '★ ' : ''}${obj.description}</span>
           <span>${mark}</span>
         </div>
       `;
@@ -136,7 +145,30 @@ export class DebriefingModal {
               <div style="font-size: 14px; line-height: 1.4; color: #f7efe1; font-style: italic;">
                 "${chronicleText}"
               </div>
-              ${defeatReason ? `<div style="font-size: 13px; color: #ef4444; font-weight: bold; margin-top: 4px;">Cause of Collapse: ${defeatReason}</div>` : ''}
+              ${defeatReason ? `
+                <div style="
+                  font-size: 13px;
+                  color: #fee2e2;
+                  background: rgba(185, 28, 28, 0.45);
+                  border: 1px solid #ef4444;
+                  border-radius: 4px;
+                  padding: 8px 12px;
+                  margin-top: 8px;
+                  display: flex;
+                  flex-direction: column;
+                  gap: 3px;
+                ">
+                  <span style="font-weight: 800; color: #fca5a5; font-family: 'Cinzel', serif; letter-spacing: 0.5px;">
+                    CAUSE OF COLLAPSE:
+                  </span>
+                  <span style="font-weight: 600;">${defeatReason}</span>
+                  ${criticalFailedObj ? `
+                    <span style="font-size: 12px; color: #fecaca; margin-top: 2px;">
+                      Triggered by loss of: <strong>${criticalFailedObj.description}</strong>
+                    </span>
+                  ` : ''}
+                </div>
+              ` : ''}
             </div>
           </div>
 

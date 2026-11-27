@@ -36,22 +36,34 @@ export class AStar {
 
     const toKey = (tx: number, ty: number) => ty * graph.width + tx;
 
-    // Se l'obiettivo non è calpestabile o è bloccato da un'altra unità,
-    // cerca il vicino calpestabile libero più prossimo al punto di partenza
+    // Se l'obiettivo non è calpestabile o è bloccato da un'altra unità / edificio,
+    // cerca la tessera calpestabile libera più vicina al punto di partenza (fino a raggio 6 per edifici grandi)
     let targetGoal = goal;
     const isGoalBlocked = !graph.isWalkable(goal.tx, goal.ty) || (blockedTileKeys && blockedTileKeys.has(toKey(goal.tx, goal.ty)));
     if (isGoalBlocked) {
-      const neighbors = graph.getNeighbors(goal.tx, goal.ty, true);
-      const freeNeighbors = neighbors.filter(n =>
-        graph.isWalkable(n.tx, n.ty) && (!blockedTileKeys || !blockedTileKeys.has(toKey(n.tx, n.ty)))
-      );
-      if (freeNeighbors.length === 0) return [];
-      freeNeighbors.sort((a, b) => {
-        const da = Math.hypot(a.tx - start.tx, a.ty - start.ty);
-        const db = Math.hypot(b.tx - start.tx, b.ty - start.ty);
-        return da - db;
-      });
-      targetGoal = freeNeighbors[0];
+      let candidate: GridCoord | null = null;
+      let bestDist = Infinity;
+
+      for (let r = 1; r <= 6; r++) {
+        for (let dy = -r; dy <= r; dy++) {
+          for (let dx = -r; dx <= r; dx++) {
+            if (Math.abs(dx) !== r && Math.abs(dy) !== r) continue;
+            const nx = goal.tx + dx;
+            const ny = goal.ty + dy;
+            if (graph.isInBounds(nx, ny) && graph.isWalkable(nx, ny) && (!blockedTileKeys || !blockedTileKeys.has(toKey(nx, ny)))) {
+              const d = Math.hypot(nx - start.tx, ny - start.ty);
+              if (d < bestDist) {
+                bestDist = d;
+                candidate = { tx: nx, ty: ny };
+              }
+            }
+          }
+        }
+        if (candidate) break; // Trovato il perimetro calpestabile più vicino
+      }
+
+      if (!candidate) return [];
+      targetGoal = candidate;
     }
 
     const openList: PathNode[] = [];

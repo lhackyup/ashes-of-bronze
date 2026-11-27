@@ -14,7 +14,7 @@
     "startPosition": { "tx": 12, "ty": 50 },
     "initialResources": {
       "copper": 450,
-      "tin": 35,
+      "tin": 70,
       "iron": 0,
       "grain": 350,
       "stone": 320,
@@ -27,6 +27,7 @@
       "granary",
       "bronze_foundry",
       "barracks",
+      "chariot_stable",
       "watchtower",
       "signal_beacon"
     ],
@@ -36,7 +37,8 @@
       "skirmisher",
       "highland_skirmisher",
       "composite_bowman",
-      "bronze_swordsman"
+      "bronze_swordsman",
+      "war_chariot"
     ]
   },
   "opponents": [

@@ -62,8 +62,7 @@ export const BUILDINGS: Record<string, BuildingDef> = {
     requiresFoundation: true,
     foundationPenaltyHpRatio: 0.5,
     storageProvided: 500,
-    dropsOffResources: ['copper', 'tin', 'iron'],
-    producesUnits: ['donkey_caravan']
+    dropsOffResources: ['copper', 'tin', 'iron']
   },
 
   iron_smelter: {
@@ -108,12 +107,12 @@ export const BUILDINGS: Record<string, BuildingDef> = {
     maxHp: 1100,
     cost: { stone: 150, timber: 140, copper: 60 },
     buildTime: 14,
-    description: 'Stone and cedar field armory where mass iron pike heads and reinforced shield fittings are forged in series. Expands storage (+400 Iron, +400 Grain, +200 Stone) and equips Iron-Spiked Phalangites.',
+    description: 'Stone and cedar field armory where mass iron pike heads and heavy plate cuirasses are forged in series. Expands storage (+400 Iron, +400 Grain, +200 Stone) and equips Iron-Spiked Phalangites and Iron Vanguard Champions.',
     requiresFoundation: true,
     foundationPenaltyHpRatio: 0.5,
     storageProvided: 400,
     dropsOffResources: ['iron', 'grain', 'stone', 'copper'],
-    producesUnits: ['iron_phalangite', 'iron_champion', 'spear_militia']
+    producesUnits: ['iron_phalangite', 'iron_champion']
   },
 
   iron_bastion: {
@@ -125,14 +124,13 @@ export const BUILDINGS: Record<string, BuildingDef> = {
     maxHp: 2200,
     cost: { stone: 260, iron: 120, timber: 120, copper: 60 },
     buildTime: 20,
-    description: 'A monumental 3x3 cyclopean fortress bastion reinforced with forged iron armor plates. Mounts a heavy torsion siege ballista that fires devastating iron-tipped bolts across extreme distances, and trains elite Iron Vanguard Champions.',
+    description: 'A monumental 3x3 cyclopean fortress bastion reinforced with forged iron armor plates. Mounts a heavy torsion siege ballista that fires devastating iron-tipped bolts across extreme distances.',
     requiresFoundation: true,
     foundationPenaltyHpRatio: 0.5,
     radarRange: 22,
     attackRange: 6.5,
     damage: 48,
-    attackRate: 0.8,
-    producesUnits: ['iron_champion', 'composite_bowman']
+    attackRate: 0.8
   },
 
   barracks: {
@@ -144,10 +142,10 @@ export const BUILDINGS: Record<string, BuildingDef> = {
     maxHp: 1000,
     cost: { copper: 150, timber: 100 },
     buildTime: 12,
-    description: 'Trains tower-shield spearmen, Levantine slingers, Highland skirmishers, Cypriot composite bowmen, Black Blade warriors, Iron Phalangites, and assault infantry.',
+    description: 'Trains tower-shield spearmen, Levantine slingers, Highland skirmishers, Cypriot composite bowmen, Khopesh swordsmen, and frontline infantry.',
     requiresFoundation: true,
     foundationPenaltyHpRatio: 0.5,
-    producesUnits: ['spear_militia', 'skirmisher', 'highland_skirmisher', 'composite_bowman', 'bronze_swordsman', 'black_blade_warrior', 'iron_phalangite', 'iron_champion', 'iron_infantry']
+    producesUnits: ['spear_militia', 'skirmisher', 'highland_skirmisher', 'composite_bowman', 'bronze_swordsman', 'iron_infantry']
   },
 
   watchtower: {

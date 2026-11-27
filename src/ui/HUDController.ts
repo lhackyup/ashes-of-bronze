@@ -578,6 +578,8 @@ export class HUDController {
             infoBox.innerHTML = '🌾 <strong>Royal Granary:</strong> Expands grain stockpile capacity to 1200 units to support a large standing army.';
           } else if (selectedBuilding.defId === 'bronze_foundry') {
             infoBox.innerHTML = '🔥 <strong>Bronze Foundry:</strong> Smelts copper and tin into bronze armaments, expanding metal storage capacity to 1500.';
+          } else if (selectedBuilding.defId === 'iron_bastion') {
+            infoBox.innerHTML = '🛡️ <strong>Iron Bastion:</strong> Heavy fortified fortress redoubt with a long-range torsion ballista to repel invaders.';
           } else if (selectedBuilding.defId === 'sentry_tower') {
             infoBox.innerHTML = '🏹 <strong>Sentry Tower:</strong> Archer garrison that automatically fires arrows upon hostile threats.';
           } else if (selectedBuilding.defId === 'cyclopean_slab') {
@@ -642,7 +644,8 @@ export class HUDController {
                         (uId === 'black_blade_warrior' ? 'Black Blade' :
                         (uId === 'iron_phalangite' ? 'Phalangite' :
                         (uId === 'iron_champion' ? 'Champion' :
-                        (uId === 'donkey_caravan' ? 'Caravan' : uDef.name.split(' ')[0]))))))));
+                        (uId === 'war_chariot' ? 'War Chariot' :
+                        (uId === 'donkey_caravan' ? 'Caravan' : uDef.name.split(' ')[0])))))))));
 
       const trainBtn = document.createElement('button');
       trainBtn.className = 'svga-btn build-btn';

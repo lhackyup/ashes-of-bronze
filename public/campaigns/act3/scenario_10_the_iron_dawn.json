@@ -14,7 +14,7 @@
     "startPosition": { "tx": 20, "ty": 42 },
     "initialResources": {
       "copper": 600,
-      "tin": 40,
+      "tin": 70,
       "iron": 600,
       "grain": 500,
       "stone": 500,
@@ -29,6 +29,7 @@
       "primitive_bloomery",
       "peoples_armory",
       "barracks",
+      "chariot_stable",
       "watchtower",
       "signal_beacon",
       "iron_bastion"

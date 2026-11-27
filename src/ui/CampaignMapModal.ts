@@ -8,6 +8,8 @@ export class CampaignMapModal {
   private selectedActIndex: number = 1;
   public onSelectScenario?: (scenarioId: string) => void;
   public onShowInterlude?: (fromScenarioId: string, toScenarioId: string) => void;
+  public onOpenPrologue?: () => void;
+  public onOpenEpilogue?: () => void;
   public onClose?: () => void;
 
   constructor() {
@@ -163,6 +165,33 @@ export class CampaignMapModal {
           </div>
 
           <div style="margin-top: auto; padding-top: 12px; display: flex; flex-direction: column; gap: 8px;">
+            <button id="intel-btn-epic-prologue" class="svga-btn" style="
+              display: none;
+              width: 100%;
+              padding: 9px;
+              font-size: 12px;
+              font-weight: bold;
+              background: #3b2310;
+              border-color: #ffd166;
+              color: #ffd166;
+            ">
+              📜 HISTORICAL PROLOGUE (1200 BC)
+            </button>
+
+            <button id="intel-btn-epic-epilogue" class="svga-btn" style="
+              display: none;
+              width: 100%;
+              padding: 9px;
+              font-size: 12px;
+              font-weight: 900;
+              background: linear-gradient(180deg, #784a16 0%, #452807 100%);
+              border-color: #ffd166;
+              color: #fff8e8;
+              box-shadow: 0 0 10px rgba(255, 209, 102, 0.3);
+            ">
+              ☀ THE IRON DAWN: EPILOGUE (1110 BC)
+            </button>
+
             <button id="intel-btn-interlude" class="svga-btn" style="
               width: 100%;
               padding: 8px;
@@ -203,6 +232,18 @@ export class CampaignMapModal {
       EventBus.get().emit('audio:click');
       this.hide();
       if (this.onClose) this.onClose();
+    });
+
+    document.getElementById('intel-btn-epic-prologue')?.addEventListener('click', () => {
+      EventBus.get().emit('audio:click');
+      this.hide();
+      if (this.onOpenPrologue) this.onOpenPrologue();
+    });
+
+    document.getElementById('intel-btn-epic-epilogue')?.addEventListener('click', () => {
+      EventBus.get().emit('audio:click');
+      this.hide();
+      if (this.onOpenEpilogue) this.onOpenEpilogue();
     });
 
     document.getElementById('intel-btn-interlude')?.addEventListener('click', () => {
@@ -378,6 +419,15 @@ export class CampaignMapModal {
 
     const statusEl = document.getElementById('intel-scenario-status')!;
     const deployBtn = document.getElementById('intel-btn-deploy') as HTMLButtonElement;
+    const prologueBtn = document.getElementById('intel-btn-epic-prologue') as HTMLButtonElement;
+    const epilogueBtn = document.getElementById('intel-btn-epic-epilogue') as HTMLButtonElement;
+
+    if (prologueBtn) {
+      prologueBtn.style.display = sc.id === 'scenario_01_horned_sails' ? 'block' : 'none';
+    }
+    if (epilogueBtn) {
+      epilogueBtn.style.display = (sc.id === 'scenario_10_the_iron_dawn' && isCompleted) ? 'block' : 'none';
+    }
 
     if (isCompleted) {
       statusEl.textContent = '✓ TERRITORY SECURED';
