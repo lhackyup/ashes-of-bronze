@@ -26,9 +26,12 @@
       "acropolis",
       "granary",
       "bronze_foundry",
+      "primitive_bloomery",
+      "peoples_armory",
       "barracks",
       "watchtower",
-      "signal_beacon"
+      "signal_beacon",
+      "iron_bastion"
     ],
     "unlockedUnits": [
       "donkey_caravan",
@@ -36,7 +39,11 @@
       "skirmisher",
       "highland_skirmisher",
       "composite_bowman",
-      "bronze_swordsman"
+      "bronze_swordsman",
+      "war_chariot",
+      "black_blade_warrior",
+      "iron_phalangite",
+      "iron_champion"
     ]
   },
   "opponents": [
@@ -87,6 +94,13 @@
         "isPrimary": true
       },
       {
+        "id": "build_bastion",
+        "type": "build_building",
+        "description": "Erect an Iron-Plated Ballista Bastion at the Citadel gorge defile.",
+        "targetId": "iron_bastion",
+        "isPrimary": true
+      },
+      {
         "id": "slay_warlord",
         "type": "destroy_entity",
         "description": "Slay the Supreme Fleet Warlord of the Sea Peoples coalition.",
@@ -104,11 +118,11 @@
     ],
     "secondary": [
       {
-        "id": "field_iron_legion",
+        "id": "train_iron_champions",
         "type": "train_units",
-        "description": "The Iron Vanguard: Field at least 15 active warriors armed in iron.",
-        "targetId": "spear_militia",
-        "targetAmount": 15,
+        "description": "The Iron Vanguard: Field at least 4 Iron Vanguard Champions.",
+        "targetId": "iron_champion",
+        "targetAmount": 4,
         "isPrimary": false
       }
     ]

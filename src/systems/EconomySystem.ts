@@ -79,6 +79,10 @@ export class EconomySystem {
           newMax.iron += 400;
           newMax.grain += 400;
           newMax.stone += 200;
+        } else if (b.defId === 'iron_bastion') {
+          // Iron-Plated Bastion: fortified arsenal storage
+          newMax.iron += 300;
+          newMax.stone += 300;
         }
       }
     }

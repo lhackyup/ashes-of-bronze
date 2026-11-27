@@ -135,6 +135,23 @@ export const UNITS: Record<string, UnitDef> = {
     damageType: 'pierce'
   },
 
+  iron_champion: {
+    id: 'iron_champion',
+    name: 'Iron Vanguard Champion',
+    category: 'infantry',
+    maxHp: 320,
+    speed: 1.05,
+    cost: { iron: 65, copper: 35, grain: 30 },
+    trainTime: 7.0,
+    description: 'The supreme warrior of the Iron Dawn. Clad in forged iron plate cuirass, greaves, and a crested helm, wielding an iron-spiked aspis and a razor-sharp tempered Naue II iron broadsword. Capable of shattering elite enemy lines and fighting the Sea Peoples Warlord head-on.',
+    supplyCost: 1,
+    attackRange: 1.3,
+    damage: 36,
+    attackCooldown: 1.0,
+    armor: 5,
+    damageType: 'slash'
+  },
+
   war_chariot: {
     id: 'war_chariot',
     name: 'Royal War Chariot (2 Horses)',

@@ -450,6 +450,9 @@ export class UnitFSM {
               if (u.defId === 'bronze_swordsman' && Math.random() < 0.28) {
                 dmg = Math.floor(dmg * 1.5);
                 isCrit = true;
+              } else if (u.defId === 'iron_champion' && Math.random() < 0.32) {
+                dmg = Math.floor(dmg * 1.5);
+                isCrit = true;
               }
 
               EventBus.get().emit('fx:floating_text', {

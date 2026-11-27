@@ -144,7 +144,9 @@ class GameApp {
     );
 
     // Setup map terrain depending on scenario biome
-    if (scenario.id === 'scenario_07_into_stone_gorges' || scenario.map.biome === 'taurus_mountains') {
+    if (scenario.id === 'scenario_10_the_iron_dawn') {
+      this.setupIronDawnMap(mapW, mapH);
+    } else if (scenario.id === 'scenario_07_into_stone_gorges' || scenario.map.biome === 'taurus_mountains') {
       this.setupStoneGorgesMap(mapW, mapH);
     } else if (scenario.id === 'scenario_06_war_of_rags' || scenario.map.biome === 'orontes_borderlands') {
       this.setupOrontesBorderlandsMap(mapW, mapH);
@@ -162,7 +164,108 @@ class GameApp {
 
     // Position starting buildings and units
     const pStart = scenario.player.startPosition;
-    if (scenario.id === 'scenario_09_the_peoples_phalanx') {
+    if (scenario.id === 'scenario_10_the_iron_dawn') {
+      // Scenario 10: The Iron Dawn - Stronghold of the New Age (64x64)
+      this.gridGraph.setFoundation(pStart.tx, pStart.ty, 4, 4, true);         // Acropolis Citadel
+      this.gridGraph.setFoundation(pStart.tx + 6, pStart.ty - 6, 3, 3, true); // Terrace ready for Iron Bastion
+      this.gridGraph.setFoundation(pStart.tx - 5, pStart.ty, 2, 2, true);     // Granary
+      this.gridGraph.setFoundation(pStart.tx, pStart.ty - 6, 3, 3, true);     // Barracks
+      this.gridGraph.setFoundation(pStart.tx + 6, pStart.ty + 4, 2, 2, true); // South Watchtower
+      this.gridGraph.setFoundation(pStart.tx - 5, pStart.ty - 4, 2, 2, true); // West Watchtower
+
+      // Core Citadel Stronghold
+      const citadel = this.spawnBuilding('acropolis', 'player', pStart.tx, pStart.ty, true);
+      if (citadel) {
+        citadel.customName = 'Iron Citadel of the New Age';
+        citadel.customDescription = 'The sovereign stronghold of the Levantine renaissance, where the iron secrets of the collapse are forged into the vanguard of a new civilization.';
+      }
+
+      this.spawnBuilding('granary', 'player', pStart.tx - 5, pStart.ty, true);
+      this.spawnBuilding('barracks', 'player', pStart.tx, pStart.ty - 6, true);
+
+      // Guard Watchtowers
+      this.spawnBuilding('watchtower', 'player', pStart.tx + 6, pStart.ty + 4, true);
+      this.spawnBuilding('watchtower', 'player', pStart.tx - 5, pStart.ty - 4, true);
+
+      // Cyclopean Rampart Walls creating chokepoint barriers at defiles
+      const wallCoords = [
+        { tx: pStart.tx + 5, ty: pStart.ty - 8 },
+        { tx: pStart.tx + 6, ty: pStart.ty - 8 },
+        { tx: pStart.tx + 7, ty: pStart.ty - 8 },
+        { tx: pStart.tx + 8, ty: pStart.ty - 1 },
+        { tx: pStart.tx + 8, ty: pStart.ty },
+        { tx: pStart.tx - 6, ty: pStart.ty - 1 },
+        { tx: pStart.tx - 6, ty: pStart.ty }
+      ];
+      for (const w of wallCoords) {
+        this.spawnBuilding('cyclopean_wall', 'player', w.tx, w.ty, true);
+      }
+
+      // Starting Defenders (Player constructs the Iron Bastion and trains Iron Champions during the battle!)
+      this.spawnUnit('donkey_caravan', 'player', (pStart.tx + 2) * TILE_SIZE + 24, (pStart.ty + 3) * TILE_SIZE + 24);
+      this.spawnUnit('donkey_caravan', 'player', (pStart.tx + 3) * TILE_SIZE + 24, (pStart.ty + 3) * TILE_SIZE + 24);
+      this.spawnUnit('spear_militia', 'player', (pStart.tx + 1) * TILE_SIZE + 24, (pStart.ty - 7) * TILE_SIZE + 24);
+      this.spawnUnit('spear_militia', 'player', (pStart.tx + 2) * TILE_SIZE + 24, (pStart.ty - 7) * TILE_SIZE + 24);
+      this.spawnUnit('spear_militia', 'player', (pStart.tx + 3) * TILE_SIZE + 24, (pStart.ty - 7) * TILE_SIZE + 24);
+      this.spawnUnit('spear_militia', 'player', (pStart.tx - 3) * TILE_SIZE + 24, (pStart.ty - 3) * TILE_SIZE + 24);
+      this.spawnUnit('composite_bowman', 'player', (pStart.tx + 5) * TILE_SIZE + 24, (pStart.ty - 4) * TILE_SIZE + 24);
+      this.spawnUnit('composite_bowman', 'player', (pStart.tx - 4) * TILE_SIZE + 24, (pStart.ty - 3) * TILE_SIZE + 24);
+      this.spawnUnit('skirmisher', 'player', (pStart.tx - 2) * TILE_SIZE + 24, (pStart.ty - 5) * TILE_SIZE + 24);
+      this.spawnUnit('skirmisher', 'player', (pStart.tx + 4) * TILE_SIZE + 24, (pStart.ty - 5) * TILE_SIZE + 24);
+      this.spawnUnit('bronze_swordsman', 'player', (pStart.tx + 1) * TILE_SIZE + 24, (pStart.ty - 2) * TILE_SIZE + 24);
+      this.spawnUnit('bronze_swordsman', 'player', (pStart.tx - 2) * TILE_SIZE + 24, (pStart.ty + 2) * TILE_SIZE + 24);
+
+      // Rich Iron Deposits inside Citadel bluffs (tx: 14..16, ty: 48..49) and northern bluffs (tx: 28..30, ty: 35..36)
+      for (let dy = 0; dy < 2; dy++) {
+        for (let dx = 0; dx < 3; dx++) {
+          this.tileRenderer.setTile(14 + dx, 48 + dy, 'vein_iron', 950);
+          this.gridGraph.setTileCost(14 + dx, 48 + dy, 0);
+          this.tileRenderer.setTile(28 + dx, 35 + dy, 'vein_iron', 950);
+          this.gridGraph.setTileCost(28 + dx, 35 + dy, 0);
+        }
+      }
+
+      // Limestone quarries for megalithic ramparts (tx: 18..20, ty: 52..53)
+      for (let dy = 0; dy < 2; dy++) {
+        for (let dx = 0; dx < 3; dx++) {
+          this.tileRenderer.setTile(18 + dx, 52 + dy, 'vein_stone', 900);
+          this.gridGraph.setTileCost(18 + dx, 52 + dy, 0);
+        }
+      }
+
+      // Copper veins for equipment alloy (tx: 24..26, ty: 48..49)
+      for (let dy = 0; dy < 2; dy++) {
+        for (let dx = 0; dx < 3; dx++) {
+          this.tileRenderer.setTile(24 + dx, 48 + dy, 'vein_copper', 800);
+          this.gridGraph.setTileCost(24 + dx, 48 + dy, 0);
+        }
+      }
+
+      // Two Hostile Supreme Sea Peoples Invasion Redoubts:
+      // Camp 1: Northern Estuary Beachhead (tx: 42, ty: 12)
+      const camp1Tx = 42;
+      const camp1Ty = 12;
+      this.gridGraph.setFoundation(camp1Tx, camp1Ty, 3, 3, true);
+      this.spawnBuilding('sea_camp', 'sea_peoples', camp1Tx, camp1Ty, true);
+      this.gridGraph.setFoundation(camp1Tx + 4, camp1Ty, 2, 2, true);
+      this.spawnBuilding('watchtower', 'sea_peoples', camp1Tx + 4, camp1Ty, true);
+      this.spawnUnit('skirmisher', 'sea_peoples', (camp1Tx + 1) * TILE_SIZE + 24, (camp1Ty + 4) * TILE_SIZE + 24);
+      this.spawnUnit('sea_raider', 'sea_peoples', (camp1Tx + 2) * TILE_SIZE + 24, (camp1Ty + 3) * TILE_SIZE + 24);
+      this.spawnUnit('sea_raider', 'sea_peoples', (camp1Tx - 1) * TILE_SIZE + 24, (camp1Ty + 2) * TILE_SIZE + 24);
+
+      // Camp 2: Eastern Defile Bastion (tx: 52, ty: 36)
+      const camp2Tx = 52;
+      const camp2Ty = 36;
+      this.gridGraph.setFoundation(camp2Tx, camp2Ty, 3, 3, true);
+      this.spawnBuilding('sea_camp', 'sea_peoples', camp2Tx, camp2Ty, true);
+      this.gridGraph.setFoundation(camp2Tx, camp2Ty + 4, 3, 3, true);
+      this.spawnBuilding('barracks', 'sea_peoples', camp2Tx, camp2Ty + 4, true);
+      this.gridGraph.setFoundation(camp2Tx + 4, camp2Ty, 2, 2, true);
+      this.spawnBuilding('watchtower', 'sea_peoples', camp2Tx + 4, camp2Ty, true);
+      this.spawnUnit('spear_militia', 'sea_peoples', (camp2Tx + 1) * TILE_SIZE + 24, (camp2Ty + 2) * TILE_SIZE + 24);
+      this.spawnUnit('bronze_swordsman', 'sea_peoples', (camp2Tx + 2) * TILE_SIZE + 24, (camp2Ty + 3) * TILE_SIZE + 24);
+      this.spawnUnit('sea_raider', 'sea_peoples', (camp2Tx - 1) * TILE_SIZE + 24, (camp2Ty + 1) * TILE_SIZE + 24);
+    } else if (scenario.id === 'scenario_09_the_peoples_phalanx') {
       // Scenario 9: The People's Phalanx - Orontes Agricultural Floodplains (64x64)
       this.gridGraph.setFoundation(pStart.tx, pStart.ty, 4, 4, true);         // Acropolis Enclave
       this.gridGraph.setFoundation(pStart.tx + 5, pStart.ty - 2, 3, 3, true); // Terrace ready for People's Armory
@@ -1259,6 +1362,106 @@ class GameApp {
       const tile = this.tileRenderer.getTile(tx, ty);
       if ((tile === 'plain' || tile === 'fertile_soil') && distPlayer > 7) {
         this.decorations.push({ x: tx + 0.5, y: ty + 0.5, type: 'cedar', current: 240, max: 240 });
+      }
+    }
+  }
+
+  private setupIronDawnMap(w: number, h: number): void {
+    // 1. Topography: Western Mediterranean Sea Coast, Northern Estuary, Elevated Citadel Plateau, and Eastern Gorges
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const isWater = x < 8 || (y < 6 && x < 24);
+        const isBeach = (x >= 8 && x <= 12 && y >= 6) || (y >= 6 && y <= 9 && x < 24);
+
+        // Sea cliffs buffering the shore from the high interior, with defended breach paths
+        const isBeachBreach = (y >= 14 && y <= 18) || (y >= 46 && y <= 50);
+        const isSeaCliff = (x >= 13 && x <= 16 && y >= 6) && !isBeachBreach;
+
+        // Southern precipice border
+        const isSouthCliff = y >= h - 4;
+
+        // Northern mountains bordering the landing estuary
+        const isNorthGorge = (x >= 38 && x <= 46) && y <= 14;
+        const isNorthCliff = y < 5 && !isNorthGorge;
+
+        // Eastern mountain ridges bordering the invasion pass
+        const isEastPass = (y >= 32 && y <= 40) && x >= w - 14;
+        const isEastCliff = x >= w - 6 && !isEastPass;
+
+        // Citadel defile barriers (craggy limestone bluffs framing the southwest player plateau)
+        const isCitadelCliff = (x >= 30 && x <= 33 && y >= 44 && y <= 52) ||
+                               (x >= 18 && x <= 22 && y >= 32 && y <= 35);
+
+        if (isWater) {
+          this.tileRenderer.setTile(x, y, 'water');
+          this.gridGraph.setTileCost(x, y, 0);
+        } else if (isSeaCliff || isSouthCliff || isNorthCliff || isEastCliff || isCitadelCliff) {
+          this.tileRenderer.setTile(x, y, 'cliff');
+          this.gridGraph.setTileCost(x, y, 0);
+        } else if (isBeach) {
+          this.tileRenderer.setTile(x, y, 'sand');
+          this.gridGraph.setTileCost(x, y, 10);
+        } else if (x >= 16 && x <= 28 && y >= 38 && y <= 48) {
+          // Inner paved sanctuary of the Iron Citadel
+          this.tileRenderer.setTile(x, y, 'fertile_soil');
+          this.gridGraph.setTileCost(x, y, 10);
+        } else {
+          this.tileRenderer.setTile(x, y, 'plain');
+          this.gridGraph.setTileCost(x, y, 10);
+        }
+      }
+    }
+
+    // 2. Resource Deposits
+    // Iron Veins in the Citadel bluff (tx: 14..16, ty: 48..49) and northern bluffs (tx: 28..30, ty: 35..36)
+    for (let dy = 0; dy < 2; dy++) {
+      for (let dx = 0; dx < 3; dx++) {
+        this.tileRenderer.setTile(14 + dx, 48 + dy, 'vein_iron', 950);
+        this.gridGraph.setTileCost(14 + dx, 48 + dy, 0);
+        this.tileRenderer.setTile(28 + dx, 35 + dy, 'vein_iron', 950);
+        this.gridGraph.setTileCost(28 + dx, 35 + dy, 0);
+      }
+    }
+
+    // Cyclopean Limestone Quarry (tx: 18..20, ty: 52..53)
+    for (let dy = 0; dy < 2; dy++) {
+      for (let dx = 0; dx < 3; dx++) {
+        this.tileRenderer.setTile(18 + dx, 52 + dy, 'vein_stone', 900);
+        this.gridGraph.setTileCost(18 + dx, 52 + dy, 0);
+      }
+    }
+
+    // Copper Veins (tx: 24..26, ty: 48..49)
+    for (let dy = 0; dy < 2; dy++) {
+      for (let dx = 0; dx < 3; dx++) {
+        this.tileRenderer.setTile(24 + dx, 48 + dy, 'vein_copper', 800);
+        this.gridGraph.setTileCost(24 + dx, 48 + dy, 0);
+      }
+    }
+
+    // 3. Scatter Cedars and Megalithic Limestone Boulders
+    this.decorations = [];
+    for (let i = 0; i < 65; i++) {
+      const tx = Math.floor((Math.sin(i * 19.7) * 0.5 + 0.5) * (w - 12)) + 6;
+      const ty = Math.floor((Math.cos(i * 27.3) * 0.5 + 0.5) * (h - 12)) + 6;
+      const distPlayer = Math.hypot(tx - 20, ty - 42);
+      const tile = this.tileRenderer.getTile(tx, ty);
+      if ((tile === 'plain' || tile === 'fertile_soil') && distPlayer > 6) {
+        this.decorations.push({ x: tx + 0.5, y: ty + 0.5, type: 'cedar', current: 250, max: 250 });
+      }
+    }
+
+    // Natural 2.5D limestone boulders along mountain approaches
+    const boulderCoords = [
+      { tx: 29, ty: 34 }, { tx: 31, ty: 35 }, { tx: 33, ty: 36 },
+      { tx: 35, ty: 41 }, { tx: 36, ty: 45 }, { tx: 37, ty: 47 },
+      { tx: 47, ty: 14 }, { tx: 49, ty: 16 }, { tx: 50, ty: 33 },
+      { tx: 55, ty: 39 }, { tx: 56, ty: 41 }, { tx: 27, ty: 50 },
+      { tx: 29, ty: 52 }, { tx: 17, ty: 35 }, { tx: 19, ty: 33 }
+    ];
+    for (const b of boulderCoords) {
+      if (b.tx < w && b.ty < h && this.tileRenderer.getTile(b.tx, b.ty) === 'plain') {
+        this.decorations.push({ x: b.tx + 0.5, y: b.ty + 0.5, type: 'boulder', current: 0, max: 0 });
       }
     }
   }
@@ -2473,7 +2676,7 @@ class GameApp {
         targetFriendlyBuilding &&
         u.def.category === 'worker' &&
         (u.currentCargoAmount > 0 || u.state === 'WAITING_STORAGE') &&
-        (targetFriendlyBuilding.defId === 'acropolis' || targetFriendlyBuilding.defId === 'granary' || targetFriendlyBuilding.defId === 'bronze_foundry' || targetFriendlyBuilding.defId === 'iron_smelter' || targetFriendlyBuilding.defId === 'primitive_bloomery' || targetFriendlyBuilding.defId === 'peoples_armory')
+        (targetFriendlyBuilding.defId === 'acropolis' || targetFriendlyBuilding.defId === 'granary' || targetFriendlyBuilding.defId === 'bronze_foundry' || targetFriendlyBuilding.defId === 'iron_smelter' || targetFriendlyBuilding.defId === 'primitive_bloomery' || targetFriendlyBuilding.defId === 'peoples_armory' || targetFriendlyBuilding.defId === 'iron_bastion')
       ) {
         // Player directed donkey caravan to unload at a Granary, Megaron, or Foundry!
         const harvestTarget = u.targetMineCoord || u.lastHarvestCoord;
@@ -3110,7 +3313,37 @@ class GameApp {
       const pitch = (progress - 0.5) * 0.6;
       ctx.rotate(baseAngle + pitch);
 
-      if (p.kind === 'sling_stone') {
+      if (p.kind === 'ballista_bolt') {
+        // Heavy Siege Ballista Bolt: thick blackened cedar shaft, triangular forged iron barb, split leather vanes
+        ctx.strokeStyle = '#292524';
+        ctx.lineWidth = 3.0;
+        ctx.beginPath();
+        ctx.moveTo(-12, 0);
+        ctx.lineTo(10, 0);
+        ctx.stroke();
+
+        // Forged Iron Barb
+        ctx.fillStyle = '#0f172a';
+        ctx.beginPath();
+        ctx.moveTo(18, 0);
+        ctx.lineTo(8, -5);
+        ctx.lineTo(10, 0);
+        ctx.lineTo(8, 5);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#cbd5e1';
+        ctx.fillRect(9, -0.75, 7, 1.5);
+
+        // Stabilizer vanes
+        ctx.fillStyle = '#78350f';
+        ctx.beginPath();
+        ctx.moveTo(-12, 0);
+        ctx.lineTo(-16, -3.5);
+        ctx.lineTo(-14, 0);
+        ctx.lineTo(-16, 3.5);
+        ctx.closePath();
+        ctx.fill();
+      } else if (p.kind === 'sling_stone') {
         // High-velocity river pebble with dust vapor trail
         ctx.fillStyle = 'rgba(148, 163, 184, 0.45)';
         ctx.beginPath();
@@ -3337,7 +3570,7 @@ class GameApp {
       // Warm fire and hearth glows around Acropolis, Foundries, and War Camps
       ctx.globalCompositeOperation = 'screen';
       for (const b of this.buildings) {
-        if (b.hp > 0 && (b.defId === 'acropolis' || b.defId === 'bronze_foundry' || b.defId === 'sea_camp' || b.defId === 'watchtower')) {
+        if (b.hp > 0 && (b.defId === 'acropolis' || b.defId === 'bronze_foundry' || b.defId === 'sea_camp' || b.defId === 'watchtower' || b.defId === 'iron_bastion')) {
           const grad = ctx.createRadialGradient(b.centerX, b.centerY, 10, b.centerX, b.centerY, 130);
           grad.addColorStop(0, 'rgba(255, 140, 40, 0.32)');
           grad.addColorStop(1, 'rgba(0, 0, 0, 0)');

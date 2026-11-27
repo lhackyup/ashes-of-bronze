@@ -2683,6 +2683,221 @@ export class SVGAProceduralBank {
       }));
     }
 
+    // --- 9. Iron-Plated Ballista Bastion (3x3 tiles = 144x144) ---
+    // Massive cyclopean polygonal stone redoubt fortified with bolted wrought iron bands,
+    // narrow arrow/bolt embrasures, flared machicolations with spiked iron crenellations,
+    // a heavy torsion siege ballista with loaded forged iron bolt, and blazing iron brazier.
+    for (const owner of ['player', 'sea_peoples', 'neutral']) {
+      const isPlayer = owner === 'player';
+      const cMain = isPlayer ? '#b91c1c' : '#1d4ed8';
+      const cTrim = isPlayer ? '#fbbf24' : '#93c5fd';
+
+      this.buildingSprites.set(`iron_bastion_${owner}`, this.makeBuildingSprite(144, (ctx) => {
+        // 1. Volumetric ground shadow
+        const groundG = ctx.createRadialGradient(72, 108, 20, 72, 108, 68);
+        groundG.addColorStop(0, 'rgba(0, 0, 0, 0.75)');
+        groundG.addColorStop(0.65, 'rgba(0, 0, 0, 0.45)');
+        groundG.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = groundG;
+        ctx.beginPath();
+        ctx.ellipse(72, 108, 68, 28, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 2. Polygonal Cyclopean Megalithic Foundation (Lower Rampart Podium)
+        ctx.fillStyle = '#44403c';
+        ctx.fillRect(20, 56, 104, 62);
+
+        // Stone blocks shading & bevels
+        const megaliths = [
+          { x: 22, y: 58, w: 32, h: 18, c: '#78716c' },
+          { x: 56, y: 58, w: 36, h: 18, c: '#6d655f' },
+          { x: 94, y: 58, w: 28, h: 18, c: '#78716c' },
+          { x: 20, y: 78, w: 40, h: 20, c: '#635b55' },
+          { x: 62, y: 78, w: 34, h: 20, c: '#78716c' },
+          { x: 98, y: 78, w: 26, h: 20, c: '#57534e' },
+          { x: 22, y: 100, w: 30, h: 18, c: '#524b45' },
+          { x: 54, y: 100, w: 42, h: 18, c: '#635b55' },
+          { x: 98, y: 100, w: 24, h: 18, c: '#524b45' },
+        ];
+        for (const m of megaliths) {
+          ctx.fillStyle = m.c;
+          ctx.fillRect(m.x, m.y, m.w, m.h);
+          ctx.strokeStyle = '#292524';
+          ctx.lineWidth = 1.5;
+          ctx.strokeRect(m.x, m.y, m.w, m.h);
+          ctx.fillStyle = '#a8a29e';
+          ctx.fillRect(m.x + 1, m.y + 1, m.w - 2, 1.5);
+        }
+
+        // 3. Heavy Bolted Wrought Iron Armor Plates & Bracing Straps
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(18, 74, 108, 5);
+        ctx.fillRect(18, 96, 108, 5);
+        ctx.fillRect(18, 54, 7, 64);
+        ctx.fillRect(119, 54, 7, 64);
+        ctx.fillRect(70, 54, 5, 64);
+
+        // Iron Plate Rivets
+        ctx.fillStyle = '#94a3b8';
+        for (let y = 57; y <= 115; y += 10) {
+          ctx.fillRect(20, y, 2.5, 2.5);
+          ctx.fillRect(121, y, 2.5, 2.5);
+          ctx.fillRect(71.5, y, 2.5, 2.5);
+        }
+        for (let x = 30; x <= 110; x += 14) {
+          ctx.fillRect(x, 75.5, 2, 2);
+          ctx.fillRect(x, 97.5, 2, 2);
+        }
+
+        // 4. Narrow Iron-Framed Murder Embrasures
+        const embrasures = [{ x: 42, y: 64 }, { x: 98, y: 64 }, { x: 71, y: 84 }];
+        for (const em of embrasures) {
+          ctx.fillStyle = '#09090b';
+          ctx.fillRect(em.x, em.y, 4, 14);
+          ctx.strokeStyle = '#334155';
+          ctx.lineWidth = 1.5;
+          ctx.strokeRect(em.x - 1, em.y - 1, 6, 16);
+        }
+
+        // 5. Flared Stone Machicolations & Battlements
+        for (let bx = 22; bx <= 118; bx += 14) {
+          ctx.fillStyle = '#292524';
+          ctx.beginPath();
+          ctx.moveTo(bx, 54);
+          ctx.lineTo(bx + 10, 54);
+          ctx.lineTo(bx + 7, 44);
+          ctx.lineTo(bx + 3, 44);
+          ctx.closePath();
+          ctx.fill();
+        }
+
+        ctx.fillStyle = '#57534e';
+        ctx.fillRect(20, 38, 104, 8);
+        ctx.fillStyle = '#78716c';
+        ctx.fillRect(20, 38, 104, 2);
+
+        // Crenellated Battlements with Iron Spikes
+        for (let cx = 18; cx <= 120; cx += 16) {
+          ctx.fillStyle = '#78716c';
+          ctx.fillRect(cx, 26, 10, 14);
+          ctx.strokeStyle = '#292524';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(cx, 26, 10, 14);
+          // Sharpened iron spike
+          ctx.fillStyle = '#1e293b';
+          ctx.beginPath();
+          ctx.moveTo(cx + 2, 26);
+          ctx.lineTo(cx + 5, 17);
+          ctx.lineTo(cx + 8, 26);
+          ctx.closePath();
+          ctx.fill();
+          ctx.fillStyle = '#94a3b8';
+          ctx.fillRect(cx + 4.5, 18, 1, 8);
+        }
+
+        // 6. Heavy Torsion Siege Ballista on Turntable Chassis
+        ctx.fillStyle = '#292524';
+        ctx.beginPath();
+        ctx.ellipse(72, 38, 24, 9, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#78350f';
+        ctx.beginPath();
+        ctx.ellipse(72, 37, 22, 8, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Guide Stock
+        ctx.fillStyle = '#451a03';
+        ctx.fillRect(69, 14, 6, 28);
+        ctx.fillStyle = '#92400e';
+        ctx.fillRect(70, 14, 4, 28);
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(71.5, 12, 1, 28);
+
+        // Twin Torsion Spring Skeins
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(52, 22, 7, 10);
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(53, 23, 5, 8);
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(85, 22, 7, 10);
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(86, 23, 5, 8);
+
+        // Forged Iron Bow Arms
+        ctx.strokeStyle = '#0f172a';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(56, 27);
+        ctx.quadraticCurveTo(40, 22, 32, 32);
+        ctx.moveTo(88, 27);
+        ctx.quadraticCurveTo(104, 22, 112, 32);
+        ctx.stroke();
+
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(55, 26);
+        ctx.quadraticCurveTo(41, 21, 33, 31);
+        ctx.moveTo(89, 26);
+        ctx.quadraticCurveTo(103, 21, 111, 31);
+        ctx.stroke();
+
+        // Tense Bowstring
+        ctx.strokeStyle = '#fef08a';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(32, 32);
+        ctx.lineTo(72, 36);
+        ctx.lineTo(112, 32);
+        ctx.stroke();
+
+        // Loaded Iron-Tipped Ballista Bolt
+        ctx.strokeStyle = '#292524';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(72, 36);
+        ctx.lineTo(72, 10);
+        ctx.stroke();
+        ctx.fillStyle = '#0f172a';
+        ctx.beginPath();
+        ctx.moveTo(72, 4);
+        ctx.lineTo(68, 12);
+        ctx.lineTo(76, 12);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#cbd5e1';
+        ctx.fillRect(71.5, 5, 1, 7);
+
+        // 7. Blazing Iron Brazier
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(28, 24, 3, 14);
+        ctx.beginPath();
+        ctx.ellipse(29, 24, 6, 3, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ea580c';
+        ctx.beginPath();
+        ctx.arc(29, 21, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#fef08a';
+        ctx.beginPath();
+        ctx.arc(29, 20, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 8. Faction Standard
+        ctx.fillStyle = '#3b2210';
+        ctx.fillRect(114, 4, 3, 24);
+        ctx.fillStyle = cMain;
+        ctx.beginPath();
+        ctx.moveTo(117, 6);
+        ctx.lineTo(138, 12);
+        ctx.lineTo(117, 18);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = cTrim;
+        ctx.fillRect(117, 6, 3, 12);
+      }));
+    }
+
     // 8. Natural Wildlife Lair: Lion's Rocky Den (2x2 tiles = 96x96)
     // Authentic 2.5D Bronze Age SVGA limestone/sandstone mountain crag with cave maw,
     // hanging rock teeth, predatory glowing amber eyes, claw gouges, bleached bones, and scrub.
@@ -4428,6 +4643,135 @@ export class SVGAProceduralBank {
       ctx.beginPath();
       ctx.moveTo(-2, -22); ctx.lineTo(0.5, -28); ctx.lineTo(2.5, -22);
       ctx.fill();
+      ctx.restore();
+
+    } else if (u.defId === 'iron_champion') {
+      // --- IRON VANGUARD CHAMPION (Anatomical iron plate cuirass, crested helm, spiked aspis, Naue II broadsword) ---
+      const isAttacking = u.state === 'ATTACK_TARGET' && u.attackCooldown > 0;
+      const swingRatio = isAttacking ? (u.attackCooldown / (u.def.attackCooldown || 1.0)) : 0;
+      const slashAngle = isAttacking ? Math.sin(swingRatio * Math.PI) * 1.5 : 0;
+      const swordLunge = isAttacking ? Math.sin(swingRatio * Math.PI) * 8 : 0;
+
+      // Heavy Polished Iron Greaves
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(-6, 5, 4, 9 + bob);
+      ctx.fillRect(2, 5, 4, 9 - bob);
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillRect(-5, 6, 1.5, 7 + bob);
+      ctx.fillRect(3, 6, 1.5, 7 - bob);
+
+      // Crimson & Leather Pteryges (War skirt)
+      ctx.fillStyle = '#991b1b';
+      ctx.fillRect(-7, -2 + bob * 0.5, 14, 8);
+      ctx.fillStyle = '#451a03';
+      for (let i = 0; i < 4; i++) {
+        ctx.fillRect(-6 + i * 3.2, 0 + bob * 0.5, 2.2, 6);
+        ctx.fillStyle = '#cbd5e1';
+        ctx.fillRect(-5.5 + i * 3.2, 4 + bob * 0.5, 1.2, 1.2);
+        ctx.fillStyle = '#451a03';
+      }
+
+      // Anatomical Iron Plate Muscle Cuirass
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(-7, -10 + bob * 0.5, 14, 11);
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(-6, -9 + bob * 0.5, 5.5, 4.5);
+      ctx.fillRect(0.5, -9 + bob * 0.5, 5.5, 4.5);
+      ctx.fillRect(-4, -4 + bob * 0.5, 8, 4);
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillRect(-5, -8 + bob * 0.5, 2, 1.5);
+      ctx.fillRect(3, -8 + bob * 0.5, 2, 1.5);
+      ctx.fillRect(-2, -3 + bob * 0.5, 4, 1);
+
+      // Curved Iron Pauldrons
+      ctx.fillStyle = '#475569';
+      ctx.beginPath();
+      ctx.arc(-8, -9 + bob * 0.5, 3.5, 0, Math.PI * 2);
+      ctx.arc(8, -9 + bob * 0.5, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Crested Helmet with Cheekplates
+      ctx.fillStyle = '#334155';
+      ctx.beginPath();
+      ctx.arc(0, -14 + bob * 0.5, 5.5, Math.PI, 0);
+      ctx.lineTo(5, -10 + bob * 0.5);
+      ctx.lineTo(-5, -10 + bob * 0.5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#020617';
+      ctx.fillRect(-3, -13 + bob * 0.5, 6, 3);
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillRect(-2, -12.5 + bob * 0.5, 1.2, 1);
+      ctx.fillRect(1, -12.5 + bob * 0.5, 1.2, 1);
+
+      // High Crest Mount & Flowing Horsehair Plume in Faction Color
+      ctx.fillStyle = '#e2e8f0';
+      ctx.fillRect(-1, -19 + bob * 0.5, 2, 6);
+      ctx.fillStyle = cMain;
+      ctx.beginPath();
+      ctx.moveTo(-1, -22 + bob * 0.5);
+      ctx.quadraticCurveTo(8, -25 + bob * 0.5, 12, -17 + bob * 0.5);
+      ctx.quadraticCurveTo(6, -18 + bob * 0.5, 1, -17 + bob * 0.5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = cTrim;
+      ctx.fillRect(0, -21 + bob * 0.5, 3, 2);
+
+      // Off-hand: Heavy Spiked Iron Aspis Shield
+      ctx.save();
+      ctx.translate(-9, -2 + bob * 0.5);
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.arc(0, 0, 7.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#64748b';
+      ctx.lineWidth = 1.8;
+      ctx.stroke();
+      ctx.fillStyle = '#94a3b8';
+      for (let a = 0; a < Math.PI * 2; a += Math.PI / 2) {
+        ctx.beginPath();
+        ctx.arc(Math.cos(a) * 4.5, Math.sin(a) * 4.5, 1, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.fillStyle = '#f8fafc';
+      ctx.beginPath();
+      ctx.arc(0, 0, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(-0.5, -0.5, 1, 1);
+      ctx.restore();
+
+      // Main hand: Naue II Tempered Iron Broadsword
+      ctx.save();
+      ctx.translate(6 + swordLunge, -4 + bob * 0.5);
+      ctx.rotate(0.3 - slashAngle);
+
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(-3, 0, 6, 2);
+      ctx.fillRect(-1, 2, 2, 4);
+      ctx.beginPath(); ctx.arc(0, 7, 1.8, 0, Math.PI * 2); ctx.fill();
+
+      ctx.fillStyle = '#475569';
+      ctx.fillRect(-1.2, -19, 2.4, 19);
+      ctx.fillStyle = '#cbd5e1';
+      ctx.beginPath();
+      ctx.moveTo(0, -23);
+      ctx.lineTo(-2.8, -17);
+      ctx.lineTo(-2, -2);
+      ctx.lineTo(2, -2);
+      ctx.lineTo(2.8, -17);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(-0.4, -21, 0.8, 17);
+
+      if (isAttacking) {
+        ctx.strokeStyle = 'rgba(248, 250, 252, 0.55)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(0, 0, 24, -Math.PI * 0.6, 0);
+        ctx.stroke();
+      }
       ctx.restore();
 
     } else if (u.defId === 'iron_infantry') {

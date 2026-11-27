@@ -12,7 +12,7 @@ export interface Projectile {
   targetIsBuilding: boolean;
   damage: number;
   speed: number;
-  kind: 'arrow' | 'sling_stone' | 'javelin';
+  kind: 'arrow' | 'sling_stone' | 'javelin' | 'ballista_bolt';
   totalDist: number;
   traveled: number;
 }
@@ -47,12 +47,19 @@ export class CombatSystem {
         }
 
         if (nearest) {
-          // Salva freccia scoccata dai merli della torre ciclopea (elevata di 28px)
-          const targetDist = Math.hypot(nearest.x - b.centerX, nearest.y - (b.centerY - 28));
-          this.fireProjectile(b.centerX, b.centerY - 28, nearest.id, false, b.def.damage, 'arrow', targetDist);
+          const isBastion = b.defId === 'iron_bastion';
+          const elev = isBastion ? 42 : 28;
+          const pKind: 'arrow' | 'ballista_bolt' = isBastion ? 'ballista_bolt' : 'arrow';
+          const targetDist = Math.hypot(nearest.x - b.centerX, nearest.y - (b.centerY - elev));
+          this.fireProjectile(b.centerX, b.centerY - elev, nearest.id, false, b.def.damage, pKind, targetDist);
           b.attackCooldown = 1 / (b.def.attackRate || 1);
-          EventBus.get().emit('audio:arrow');
-          EventBus.get().emit('fx:combat_hit', { x: b.centerX, y: b.centerY - 32, color: '#fef08a' });
+          if (isBastion) {
+            EventBus.get().emit('audio:combat_hit');
+            EventBus.get().emit('fx:combat_hit', { x: b.centerX, y: b.centerY - 46, color: '#f97316' });
+          } else {
+            EventBus.get().emit('audio:arrow');
+            EventBus.get().emit('fx:combat_hit', { x: b.centerX, y: b.centerY - 32, color: '#fef08a' });
+          }
         }
       }
     }
@@ -178,10 +185,10 @@ export class CombatSystem {
     targetId: number,
     targetIsBuilding: boolean,
     damage: number,
-    kind: 'arrow' | 'sling_stone' | 'javelin',
+    kind: 'arrow' | 'sling_stone' | 'javelin' | 'ballista_bolt',
     initialDist: number = 200
   ): void {
-    const speed = kind === 'arrow' ? 420 : 360;
+    const speed = kind === 'ballista_bolt' ? 520 : (kind === 'arrow' ? 420 : 360);
     this.projectiles.push({
       x: sx,
       y: sy,

@@ -302,6 +302,22 @@ export class ObjectiveManager {
         } else {
           allPrimariesDone = false;
         }
+      } else if (obj.id === 'build_bastion' || (obj.type === 'build_building' && obj.targetId === 'iron_bastion')) {
+        const bastions = buildings.filter(b => b.owner === 'player' && b.defId === 'iron_bastion' && b.buildProgress >= 1.0);
+        obj.currentAmount = bastions.length;
+        if (bastions.length >= (obj.targetAmount || 1)) {
+          this.completeObjective(obj);
+        } else {
+          allPrimariesDone = false;
+        }
+      } else if (obj.id === 'train_iron_champions' || (obj.type === 'train_units' && obj.targetId === 'iron_champion')) {
+        const champions = units.filter(u => u.owner === 'player' && u.defId === 'iron_champion');
+        obj.currentAmount = champions.length;
+        if (champions.length >= (obj.targetAmount || 4)) {
+          this.completeObjective(obj);
+        } else if (obj.isPrimary) {
+          allPrimariesDone = false;
+        }
       } else if (obj.id === 'train_phalangites' || obj.id === 'form_iron_phalanx' || (obj.type === 'train_units' && obj.targetId === 'iron_phalangite')) {
         const phalangites = units.filter(u => u.owner === 'player' && u.defId === 'iron_phalangite');
         obj.currentAmount = phalangites.length;

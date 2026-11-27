@@ -113,7 +113,26 @@ export const BUILDINGS: Record<string, BuildingDef> = {
     foundationPenaltyHpRatio: 0.5,
     storageProvided: 400,
     dropsOffResources: ['iron', 'grain', 'stone', 'copper'],
-    producesUnits: ['iron_phalangite', 'spear_militia']
+    producesUnits: ['iron_phalangite', 'iron_champion', 'spear_militia']
+  },
+
+  iron_bastion: {
+    id: 'iron_bastion',
+    name: 'Iron-Plated Ballista Bastion',
+    category: 'defense',
+    width: 3,
+    height: 3,
+    maxHp: 2200,
+    cost: { stone: 260, iron: 120, timber: 120, copper: 60 },
+    buildTime: 20,
+    description: 'A monumental 3x3 cyclopean fortress bastion reinforced with forged iron armor plates. Mounts a heavy torsion siege ballista that fires devastating iron-tipped bolts across extreme distances, and trains elite Iron Vanguard Champions.',
+    requiresFoundation: true,
+    foundationPenaltyHpRatio: 0.5,
+    radarRange: 22,
+    attackRange: 6.5,
+    damage: 48,
+    attackRate: 0.8,
+    producesUnits: ['iron_champion', 'composite_bowman']
   },
 
   barracks: {
@@ -128,7 +147,7 @@ export const BUILDINGS: Record<string, BuildingDef> = {
     description: 'Trains tower-shield spearmen, Levantine slingers, Highland skirmishers, Cypriot composite bowmen, Black Blade warriors, Iron Phalangites, and assault infantry.',
     requiresFoundation: true,
     foundationPenaltyHpRatio: 0.5,
-    producesUnits: ['spear_militia', 'skirmisher', 'highland_skirmisher', 'composite_bowman', 'bronze_swordsman', 'black_blade_warrior', 'iron_phalangite', 'iron_infantry']
+    producesUnits: ['spear_militia', 'skirmisher', 'highland_skirmisher', 'composite_bowman', 'bronze_swordsman', 'black_blade_warrior', 'iron_phalangite', 'iron_champion', 'iron_infantry']
   },
 
   watchtower: {
