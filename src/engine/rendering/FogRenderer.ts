@@ -53,6 +53,11 @@ export class FogRenderer {
     }
   }
 
+  public revealAll(visible: boolean = true): void {
+    const val = visible ? FOG_VISIBLE : FOG_EXPLORED;
+    this.fogState.fill(val);
+  }
+
   // Dune II Crisp Tile-Based Fog Rendering
   public render(ctx: CanvasRenderingContext2D, camera: Camera2D): void {
     const startTileX = Math.max(0, Math.floor(camera.x / TILE_SIZE));

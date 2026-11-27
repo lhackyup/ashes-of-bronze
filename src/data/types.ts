@@ -68,6 +68,7 @@ export interface BuildingDef {
   producesUnits?: string[];
   dropsOffResources?: ResourceType[];
   radarRange?: number;
+  revealsEntireMap?: boolean;
   attackRange?: number;
   damage?: number;
   attackRate?: number; // hits per sec
@@ -146,7 +147,7 @@ export interface ScenarioData {
   map: {
     width: number;
     height: number;
-    biome: 'levantine_coast' | 'shallows_of_ugarit' | 'river_valley' | 'taurus_mountains' | 'cyclopean_ruins' | 'lebanon_cedar_pass' | 'kadesh_night_siege';
+    biome: 'levantine_coast' | 'shallows_of_ugarit' | 'river_valley' | 'taurus_mountains' | 'cyclopean_ruins' | 'lebanon_cedar_pass' | 'kadesh_night_siege' | 'orontes_borderlands';
     seed?: number;
     tiles?: number[];
   };

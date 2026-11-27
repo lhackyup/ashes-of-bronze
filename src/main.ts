@@ -26,6 +26,7 @@ import { TitleScreen } from './ui/TitleScreen.ts';
 import { CampaignMapModal } from './ui/CampaignMapModal.ts';
 import { ChronicleModal } from './ui/ChronicleModal.ts';
 import { SettingsModal } from './ui/SettingsModal.ts';
+import { NarrativeInterludeModal } from './ui/NarrativeInterludeModal.ts';
 import { SaveManager } from './services/SaveManager.ts';
 
 class GameApp {
@@ -48,6 +49,7 @@ class GameApp {
   private campaignMapModal!: CampaignMapModal;
   private chronicleModal!: ChronicleModal;
   private settingsModal!: SettingsModal;
+  private narrativeInterludeModal!: NarrativeInterludeModal;
   private objectiveManager!: ObjectiveManager;
   private councilModal!: CouncilModal;
   private debriefingModal!: DebriefingModal;
@@ -96,6 +98,8 @@ class GameApp {
   private selectedBuilding: BuildingEntity | null = null;
   private selectedVein: { name: string; type: string; current: number; max: number; tx: number; ty: number } | null = null;
   private buildingToPlace: string | null = null;
+  private activeUnitCommand: 'move' | 'stop' | 'attack' | 'harvest' = 'move';
+  private isCommandManuallyArmed = false;
 
   private isDraggingBox = false;
   private dragStart = { x: 0, y: 0 };
@@ -140,7 +144,13 @@ class GameApp {
     );
 
     // Setup map terrain depending on scenario biome
-    if (scenario.id === 'scenario_04_siege_kadesh_sea' || scenario.map.biome === 'kadesh_night_siege') {
+    if (scenario.id === 'scenario_07_into_stone_gorges' || scenario.map.biome === 'taurus_mountains') {
+      this.setupStoneGorgesMap(mapW, mapH);
+    } else if (scenario.id === 'scenario_06_war_of_rags' || scenario.map.biome === 'orontes_borderlands') {
+      this.setupOrontesBorderlandsMap(mapW, mapH);
+    } else if (scenario.id === 'scenario_05_silence_great_kings' || scenario.map.biome === 'cyclopean_ruins') {
+      this.setupUgaritRuinsMap(mapW, mapH);
+    } else if (scenario.id === 'scenario_04_siege_kadesh_sea' || scenario.map.biome === 'kadesh_night_siege') {
       this.setupNightSiegeMap(mapW, mapH);
     } else if (scenario.id === 'scenario_03_gate_of_cedars' || scenario.map.biome === 'lebanon_cedar_pass') {
       this.setupCedarPassMap(mapW, mapH);
@@ -152,7 +162,232 @@ class GameApp {
 
     // Position starting buildings and units
     const pStart = scenario.player.startPosition;
-    if (scenario.id === 'scenario_04_siege_kadesh_sea') {
+    if (scenario.id === 'scenario_07_into_stone_gorges') {
+      // Scenario 7: Into the Stone Gorges - Taurus Mountains Expedition (64x64)
+      this.gridGraph.setFoundation(pStart.tx, pStart.ty, 4, 4, true);
+      this.gridGraph.setFoundation(pStart.tx + 5, pStart.ty - 2, 3, 3, true);
+      this.gridGraph.setFoundation(pStart.tx - 5, pStart.ty, 2, 2, true);
+      this.gridGraph.setFoundation(pStart.tx, pStart.ty - 6, 3, 3, true);
+      this.gridGraph.setFoundation(pStart.tx + 5, pStart.ty + 4, 2, 2, true);
+      this.gridGraph.setFoundation(pStart.tx - 4, pStart.ty - 6, 2, 2, true);
+
+      // Core Expedition Outpost
+      const redoubt = this.spawnBuilding('acropolis', 'player', pStart.tx, pStart.ty, true);
+      if (redoubt) {
+        redoubt.customName = 'Taurus Expedition Redoubt';
+        redoubt.customDescription = 'Forward fortified base of Tarkhunta at the southern gate of the Taurus gorges.';
+      }
+      this.spawnBuilding('bronze_foundry', 'player', pStart.tx + 5, pStart.ty - 2, true);
+      this.spawnBuilding('granary', 'player', pStart.tx - 5, pStart.ty, true);
+      this.spawnBuilding('barracks', 'player', pStart.tx, pStart.ty - 6, true);
+
+      // Watchtowers guarding the gorge mouth
+      this.spawnBuilding('watchtower', 'player', pStart.tx + 5, pStart.ty + 4, true);
+      this.spawnBuilding('watchtower', 'player', pStart.tx - 4, pStart.ty - 6, true);
+
+      // Cyclopean Rampart Walls creating a defensive chokepoint gate
+      const wallCoords = [
+        { tx: pStart.tx + 3, ty: pStart.ty - 7 },
+        { tx: pStart.tx + 4, ty: pStart.ty - 7 },
+        { tx: pStart.tx - 5, ty: pStart.ty - 4 },
+        { tx: pStart.tx - 5, ty: pStart.ty - 3 }
+      ];
+      for (const w of wallCoords) {
+        this.spawnBuilding('cyclopean_wall', 'player', w.tx, w.ty, true);
+      }
+
+      // Starting Expedition Defenders (including our brand-new Highland Skirmishers!)
+      this.spawnUnit('donkey_caravan', 'player', (pStart.tx + 2) * TILE_SIZE + 24, (pStart.ty + 3) * TILE_SIZE + 24);
+      this.spawnUnit('donkey_caravan', 'player', (pStart.tx + 3) * TILE_SIZE + 24, (pStart.ty + 3) * TILE_SIZE + 24);
+      this.spawnUnit('spear_militia', 'player', (pStart.tx + 1) * TILE_SIZE + 24, (pStart.ty - 7) * TILE_SIZE + 24);
+      this.spawnUnit('spear_militia', 'player', (pStart.tx + 2) * TILE_SIZE + 24, (pStart.ty - 7) * TILE_SIZE + 24);
+      this.spawnUnit('highland_skirmisher', 'player', (pStart.tx - 2) * TILE_SIZE + 24, (pStart.ty - 6) * TILE_SIZE + 24);
+      this.spawnUnit('highland_skirmisher', 'player', (pStart.tx + 4) * TILE_SIZE + 24, (pStart.ty - 5) * TILE_SIZE + 24);
+      this.spawnUnit('composite_bowman', 'player', (pStart.tx - 3) * TILE_SIZE + 24, (pStart.ty - 1) * TILE_SIZE + 24);
+      this.spawnUnit('bronze_swordsman', 'player', (pStart.tx + 1) * TILE_SIZE + 24, (pStart.ty + 2) * TILE_SIZE + 24);
+
+      // Two Hostile Lukka Ambush Outposts on high ridges:
+      // Outpost 1: Eastern Gorge Defile (tx: 36, ty: 38)
+      const camp1Tx = 36;
+      const camp1Ty = 38;
+      this.gridGraph.setFoundation(camp1Tx, camp1Ty, 3, 3, true);
+      this.spawnBuilding('sea_camp', 'sea_peoples', camp1Tx, camp1Ty, true);
+      this.gridGraph.setFoundation(camp1Tx + 4, camp1Ty, 2, 2, true);
+      this.spawnBuilding('watchtower', 'sea_peoples', camp1Tx + 4, camp1Ty, true);
+      this.spawnUnit('skirmisher', 'sea_peoples', (camp1Tx + 1) * TILE_SIZE + 24, (camp1Ty + 3) * TILE_SIZE + 24);
+      this.spawnUnit('sea_raider', 'sea_peoples', (camp1Tx + 2) * TILE_SIZE + 24, (camp1Ty + 4) * TILE_SIZE + 24);
+
+      // Outpost 2: Northern Iron Sanctuary Gateway (tx: 48, ty: 18)
+      const camp2Tx = 48;
+      const camp2Ty = 18;
+      this.gridGraph.setFoundation(camp2Tx, camp2Ty, 3, 3, true);
+      this.spawnBuilding('sea_camp', 'sea_peoples', camp2Tx, camp2Ty, true);
+      this.gridGraph.setFoundation(camp2Tx - 4, camp2Ty, 3, 3, true);
+      this.spawnBuilding('barracks', 'sea_peoples', camp2Tx - 4, camp2Ty, true);
+      this.spawnUnit('spear_militia', 'sea_peoples', (camp2Tx - 1) * TILE_SIZE + 24, (camp2Ty + 2) * TILE_SIZE + 24);
+      this.spawnUnit('sea_raider', 'sea_peoples', (camp2Tx + 1) * TILE_SIZE + 24, (camp2Ty + 3) * TILE_SIZE + 24);
+    } else if (scenario.id === 'scenario_06_war_of_rags') {
+      // Scenario 6: The War of Rags and Bronze - Orontes Valley Borderlands (64x64)
+      this.gridGraph.setFoundation(pStart.tx, pStart.ty, 4, 4, true);
+      this.gridGraph.setFoundation(pStart.tx + 6, pStart.ty - 2, 3, 3, true);
+      this.gridGraph.setFoundation(pStart.tx - 5, pStart.ty, 2, 2, true);
+      this.gridGraph.setFoundation(pStart.tx, pStart.ty + 6, 3, 3, true);
+      this.gridGraph.setFoundation(pStart.tx + 5, pStart.ty + 5, 3, 3, true);
+      this.gridGraph.setFoundation(pStart.tx - 6, pStart.ty - 4, 2, 2, true);
+      this.gridGraph.setFoundation(pStart.tx + 7, pStart.ty - 6, 2, 2, true);
+
+      // Core Citadel Buildings
+      const megaron = this.spawnBuilding('acropolis', 'player', pStart.tx, pStart.ty, true);
+      if (megaron) {
+        megaron.customName = 'Orontes Border Acropolis';
+        megaron.customDescription = 'Southern citadel of Kar-Sur guarding the agricultural floodplains and the last bronze stores.';
+      }
+      this.spawnBuilding('bronze_foundry', 'player', pStart.tx + 6, pStart.ty - 2, true);
+      this.spawnBuilding('granary', 'player', pStart.tx - 5, pStart.ty, true);
+      this.spawnBuilding('barracks', 'player', pStart.tx, pStart.ty + 6, true);
+      this.spawnBuilding('chariot_stable', 'player', pStart.tx + 5, pStart.ty + 5, true);
+
+      // Two Watchtowers guarding southern avenue and river approaches
+      this.spawnBuilding('watchtower', 'player', pStart.tx - 6, pStart.ty - 4, true);
+      this.spawnBuilding('watchtower', 'player', pStart.tx + 7, pStart.ty - 6, true);
+
+      // Cyclopean Rampart Walls creating defensive riverbank barriers
+      const wallCoords = [
+        { tx: pStart.tx - 6, ty: pStart.ty - 1 },
+        { tx: pStart.tx - 6, ty: pStart.ty },
+        { tx: pStart.tx - 6, ty: pStart.ty + 1 },
+        { tx: pStart.tx + 2, ty: pStart.ty - 6 },
+        { tx: pStart.tx + 3, ty: pStart.ty - 6 },
+        { tx: pStart.tx + 4, ty: pStart.ty - 6 }
+      ];
+      for (const w of wallCoords) {
+        this.spawnBuilding('cyclopean_wall', 'player', w.tx, w.ty, true);
+      }
+
+      // Starting Defenders
+      this.spawnUnit('donkey_caravan', 'player', (pStart.tx + 2) * TILE_SIZE + 24, (pStart.ty + 4) * TILE_SIZE + 24);
+      this.spawnUnit('donkey_caravan', 'player', (pStart.tx + 3) * TILE_SIZE + 24, (pStart.ty + 4) * TILE_SIZE + 24);
+      this.spawnUnit('spear_militia', 'player', (pStart.tx - 3) * TILE_SIZE + 24, (pStart.ty - 3) * TILE_SIZE + 24);
+      this.spawnUnit('spear_militia', 'player', (pStart.tx + 4) * TILE_SIZE + 24, (pStart.ty - 5) * TILE_SIZE + 24);
+      this.spawnUnit('composite_bowman', 'player', (pStart.tx - 4) * TILE_SIZE + 24, (pStart.ty - 2) * TILE_SIZE + 24);
+      this.spawnUnit('bronze_swordsman', 'player', (pStart.tx - 2) * TILE_SIZE + 24, (pStart.ty + 3) * TILE_SIZE + 24);
+      this.spawnUnit('war_chariot', 'player', (pStart.tx + 6) * TILE_SIZE + 24, (pStart.ty + 8) * TILE_SIZE + 24);
+
+      // Two Hostile Rival Coalition Forward Camps across the river:
+      // Camp 1: Northern Riverbank Siege Camp (tx: 42, ty: 12)
+      const camp1Tx = 42;
+      const camp1Ty = 12;
+      this.gridGraph.setFoundation(camp1Tx, camp1Ty, 3, 3, true);
+      this.spawnBuilding('sea_camp', 'sea_peoples', camp1Tx, camp1Ty, true);
+      this.gridGraph.setFoundation(camp1Tx + 4, camp1Ty, 3, 3, true);
+      this.spawnBuilding('barracks', 'sea_peoples', camp1Tx + 4, camp1Ty, true);
+      this.spawnUnit('spear_militia', 'sea_peoples', (camp1Tx + 1) * TILE_SIZE + 24, (camp1Ty + 4) * TILE_SIZE + 24);
+      this.spawnUnit('skirmisher', 'sea_peoples', (camp1Tx + 3) * TILE_SIZE + 24, (camp1Ty + 4) * TILE_SIZE + 24);
+
+      // Camp 2: Eastern Highland Siege Camp (tx: 52, ty: 32)
+      const camp2Tx = 52;
+      const camp2Ty = 32;
+      this.gridGraph.setFoundation(camp2Tx, camp2Ty, 3, 3, true);
+      this.spawnBuilding('sea_camp', 'sea_peoples', camp2Tx, camp2Ty, true);
+      this.gridGraph.setFoundation(camp2Tx, camp2Ty + 4, 2, 2, true);
+      this.spawnBuilding('watchtower', 'sea_peoples', camp2Tx, camp2Ty + 4, true);
+      this.spawnUnit('sea_raider', 'sea_peoples', (camp2Tx + 1) * TILE_SIZE + 24, (camp2Ty + 2) * TILE_SIZE + 24);
+      this.spawnUnit('shardana_torchbearer', 'sea_peoples', (camp2Tx - 1) * TILE_SIZE + 24, (camp2Ty + 1) * TILE_SIZE + 24);
+    } else if (scenario.id === 'scenario_05_silence_great_kings') {
+      // Scenario 5: The Smoking Ruins of Ugarit & The Royal Cuneiform Archives (1177 BC)
+      this.gridGraph.setFoundation(pStart.tx, pStart.ty, 4, 4, true);
+      this.gridGraph.setFoundation(pStart.tx + 6, pStart.ty - 2, 3, 3, true);
+      this.gridGraph.setFoundation(pStart.tx - 5, pStart.ty, 2, 2, true);
+      this.gridGraph.setFoundation(pStart.tx, pStart.ty + 6, 3, 3, true);
+      this.gridGraph.setFoundation(pStart.tx + 5, pStart.ty + 5, 3, 3, true);
+      this.gridGraph.setFoundation(pStart.tx - 7, pStart.ty - 2, 2, 2, true);
+      this.gridGraph.setFoundation(pStart.tx + 1, pStart.ty - 7, 2, 2, true);
+      this.gridGraph.setFoundation(pStart.tx - 3, pStart.ty + 9, 2, 2, true);
+
+      // Cyclopean slabs for library foundations
+      this.spawnBuilding('cyclopean_slab', 'player', pStart.tx - 2, pStart.ty, true);
+      this.spawnBuilding('cyclopean_slab', 'player', pStart.tx - 2, pStart.ty + 2, true);
+      this.spawnBuilding('cyclopean_slab', 'player', pStart.tx + 4, pStart.ty, true);
+
+      // Core Citadel Buildings: Acropolis (The Cuneiform Archives of Ugarit)
+      const library = this.spawnBuilding('acropolis', 'player', pStart.tx, pStart.ty, true);
+      if (library) {
+        library.customName = 'Royal Cuneiform Library & Acropolis';
+        library.customDescription = 'The Great Archives of Ugarit. Holds thousands of fired clay tablets inscribed with the laws, treaties, and history of the Bronze Age. Must be protected at all costs!';
+      }
+      this.spawnBuilding('bronze_foundry', 'player', pStart.tx + 6, pStart.ty - 2, true);
+      this.spawnBuilding('granary', 'player', pStart.tx - 5, pStart.ty, true);
+      this.spawnBuilding('barracks', 'player', pStart.tx, pStart.ty + 6, true);
+      this.spawnBuilding('chariot_stable', 'player', pStart.tx + 5, pStart.ty + 5, true);
+
+      // Three Strategic Bastion Watchtowers guarding main ruined avenues
+      this.spawnBuilding('watchtower', 'player', pStart.tx - 7, pStart.ty - 2, true);
+      this.spawnBuilding('watchtower', 'player', pStart.tx + 1, pStart.ty - 7, true);
+      this.spawnBuilding('watchtower', 'player', pStart.tx - 3, pStart.ty + 9, true);
+
+      // Defensive Cyclopean Rampart Walls creating barriers and protecting the library archives
+      const wallCoords = [
+        // Western coastal ramparts
+        { tx: pStart.tx - 7, ty: pStart.ty + 1 },
+        { tx: pStart.tx - 7, ty: pStart.ty + 2 },
+        { tx: pStart.tx - 7, ty: pStart.ty + 3 },
+        { tx: pStart.tx - 7, ty: pStart.ty - 3 },
+        // Northern avenue gate
+        { tx: pStart.tx + 3, ty: pStart.ty - 7 },
+        { tx: pStart.tx - 1, ty: pStart.ty - 7 },
+        // Southern perimeter
+        { tx: pStart.tx - 1, ty: pStart.ty + 11 },
+        { tx: pStart.tx - 2, ty: pStart.ty + 11 },
+        { tx: pStart.tx + 2, ty: pStart.ty + 11 }
+      ];
+      for (const w of wallCoords) {
+        this.spawnBuilding('cyclopean_wall', 'player', w.tx, w.ty, true);
+      }
+
+      // Starting Defenders
+      this.spawnUnit('donkey_caravan', 'player', (pStart.tx + 2) * TILE_SIZE + 24, (pStart.ty + 4) * TILE_SIZE + 24);
+      this.spawnUnit('donkey_caravan', 'player', (pStart.tx + 3) * TILE_SIZE + 24, (pStart.ty + 4) * TILE_SIZE + 24);
+      this.spawnUnit('spear_militia', 'player', (pStart.tx - 4) * TILE_SIZE + 24, (pStart.ty + 1) * TILE_SIZE + 24);
+      this.spawnUnit('spear_militia', 'player', (pStart.tx + 2) * TILE_SIZE + 24, (pStart.ty - 4) * TILE_SIZE + 24);
+      this.spawnUnit('spear_militia', 'player', (pStart.tx - 1) * TILE_SIZE + 24, (pStart.ty + 8) * TILE_SIZE + 24);
+      this.spawnUnit('composite_bowman', 'player', (pStart.tx - 5) * TILE_SIZE + 24, (pStart.ty - 1) * TILE_SIZE + 24);
+      this.spawnUnit('composite_bowman', 'player', (pStart.tx + 3) * TILE_SIZE + 24, (pStart.ty - 5) * TILE_SIZE + 24);
+      this.spawnUnit('bronze_swordsman', 'player', (pStart.tx - 3) * TILE_SIZE + 24, (pStart.ty + 3) * TILE_SIZE + 24);
+      this.spawnUnit('war_chariot', 'player', (pStart.tx + 6) * TILE_SIZE + 24, (pStart.ty + 8) * TILE_SIZE + 24);
+
+      // Two Hostile Sea Peoples Blockade Outposts in the ruins:
+      // Outpost 1: Northwest Gorge Outpost
+      const camp1Tx = 14;
+      const camp1Ty = 6;
+      this.gridGraph.setFoundation(camp1Tx, camp1Ty, 3, 3, true);
+      this.spawnBuilding('sea_camp', 'sea_peoples', camp1Tx, camp1Ty, true);
+      const b1Tx = 18;
+      const b1Ty = 6;
+      this.gridGraph.setFoundation(b1Tx, b1Ty, 3, 3, true);
+      this.spawnBuilding('barracks', 'sea_peoples', b1Tx, b1Ty, true);
+      const t1Tx = 16;
+      const t1Ty = 10;
+      this.gridGraph.setFoundation(t1Tx, t1Ty, 2, 2, true);
+      this.spawnBuilding('watchtower', 'sea_peoples', t1Tx, t1Ty, true);
+
+      this.spawnUnit('sea_raider', 'sea_peoples', (camp1Tx + 1) * TILE_SIZE + 24, (camp1Ty + 3) * TILE_SIZE + 24);
+      this.spawnUnit('shardana_torchbearer', 'sea_peoples', (b1Tx + 1) * TILE_SIZE + 24, (b1Ty + 3) * TILE_SIZE + 24);
+      this.spawnUnit('skirmisher', 'sea_peoples', (t1Tx + 1) * TILE_SIZE + 24, (t1Ty + 2) * TILE_SIZE + 24);
+
+      // Outpost 2: Western Coast Beachhead Outpost
+      const camp2Tx = 8;
+      const camp2Ty = 40;
+      this.gridGraph.setFoundation(camp2Tx, camp2Ty, 3, 3, true);
+      this.spawnBuilding('sea_camp', 'sea_peoples', camp2Tx, camp2Ty, true);
+      const t2Tx = 12;
+      const t2Ty = 38;
+      this.gridGraph.setFoundation(t2Tx, t2Ty, 2, 2, true);
+      this.spawnBuilding('watchtower', 'sea_peoples', t2Tx, t2Ty, true);
+
+      this.spawnUnit('sea_raider', 'sea_peoples', (camp2Tx + 1) * TILE_SIZE + 24, (camp2Ty + 3) * TILE_SIZE + 24);
+      this.spawnUnit('sea_raider', 'sea_peoples', (t2Tx + 1) * TILE_SIZE + 24, (t2Ty + 2) * TILE_SIZE + 24);
+      this.spawnUnit('shardana_torchbearer', 'sea_peoples', (camp2Tx - 1) * TILE_SIZE + 24, (camp2Ty + 1) * TILE_SIZE + 24);
+    } else if (scenario.id === 'scenario_04_siege_kadesh_sea') {
       // Scenario 4: Fortress Citadel of Kadesh-on-Sea under Grand Nocturnal Siege
       this.gridGraph.setFoundation(pStart.tx, pStart.ty, 4, 4, true);
       this.gridGraph.setFoundation(pStart.tx + 6, pStart.ty - 2, 3, 3, true);
@@ -353,13 +588,85 @@ class GameApp {
     this.updateFogOfWar();
 
     this.hud = new HUDController();
-    this.hud.populateBuildMenu(scenario.player.unlockedBuildings);
-    this.hud.setUnlockedUnits(scenario.player.unlockedUnits);
+    this.hud.setUnlockedBuildings(scenario.player.unlockedBuildings || []);
+    this.hud.setUnlockedUnits(scenario.player.unlockedUnits || []);
     this.hud.onSelectBuildItem = (defId: string) => {
       this.buildingToPlace = defId;
+      this.refreshHUDSelection();
     };
     this.hud.onTrainUnit = (unitDefId: string) => {
       this.trainUnit(unitDefId);
+      this.refreshHUDSelection();
+    };
+    this.hud.onSelectUnitCommand = (cmd: 'move' | 'stop' | 'attack' | 'harvest') => {
+      if (cmd === 'stop') {
+        for (const u of this.selectedUnits) {
+          if (u.owner === 'player') {
+            u.path = [];
+            u.state = 'IDLE';
+            u.targetEntityId = null;
+            u.targetMineCoord = null;
+            u.isHalted = true;
+            u.isAttackMove = false;
+          }
+        }
+        EventBus.get().emit('audio:command');
+        if (this.selectedUnits.length > 0) {
+          EventBus.get().emit('fx:floating_text', {
+            text: 'HALT!',
+            color: '#ffd166',
+            x: this.selectedUnits[0].x,
+            y: this.selectedUnits[0].y - 20
+          });
+        }
+        this.activeUnitCommand = 'stop';
+        this.isCommandManuallyArmed = false;
+        this.refreshHUDSelection();
+      } else {
+        this.activeUnitCommand = cmd;
+        this.isCommandManuallyArmed = true;
+        EventBus.get().emit('audio:click');
+        this.refreshHUDSelection();
+      }
+    };
+    this.hud.onAssignHarvest = () => {
+      if (this.selectedVein) {
+        const workers = this.selectedUnits.filter(u => u.owner === 'player' && (u.def.category === 'worker' || !!u.def.cargoCapacity));
+        if (workers.length > 0) {
+          for (const w of workers) {
+            w.targetMineCoord = { tx: this.selectedVein.tx, ty: this.selectedVein.ty };
+            w.state = 'HARVESTING';
+            w.path = [];
+          }
+          EventBus.get().emit('audio:command');
+          EventBus.get().emit('fx:floating_text', {
+            text: 'HARVESTING STARTED',
+            color: '#38bdf8',
+            x: workers[0].x,
+            y: workers[0].y - 20
+          });
+        } else {
+          const idleWorker = this.units.find(u => u.owner === 'player' && (u.def.category === 'worker' || !!u.def.cargoCapacity) && u.hp > 0);
+          if (idleWorker) {
+            idleWorker.targetMineCoord = { tx: this.selectedVein.tx, ty: this.selectedVein.ty };
+            idleWorker.state = 'HARVESTING';
+            idleWorker.path = [];
+            EventBus.get().emit('audio:command');
+            EventBus.get().emit('fx:floating_text', {
+              text: 'CARAVAN ASSIGNED',
+              color: '#38bdf8',
+              x: idleWorker.x,
+              y: idleWorker.y - 20
+            });
+          } else {
+            EventBus.get().emit('advisor:message', {
+              speaker: 'burna_khabir',
+              text: 'No Donkey Caravans available! Train one at the Megaron.',
+              isAlert: true
+            });
+          }
+        }
+      }
     };
 
     // Initialize Settings from SaveManager
@@ -382,11 +689,31 @@ class GameApp {
       this.audio.startBGM();
     });
     this.councilModal.setScenario(scenario);
+
+    this.narrativeInterludeModal = new NarrativeInterludeModal();
+    this.narrativeInterludeModal.onProceedToNext = (nextScenarioId: string) => {
+      SaveManager.get().setCurrentScenarioId(nextScenarioId);
+      window.location.reload();
+    };
+    this.narrativeInterludeModal.onOpenMap = () => {
+      this.closeAllModals();
+      this.campaignMapModal.show();
+    };
+    this.narrativeInterludeModal.onOpenChronicle = () => {
+      this.closeAllModals();
+      this.chronicleModal.show();
+    };
+
     this.debriefingModal = new DebriefingModal(
       () => window.location.reload(),
-      () => {
+      (fromScenarioId: string, nextScenarioId: string) => {
         this.closeAllModals();
-        this.campaignMapModal.show();
+        if (nextScenarioId) {
+          this.narrativeInterludeModal.show(fromScenarioId, nextScenarioId);
+        } else {
+          // Completed current act / last scenario
+          this.narrativeInterludeModal.show(fromScenarioId, 'scenario_06_war_of_rags');
+        }
       }
     );
 
@@ -415,6 +742,10 @@ class GameApp {
     this.campaignMapModal.onSelectScenario = (scenarioId: string) => {
       SaveManager.get().setCurrentScenarioId(scenarioId);
       window.location.reload();
+    };
+    this.campaignMapModal.onShowInterlude = (fromScenarioId: string, toScenarioId: string) => {
+      this.closeAllModals();
+      this.narrativeInterludeModal.show(fromScenarioId, toScenarioId);
     };
     this.campaignMapModal.onClose = () => {
       this.closeAllModals();
@@ -579,6 +910,317 @@ class GameApp {
       this.canvas.height = parent.clientHeight;
       if (this.camera) {
         this.camera.updateDimensions(this.canvas.width, this.canvas.height);
+      }
+    }
+  }
+
+  private setupStoneGorgesMap(w: number, h: number): void {
+    // 1. Topography: 64x64 Rugged Taurus Mountain Gorges, Limestone Cliffs, and Defiles
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        // Deep zigzag canyon corridor connecting south (tx: 8..24, ty: 44..60) through center to north (tx: 40..58, ty: 4..20)
+        let canyonX = 14;
+        if (y < 44 && y >= 30) {
+          canyonX = 14 + (44 - y) * 1.2;
+        } else if (y < 30 && y >= 18) {
+          canyonX = 31 + (30 - y) * 0.8;
+        } else if (y < 18) {
+          canyonX = 41 + (18 - y) * 0.6;
+        }
+
+        const distFromCanyon = Math.abs(x - canyonX);
+        const isMainCanyon = distFromCanyon <= 4;
+        const isCanyonShelf = distFromCanyon > 4 && distFromCanyon <= 7;
+
+        // Secondary eastern tributary defile (where miners got ambushed)
+        const isEastDefile = y >= 20 && y <= 26 && x >= 30 && x <= 56;
+        // Secondary western ridge path for agile skirmishers
+        const isWestPass = x >= 4 && x <= 8 && y >= 32 && y <= 48;
+
+        // Northern Sacred Iron Sanctuary plateau
+        const isIronPlateau = y <= 16 && x >= 38 && x <= 58;
+
+        // Southern Expedition base plateau
+        const isBasePlateau = y >= 46 && y <= 58 && x >= 6 && x <= 22;
+
+        // Mountain stream meandering along the canyon bed
+        const isStream = isMainCanyon && Math.abs(x - canyonX) <= 1 && y % 4 !== 0;
+
+        if (isIronPlateau || isBasePlateau) {
+          this.tileRenderer.setTile(x, y, 'fertile_soil');
+          this.gridGraph.setTileCost(x, y, 10);
+        } else if (isStream) {
+          this.tileRenderer.setTile(x, y, 'marsh');
+          this.gridGraph.setTileCost(x, y, 14);
+        } else if (isMainCanyon || isEastDefile || isWestPass) {
+          this.tileRenderer.setTile(x, y, 'sand');
+          this.gridGraph.setTileCost(x, y, 10);
+        } else if (isCanyonShelf) {
+          this.tileRenderer.setTile(x, y, 'plain');
+          this.gridGraph.setTileCost(x, y, 12);
+        } else {
+          // Towering impassable limestone cliffs
+          this.tileRenderer.setTile(x, y, 'cliff');
+          this.gridGraph.setTileCost(x, y, 0);
+        }
+      }
+    }
+
+    // 2. Resource Deposits
+    // High Mountain Copper Veins near the base (tx: 6..8, ty: 54..56)
+    for (let dy = 0; dy < 3; dy++) {
+      for (let dx = 0; dx < 3; dx++) {
+        this.tileRenderer.setTile(6 + dx, 54 + dy, 'vein_copper', 650);
+        this.gridGraph.setTileCost(6 + dx, 54 + dy, 0);
+      }
+    }
+
+    // Cyclopean Limestone Quarry (tx: 18..20, ty: 46..47)
+    for (let dy = 0; dy < 2; dy++) {
+      for (let dx = 0; dx < 3; dx++) {
+        this.tileRenderer.setTile(18 + dx, 46 + dy, 'vein_stone', 700);
+        this.gridGraph.setTileCost(18 + dx, 46 + dy, 0);
+      }
+    }
+
+    // Tiny scarce tin pocket (only 120 tin, last remnants)
+    for (let dy = 0; dy < 2; dy++) {
+      for (let dx = 0; dx < 2; dx++) {
+        this.tileRenderer.setTile(10 + dx, 42 + dy, 'vein_tin', 120);
+        this.gridGraph.setTileCost(10 + dx, 42 + dy, 0);
+      }
+    }
+
+    // The Sacred Dark Stones: Massive Hematite Iron Ore Field in Northern Sanctuary (tx: 46..49, ty: 8..11)
+    for (let dy = 0; dy < 3; dy++) {
+      for (let dx = 0; dx < 4; dx++) {
+        this.tileRenderer.setTile(46 + dx, 8 + dy, 'vein_iron', 850);
+        this.gridGraph.setTileCost(46 + dx, 8 + dy, 0);
+      }
+    }
+
+    // Scatter Mountain Pine and Hardy Cedars
+    this.decorations = [];
+    for (let i = 0; i < 60; i++) {
+      const tx = Math.floor((Math.sin(i * 14.1) * 0.5 + 0.5) * (w - 12)) + 6;
+      const ty = Math.floor((Math.cos(i * 21.7) * 0.5 + 0.5) * (h - 12)) + 6;
+      const distBase = Math.hypot(tx - 12, ty - 50);
+      const tile = this.tileRenderer.getTile(tx, ty);
+      if ((tile === 'plain' || tile === 'sand' || tile === 'fertile_soil') && distBase > 6) {
+        this.decorations.push({ x: tx + 0.5, y: ty + 0.5, type: 'cedar', current: 240, max: 240 });
+      }
+    }
+  }
+
+  private setupOrontesBorderlandsMap(w: number, h: number): void {
+    // 1. Topography: 64x64 Winding Orontes River Valley, Rocky Defiles & Border Farmlands
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        // Northern mountain barrier & gorges
+        const isNorthRidge = y < 5 && !(x >= 28 && x <= 36);
+        // Eastern rocky ridges
+        const isEastRidge = x >= w - 6 && (y < 24 || y > 40);
+        // Central craggy bluffs separating river arms
+        const isCentralBluff = (x >= 28 && x <= 32 && y >= 14 && y <= 20) || (x >= 44 && x <= 47 && y >= 34 && y <= 38);
+
+        // The Orontes River: curves across the map from northwest to center-east
+        const riverY = Math.floor(22 + Math.sin(x * 0.12) * 5 + (x * 0.1));
+        const isRiverChannel = Math.abs(y - riverY) <= 2;
+
+        // Fords: shallow stone crossings where infantry and chariots can cross the river
+        const isWestFord = x >= 12 && x <= 15 && Math.abs(y - riverY) <= 2;
+        const isCenterFord = x >= 32 && x <= 35 && Math.abs(y - riverY) <= 2;
+        const isEastFord = x >= 50 && x <= 53 && Math.abs(y - riverY) <= 2;
+        const isFord = isWestFord || isCenterFord || isEastFord;
+
+        // Riverbanks and alluvial floodplains
+        const isRiverbank = Math.abs(y - riverY) >= 3 && Math.abs(y - riverY) <= 5;
+        // Southern fertile plain where player kingdom cultivates wheat
+        const isSouthPlain = y > 32 && y < 58 && x > 8 && x < 54;
+
+        if (isRiverChannel && !isFord) {
+          this.tileRenderer.setTile(x, y, 'water');
+          this.gridGraph.setTileCost(x, y, 0);
+        } else if (isNorthRidge || isEastRidge || isCentralBluff) {
+          this.tileRenderer.setTile(x, y, 'cliff');
+          this.gridGraph.setTileCost(x, y, 0);
+        } else if (isFord) {
+          // Shallow stony gravel ford
+          this.tileRenderer.setTile(x, y, 'sand');
+          this.gridGraph.setTileCost(x, y, 12);
+        } else if (isRiverbank || isSouthPlain) {
+          // Fertile alluvium
+          this.tileRenderer.setTile(x, y, 'fertile_soil');
+          this.gridGraph.setTileCost(x, y, 10);
+        } else {
+          this.tileRenderer.setTile(x, y, 'plain');
+          this.gridGraph.setTileCost(x, y, 10);
+        }
+      }
+    }
+
+    // 2. Resource Deposits
+    // Copper Veins in southwestern foothills (tx: 8..10, ty: 48..50)
+    for (let dy = 0; dy < 3; dy++) {
+      for (let dx = 0; dx < 3; dx++) {
+        this.tileRenderer.setTile(8 + dx, 48 + dy, 'vein_copper', 750);
+        this.gridGraph.setTileCost(8 + dx, 48 + dy, 0);
+      }
+    }
+
+    // Limestone Quarry south of the river (tx: 24..26, ty: 50..51)
+    for (let dy = 0; dy < 2; dy++) {
+      for (let dx = 0; dx < 3; dx++) {
+        this.tileRenderer.setTile(24 + dx, 50 + dy, 'vein_stone', 700);
+        this.gridGraph.setTileCost(24 + dx, 50 + dy, 0);
+      }
+    }
+
+    // Abandoned exhausted tin pit (scarce: only 180 tin total, reflects Act II collapse)
+    for (let dy = 0; dy < 2; dy++) {
+      for (let dx = 0; dx < 2; dx++) {
+        this.tileRenderer.setTile(30 + dx, 38 + dy, 'vein_tin', 180);
+        this.gridGraph.setTileCost(30 + dx, 38 + dy, 0);
+      }
+    }
+
+    // First Dark Stones / Iron Ore deposit discovered in northern high cliff (tx: 45..46, ty: 6..7)
+    for (let dy = 0; dy < 2; dy++) {
+      for (let dx = 0; dx < 2; dx++) {
+        this.tileRenderer.setTile(45 + dx, 6 + dy, 'vein_iron', 500);
+        this.gridGraph.setTileCost(45 + dx, 6 + dy, 0);
+      }
+    }
+
+    // Scatter Cedar and Olive trees
+    this.decorations = [];
+    for (let i = 0; i < 70; i++) {
+      const tx = Math.floor((Math.sin(i * 17.3) * 0.5 + 0.5) * (w - 10)) + 5;
+      const ty = Math.floor((Math.cos(i * 23.1) * 0.5 + 0.5) * (h - 10)) + 5;
+      const distPlayer = Math.hypot(tx - 16, ty - 42);
+      const tile = this.tileRenderer.getTile(tx, ty);
+      if ((tile === 'plain' || tile === 'fertile_soil') && distPlayer > 7) {
+        this.decorations.push({ x: tx + 0.5, y: ty + 0.5, type: 'cedar', current: 240, max: 240 });
+      }
+    }
+  }
+
+  private setupUgaritRuinsMap(w: number, h: number): void {
+    // 1. Topography: Western Coastline & Seashore + Flaming Ruins of Ugarit Acropolis
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const isWater = x < 7;
+        const isBeach = x >= 7 && x <= 13;
+
+        // Sea cliffs and breaches connecting the shore to the ruined plateau
+        const isBreach = (y >= 12 && y <= 18) || (y >= 24 && y <= 34) || (y >= 44 && y <= 48);
+        const isSeaCliff = (x >= 14 && x <= 17) && !isBreach;
+
+        // Northern gorge/ravines where enemy overland forces advance
+        const isNorthRavine = (x >= 24 && x <= 34) && y <= 14;
+        const isNorthCliff = y < 5 && !isNorthRavine;
+
+        // Eastern hills / mountains
+        const isEastRidge = x >= w - 5 && (y < 22 || y > 34);
+
+        // Southern mountains
+        const isSouthRidge = y >= h - 4;
+
+        // Megalithic ruined palace walls and broken stone blocks
+        const isRuinsMasonry = (x >= 38 && x <= 41 && y >= 8 && y <= 15) || (x >= 18 && x <= 20 && y >= 36 && y <= 42);
+
+        if (isWater) {
+          this.tileRenderer.setTile(x, y, 'water');
+          this.gridGraph.setTileCost(x, y, 0);
+        } else if (isSeaCliff || isNorthCliff || isEastRidge || isSouthRidge || isRuinsMasonry) {
+          this.tileRenderer.setTile(x, y, 'cliff');
+          this.gridGraph.setTileCost(x, y, 0);
+        } else if (isBeach) {
+          this.tileRenderer.setTile(x, y, 'sand');
+          this.gridGraph.setTileCost(x, y, 10);
+        } else if (x >= 24 && x <= 33 && y >= 24 && y <= 33) {
+          // Inner paved sanctuary of the Royal Cuneiform Library
+          this.tileRenderer.setTile(x, y, 'fertile_soil');
+          this.gridGraph.setTileCost(x, y, 10);
+        } else {
+          this.tileRenderer.setTile(x, y, 'plain');
+          this.gridGraph.setTileCost(x, y, 10);
+        }
+      }
+    }
+
+    // 2. Resource Deposits
+    // Rich Copper Veins on the eastern slopes (tx: 40..42, ty: 25..27)
+    for (let dy = 0; dy < 3; dy++) {
+      for (let dx = 0; dx < 3; dx++) {
+        this.tileRenderer.setTile(40 + dx, 25 + dy, 'vein_copper', 850);
+        this.gridGraph.setTileCost(40 + dx, 25 + dy, 0);
+      }
+    }
+
+    // Stone quarry from broken palace megaliths (tx: 22..24, ty: 38..39)
+    for (let dy = 0; dy < 2; dy++) {
+      for (let dx = 0; dx < 3; dx++) {
+        this.tileRenderer.setTile(22 + dx, 38 + dy, 'vein_stone', 600);
+        this.gridGraph.setTileCost(22 + dx, 38 + dy, 0);
+      }
+    }
+
+    // Merchant Cache / Ruined Bronze & Tin Vault (tx: 34..35, ty: 18..19)
+    for (let dy = 0; dy < 2; dy++) {
+      for (let dx = 0; dx < 2; dx++) {
+        this.tileRenderer.setTile(34 + dx, 18 + dy, 'vein_tin', 250);
+        this.gridGraph.setTileCost(34 + dx, 18 + dy, 0);
+      }
+    }
+
+    // 3. Cedar and Olive Tree Groves across the Ruins of Ugarit for Timber
+    this.decorations = [];
+    const treeCoords: Array<{ x: number; y: number }> = [];
+
+    // Courtyard grove near the player's base (x: 20..26, ty: 22..27)
+    for (let i = 0; i < 16; i++) {
+      const tx = 20 + Math.floor((Math.sin(i * 1.9) * 0.5 + 0.5) * 6);
+      const ty = 22 + Math.floor((Math.cos(i * 2.2) * 0.5 + 0.5) * 5);
+      treeCoords.push({ x: tx, y: ty });
+    }
+
+    // Southern ruined district groves (x: 25..37, y: 36..46)
+    for (let i = 0; i < 22; i++) {
+      const tx = 25 + Math.floor((Math.sin(i * 1.5) * 0.5 + 0.5) * 12);
+      const ty = 36 + Math.floor((Math.cos(i * 2.5) * 0.5 + 0.5) * 10);
+      treeCoords.push({ x: tx, y: ty });
+    }
+
+    // Eastern fertile groves (x: 36..48, y: 20..32)
+    for (let i = 0; i < 24; i++) {
+      const tx = 36 + Math.floor((Math.sin(i * 2.1) * 0.5 + 0.5) * 12);
+      const ty = 20 + Math.floor((Math.cos(i * 1.7) * 0.5 + 0.5) * 12);
+      treeCoords.push({ x: tx, y: ty });
+    }
+
+    // Northern ravine perimeter grove (x: 22..28, y: 10..18)
+    for (let i = 0; i < 16; i++) {
+      const tx = 22 + Math.floor((Math.sin(i * 2.4) * 0.5 + 0.5) * 6);
+      const ty = 10 + Math.floor((Math.cos(i * 1.8) * 0.5 + 0.5) * 8);
+      treeCoords.push({ x: tx, y: ty });
+    }
+
+    const placed = new Set<string>();
+    for (const pos of treeCoords) {
+      const key = `${pos.x},${pos.y}`;
+      if (placed.has(key)) continue;
+      // Ensure we don't spawn trees on veins or cliffs or water
+      const tile = this.tileRenderer.getTile(pos.x, pos.y);
+      if (tile === 'plain' || tile === 'fertile_soil') {
+        placed.add(key);
+        this.decorations.push({
+          x: pos.x + 0.5,
+          y: pos.y + 0.5,
+          type: 'cedar',
+          current: 240,
+          max: 240
+        });
       }
     }
   }
@@ -1172,8 +1814,38 @@ class GameApp {
     });
 
     if (this.selectedBuilding === trainer) {
-      this.hud.updateInspector(null, trainer);
+      this.refreshHUDSelection();
     }
+  }
+
+  private getUnitCommandMode(units: UnitEntity[]): 'move' | 'stop' | 'attack' | 'harvest' {
+    const playerUnits = units.filter(u => u.owner === 'player' && u.hp > 0);
+    if (playerUnits.length === 0) return 'move';
+
+    // 1. If any selected unit is actively attacking or targeting an enemy
+    if (playerUnits.some(u => u.state === 'ATTACK_TARGET' || u.targetEntityId !== null)) {
+      return 'attack';
+    }
+    // 2. If any selected unit is gathering or hauling resources
+    if (playerUnits.some(u => u.state === 'HARVESTING' || u.state === 'HARVEST_SEEK' || u.state === 'RETURN_CARGO' || u.state === 'WAITING_STORAGE')) {
+      return 'harvest';
+    }
+    // 3. If all selected units were explicitly halted
+    if (playerUnits.every(u => u.isHalted && u.state === 'IDLE')) {
+      return 'stop';
+    }
+    return 'move';
+  }
+
+  private refreshHUDSelection(): void {
+    if (!this.hud) return;
+    this.hud.updateSelection(
+      this.selectedUnits,
+      this.selectedBuilding,
+      this.selectedVein,
+      this.activeUnitCommand,
+      this.buildingToPlace
+    );
   }
 
   private closeAllModals(): void {
@@ -1182,6 +1854,7 @@ class GameApp {
     if (this.campaignMapModal) this.campaignMapModal.hide();
     if (this.chronicleModal) this.chronicleModal.hide();
     if (this.settingsModal) this.settingsModal.hide();
+    if (this.narrativeInterludeModal) this.narrativeInterludeModal.hide();
   }
 
   private setupInputHandlers(): void {
@@ -1225,6 +1898,7 @@ class GameApp {
     this.canvas.addEventListener('mousedown', (e) => {
       // Begin BGM on first interaction
       this.audio.startBGM();
+      this.isCommandManuallyArmed = false;
 
       const rect = this.canvas.getBoundingClientRect();
       const sx = e.clientX - rect.left;
@@ -1253,6 +1927,7 @@ class GameApp {
             this.economy.spend(bDef.cost);
             this.spawnBuilding(this.buildingToPlace, 'player', tx, ty, false);
             this.buildingToPlace = null;
+            this.refreshHUDSelection();
           } else {
             const missing: string[] = [];
             const r = this.economy.resources;
@@ -1282,6 +1957,7 @@ class GameApp {
         if (this.buildingToPlace) {
           this.buildingToPlace = null;
           EventBus.get().emit('audio:click');
+          this.refreshHUDSelection();
           return;
         }
         this.issueContextCommand(worldPos.x, worldPos.y);
@@ -1333,28 +2009,31 @@ class GameApp {
 
     const isClick = Math.abs(this.dragStart.x - this.dragCurrent.x) < 6 && Math.abs(this.dragStart.y - this.dragCurrent.y) < 6;
 
-    // DIRECT ATTACK TARGETING ON CLICK:
-    // If the player already has friendly troops selected and clicks on an enemy unit, issue an attack command!
     if (isClick) {
       const friendlyTroops = this.selectedUnits.filter(u => u.owner === 'player' && u.hp > 0);
-      if (friendlyTroops.length > 0) {
-        const clickTx = Math.floor(p1.x / TILE_SIZE);
-        const clickTy = Math.floor(p1.y / TILE_SIZE);
-        const clickedEnemy = this.units.find(
-          u => u.owner !== 'player' && u.hp > 0 &&
-          (Math.hypot(u.x - p1.x, u.y - p1.y) < 42 ||
-           (Math.abs(u.x - p1.x) <= 28 && Math.abs(u.y - p1.y) <= 38) ||
-           (Math.floor(u.x / TILE_SIZE) === clickTx && Math.floor(u.y / TILE_SIZE) === clickTy))
-        );
+      const clickTx = Math.floor(p1.x / TILE_SIZE);
+      const clickTy = Math.floor(p1.y / TILE_SIZE);
 
-        if (clickedEnemy) {
+      // Check if clicking an enemy unit
+      const clickedEnemy = this.units.find(
+        u => u.owner !== 'player' && u.hp > 0 &&
+        (Math.hypot(u.x - p1.x, u.y - p1.y) < 42 ||
+         (Math.abs(u.x - p1.x) <= 28 && Math.abs(u.y - p1.y) <= 38) ||
+         (Math.floor(u.x / TILE_SIZE) === clickTx && Math.floor(u.y / TILE_SIZE) === clickTy))
+      );
+
+      if (clickedEnemy) {
+        if (friendlyTroops.length > 0) {
           for (const u of friendlyTroops) {
             u.targetMineCoord = null;
             u.targetEntityId = clickedEnemy.id;
             u.state = 'ATTACK_TARGET';
             u.path = [];
+            u.isHalted = false;
+            u.isAttackMove = false;
           }
 
+          this.activeUnitCommand = 'attack';
           EventBus.get().emit('audio:command');
           EventBus.get().emit('fx:floating_text', {
             text: 'ATTACK ENEMY!',
@@ -1367,96 +2046,174 @@ class GameApp {
             y: clickedEnemy.y,
             color: '#ef4444'
           });
+          this.refreshHUDSelection();
+          return;
+        } else {
+          // Select enemy to inspect stats
+          for (const u of this.units) u.isSelected = false;
+          for (const b of this.buildings) b.isSelected = false;
+          this.selectedUnits = [clickedEnemy];
+          this.selectedBuilding = null;
+          this.selectedVein = null;
+          this.activeUnitCommand = 'move';
+          this.refreshHUDSelection();
           return;
         }
       }
+
+      // Check if clicking a friendly unit
+      const clickedFriendly = this.units.find(
+        u => u.owner === 'player' && u.hp > 0 && Math.hypot(u.x - p1.x, u.y - p1.y) < 24
+      );
+      if (clickedFriendly) {
+        for (const u of this.units) u.isSelected = false;
+        for (const b of this.buildings) b.isSelected = false;
+        clickedFriendly.isSelected = true;
+        this.selectedUnits = [clickedFriendly];
+        this.selectedBuilding = null;
+        this.selectedVein = null;
+        this.activeUnitCommand = this.getUnitCommandMode(this.selectedUnits);
+        EventBus.get().emit('audio:select');
+        this.refreshHUDSelection();
+        return;
+      }
+
+      // Check if clicking a building
+      const tx = Math.floor(p1.x / TILE_SIZE);
+      const ty = Math.floor(p1.y / TILE_SIZE);
+      const clickedRealB = this.buildings.find(
+        b => b.defId !== 'cyclopean_slab' &&
+             tx >= b.tx && tx < b.tx + b.def.width &&
+             ty >= b.ty - 0.7 && ty < b.ty + b.def.height
+      );
+      const clickedB = clickedRealB || this.buildings.find(
+        b => tx >= b.tx && tx < b.tx + b.def.width && ty >= b.ty && ty < b.ty + b.def.height
+      );
+      if (clickedB) {
+        for (const u of this.units) u.isSelected = false;
+        for (const b of this.buildings) b.isSelected = false;
+        clickedB.isSelected = true;
+        this.selectedUnits = [];
+        this.selectedBuilding = clickedB;
+        this.selectedVein = null;
+        this.activeUnitCommand = 'move';
+        EventBus.get().emit('audio:select');
+        this.refreshHUDSelection();
+        return;
+      }
+
+      // Check if clicking a resource vein or tree
+      const tileType = this.tileRenderer.getTile(tx, ty);
+      let foundVein: { name: string; type: string; current: number; max: number; tx: number; ty: number } | null = null;
+      if (tileType.startsWith('vein_')) {
+        const res = this.tileRenderer.getVeinReserve(tx, ty);
+        if (res) {
+          const oreName = res.type === 'copper' ? 'Malachite / Copper Deposit' :
+                          (res.type === 'tin' ? 'Cassiterite / Tin Deposit' :
+                          (res.type === 'stone' ? 'Limestone / Stone Quarry' : 'Hematite / Iron Deposit'));
+          foundVein = { name: oreName, type: res.type, current: res.current, max: res.max, tx, ty };
+        }
+      } else {
+        const clickedTree = this.decorations.find(
+          d => Math.hypot(d.x - (tx + 0.5), d.y - (ty + 0.5)) < 1.0
+        );
+        if (clickedTree) {
+          foundVein = {
+            name: clickedTree.type === 'cedar' ? 'Mediterranean Cedar Tree' : 'Felled Cedar Stump',
+            type: 'timber',
+            current: clickedTree.current,
+            max: clickedTree.max,
+            tx,
+            ty
+          };
+        }
+      }
+
+      if (foundVein) {
+        const workers = friendlyTroops.filter(u => u.def.category === 'worker' || !!u.def.cargoCapacity);
+        if (workers.length > 0 && this.activeUnitCommand === 'harvest') {
+          for (const w of workers) {
+            w.targetMineCoord = { tx: foundVein.tx, ty: foundVein.ty };
+            w.state = 'HARVESTING';
+            w.path = [];
+          }
+          EventBus.get().emit('audio:command');
+          EventBus.get().emit('fx:floating_text', {
+            text: 'HARVESTING STARTED',
+            color: '#38bdf8',
+            x: workers[0].x,
+            y: workers[0].y - 20
+          });
+          return;
+        } else {
+          for (const u of this.units) u.isSelected = false;
+          for (const b of this.buildings) b.isSelected = false;
+          this.selectedUnits = [];
+          this.selectedBuilding = null;
+          this.selectedVein = foundVein;
+          this.activeUnitCommand = 'move';
+          EventBus.get().emit('audio:select');
+          this.refreshHUDSelection();
+          return;
+        }
+      }
+
+      // Empty ground clicked
+      if (friendlyTroops.length > 0) {
+        if (this.activeUnitCommand === 'move') {
+          for (const u of friendlyTroops) {
+            u.isHalted = false;
+            u.isAttackMove = false;
+          }
+          this.issueContextCommand(p1.x, p1.y);
+          return;
+        } else if (this.activeUnitCommand === 'attack') {
+          for (const u of friendlyTroops) {
+            u.isHalted = false;
+            u.isAttackMove = true;
+          }
+          this.issueContextCommand(p1.x, p1.y);
+          return;
+        } else if (this.activeUnitCommand === 'harvest') {
+          EventBus.get().emit('fx:floating_text', {
+            text: 'SELECT AN ORE DEPOSIT OR TREE!',
+            color: '#fbbf24',
+            x: p1.x,
+            y: p1.y - 12
+          });
+          return;
+        }
+      }
+
+      // Click on empty space with no friendly troops -> deselect
+      for (const u of this.units) u.isSelected = false;
+      for (const b of this.buildings) b.isSelected = false;
+      this.selectedUnits = [];
+      this.selectedBuilding = null;
+      this.selectedVein = null;
+      this.refreshHUDSelection();
+      return;
     }
 
+    // Box drag selection
     for (const u of this.units) u.isSelected = false;
     for (const b of this.buildings) b.isSelected = false;
     this.selectedUnits = [];
     this.selectedBuilding = null;
     this.selectedVein = null;
 
-    if (isClick) {
-      // Single click: select unit, building, or resource vein
-      const clickedUnit = this.units.find(u => Math.hypot(u.x - p1.x, u.y - p1.y) < 24);
-      if (clickedUnit) {
-        clickedUnit.isSelected = true;
-        this.selectedUnits = [clickedUnit];
-        EventBus.get().emit('audio:select');
-      } else {
-        const tx = Math.floor(p1.x / TILE_SIZE);
-        const ty = Math.floor(p1.y / TILE_SIZE);
-        // Prioritize actual buildings over cyclopean foundation slabs, and allow roof vertical reach
-        const clickedRealB = this.buildings.find(
-          b => b.defId !== 'cyclopean_slab' &&
-               tx >= b.tx && tx < b.tx + b.def.width &&
-               ty >= b.ty - 0.7 && ty < b.ty + b.def.height
-        );
-        const clickedB = clickedRealB || this.buildings.find(
-          b => tx >= b.tx && tx < b.tx + b.def.width && ty >= b.ty && ty < b.ty + b.def.height
-        );
-        if (clickedB) {
-          clickedB.isSelected = true;
-          this.selectedBuilding = clickedB;
-          EventBus.get().emit('audio:select');
-        } else {
-          // Check if clicking on an ore vein or stone quarry
-          const tileType = this.tileRenderer.getTile(tx, ty);
-          if (tileType.startsWith('vein_')) {
-            const res = this.tileRenderer.getVeinReserve(tx, ty);
-            if (res) {
-              const oreName = res.type === 'copper' ? 'Malachite / Copper Deposit' :
-                              (res.type === 'tin' ? 'Cassiterite / Tin Deposit' :
-                              (res.type === 'stone' ? 'Limestone / Stone Quarry' : 'Hematite / Iron Deposit'));
-              this.selectedVein = {
-                name: oreName,
-                type: res.type,
-                current: res.current,
-                max: res.max,
-                tx,
-                ty
-              };
-              EventBus.get().emit('audio:select');
-            }
-          } else {
-            // Check if clicking on a cedar tree
-            const clickedTree = this.decorations.find(
-              d => Math.hypot(d.x - (tx + 0.5), d.y - (ty + 0.5)) < 1.0
-            );
-            if (clickedTree) {
-              this.selectedVein = {
-                name: clickedTree.type === 'cedar' ? 'Mediterranean Cedar Tree' : 'Felled Cedar Stump',
-                type: 'timber',
-                current: clickedTree.current,
-                max: clickedTree.max,
-                tx,
-                ty
-              };
-              EventBus.get().emit('audio:select');
-            }
-          }
-        }
-      }
-    } else {
-      // Box drag selection
-      for (const u of this.units) {
-        if (u.owner === 'player' && u.x >= p1.x && u.x <= p2.x && u.y >= p1.y && u.y <= p2.y) {
-          u.isSelected = true;
-          this.selectedUnits.push(u);
-        }
-      }
-      if (this.selectedUnits.length > 0) {
-        EventBus.get().emit('audio:select');
+    for (const u of this.units) {
+      if (u.owner === 'player' && u.hp > 0 && u.x >= p1.x && u.x <= p2.x && u.y >= p1.y && u.y <= p2.y) {
+        u.isSelected = true;
+        this.selectedUnits.push(u);
       }
     }
+    if (this.selectedUnits.length > 0) {
+      this.activeUnitCommand = this.getUnitCommandMode(this.selectedUnits);
+      EventBus.get().emit('audio:select');
+    }
 
-    this.hud.updateInspector(
-      this.selectedUnits.length > 0 ? this.selectedUnits[0] : null,
-      this.selectedBuilding,
-      this.selectedVein
-    );
+    this.refreshHUDSelection();
   }
 
   private issueContextCommand(wx: number, wy: number): void {
@@ -1542,6 +2299,7 @@ class GameApp {
 
     for (let i = 0; i < this.selectedUnits.length; i++) {
       const u = this.selectedUnits[i];
+      u.isHalted = false;
 
       if (targetEnemyUnit) {
         u.targetMineCoord = null;
@@ -1730,6 +2488,9 @@ class GameApp {
         }
       }
     }
+
+    this.activeUnitCommand = this.getUnitCommandMode(this.selectedUnits);
+    this.refreshHUDSelection();
   }
 
   private update(dt: number): void {
@@ -1779,6 +2540,22 @@ class GameApp {
     // Ensures troops, donkeys, and Sea Peoples never occupy the same tile or overlap
     UnitFSM.resolveUnitCollisions(this.units, this.buildings);
 
+    // Sync active unit command state if unit state changed dynamically in combat/movement
+    if (this.selectedUnits.length > 0) {
+      this.selectedUnits = this.selectedUnits.filter(u => u.hp > 0);
+      if (this.selectedUnits.length > 0) {
+        if (!this.isCommandManuallyArmed) {
+          const liveMode = this.getUnitCommandMode(this.selectedUnits);
+          if (liveMode !== this.activeUnitCommand) {
+            this.activeUnitCommand = liveMode;
+            this.refreshHUDSelection();
+          }
+        }
+      } else {
+        this.refreshHUDSelection();
+      }
+    }
+
     // Real-time update for inspected ore vein or cedar tree
     if (this.selectedVein) {
       if (this.selectedVein.type === 'timber') {
@@ -1787,19 +2564,19 @@ class GameApp {
         );
         if (tree && tree.current > 0) {
           this.selectedVein.current = tree.current;
-          this.hud.updateInspector(null, null, this.selectedVein);
+          this.refreshHUDSelection();
         } else {
           this.selectedVein = null;
-          this.hud.updateInspector(null, null, null);
+          this.refreshHUDSelection();
         }
       } else {
         const res = this.tileRenderer.getVeinReserve(this.selectedVein.tx, this.selectedVein.ty);
         if (res && res.current > 0) {
           this.selectedVein.current = res.current;
-          this.hud.updateInspector(null, null, this.selectedVein);
+          this.refreshHUDSelection();
         } else {
           this.selectedVein = null;
-          this.hud.updateInspector(null, null, null);
+          this.refreshHUDSelection();
         }
       }
     }
@@ -1808,6 +2585,25 @@ class GameApp {
     for (let i = this.buildings.length - 1; i >= 0; i--) {
       const b = this.buildings[i];
       if (b.hp <= 0) {
+        if (b.owner === 'sea_peoples' && (b.defId === 'sea_camp' || b.defId === 'barracks')) {
+          if (this.currentScenario?.id === 'scenario_05_silence_great_kings') {
+            this.economy.resources.tin = (this.economy.resources.tin || 0) + 80;
+            this.economy.resources.copper = (this.economy.resources.copper || 0) + 150;
+            EventBus.get().emit('economy:changed', this.economy.resources);
+            EventBus.get().emit('fx:floating_text', {
+              text: '+80 TIN, +150 COPPER (PLUNDERED MERCHANT CACHE RECOVERED)!',
+              color: '#38bdf8',
+              x: b.centerX,
+              y: b.centerY - 30
+            });
+            EventBus.get().emit('advisor:message', {
+              speaker: 'zalpa',
+              text: 'We have stormed the raider camp and reclaimed 80 ingots of rare tin plundered from Ugarit merchant warehouses!',
+              isAlert: false
+            });
+          }
+        }
+
         if (b.defId !== 'cyclopean_slab') {
           this.gridGraph.setBuildingOccupied(b.tx, b.ty, b.def.width, b.def.height, false);
         } else {
@@ -1851,10 +2647,10 @@ class GameApp {
           }
 
           if (b === this.selectedBuilding) {
-            this.hud.updateInspector(null, b);
+            this.refreshHUDSelection();
           }
         } else if (b === this.selectedBuilding) {
-          this.hud.updateInspector(null, b);
+          this.refreshHUDSelection();
         }
       } else if (b.trainingQueue.length > 0) {
         // Progress active unit training queue in completed military structures
@@ -1892,10 +2688,10 @@ class GameApp {
             y: spawnTy * TILE_SIZE - 12
           });
           if (b === this.selectedBuilding) {
-            this.hud.updateInspector(null, b);
+            this.refreshHUDSelection();
           }
         } else if (b === this.selectedBuilding) {
-          this.hud.updateInspector(null, b);
+          this.refreshHUDSelection();
         }
       }
     }
@@ -2002,6 +2798,16 @@ class GameApp {
 
   private updateFogOfWar(): void {
     if (!this.fogRenderer) return;
+
+    // Check if player has an operational Signal Beacon Spire
+    const hasActiveSignalBeacon = this.buildings.some(
+      b => b.owner === 'player' && b.hp > 0 && b.buildProgress >= 1.0 && b.def.revealsEntireMap
+    );
+    if (hasActiveSignalBeacon) {
+      this.fogRenderer.revealAll(true);
+      return;
+    }
+
     this.fogRenderer.resetVisibility();
     for (const u of this.units) {
       if (u.owner === 'player') {
@@ -2359,6 +3165,63 @@ class GameApp {
           ctx.fill();
         }
       }
+      ctx.restore();
+    } else if (this.currentScenario?.id === 'scenario_05_silence_great_kings' || this.currentScenario?.map.biome === 'cyclopean_ruins') {
+      // Twilight of Empires: Smoky amber-copper dusk tint with glowing fire embers rising from ruins
+      ctx.save();
+      ctx.fillStyle = 'rgba(45, 20, 10, 0.28)'; // Warm smoky copper-amber dusk
+      ctx.fillRect(0, 0, this.tileRenderer.width * TILE_SIZE, this.tileRenderer.height * TILE_SIZE);
+
+      // Warm fire and hearth glows around Acropolis, Foundries, and War Camps
+      ctx.globalCompositeOperation = 'screen';
+      for (const b of this.buildings) {
+        if (b.hp > 0 && (b.defId === 'acropolis' || b.defId === 'bronze_foundry' || b.defId === 'sea_camp' || b.defId === 'watchtower')) {
+          const grad = ctx.createRadialGradient(b.centerX, b.centerY, 10, b.centerX, b.centerY, 130);
+          grad.addColorStop(0, 'rgba(255, 140, 40, 0.32)');
+          grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(b.centerX, b.centerY, 130, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      ctx.restore();
+
+      // Render dedicated Golden Title Banner above the Royal Cuneiform Library in Scenario 5
+      const library = this.buildings.find(b => b.owner === 'player' && b.defId === 'acropolis' && b.hp > 0);
+      if (library) {
+        ctx.save();
+        const bx = library.centerX;
+        const by = library.centerY - (library.def.height * TILE_SIZE) / 2 - 16;
+        ctx.font = 'bold 12px "Cinzel", serif';
+        ctx.textAlign = 'center';
+        const title = '📜 ROYAL CUNEIFORM LIBRARY';
+        const tw = ctx.measureText(title).width;
+        ctx.fillStyle = 'rgba(16, 11, 7, 0.90)';
+        ctx.fillRect(bx - tw / 2 - 10, by - 14, tw + 20, 20);
+        ctx.strokeStyle = '#ffd166';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(bx - tw / 2 - 10, by - 14, tw + 20, 20);
+        ctx.fillStyle = '#ffd166';
+        ctx.fillText(title, bx, by);
+        ctx.restore();
+      }
+
+      // Render dedicated Cyan Title Banner above the Ruined Merchant Tin Vault at (34, 18)
+      ctx.save();
+      const vx = (34 + 1) * TILE_SIZE;
+      const vy = 18 * TILE_SIZE - 12;
+      ctx.font = 'bold 11px "Cinzel", serif';
+      ctx.textAlign = 'center';
+      const vTitle = '🏺 RUINED MERCHANT VAULT (TIN)';
+      const vtw = ctx.measureText(vTitle).width;
+      ctx.fillStyle = 'rgba(10, 18, 25, 0.90)';
+      ctx.fillRect(vx - vtw / 2 - 8, vy - 13, vtw + 16, 18);
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 1.2;
+      ctx.strokeRect(vx - vtw / 2 - 8, vy - 13, vtw + 16, 18);
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillText(vTitle, vx, vy);
       ctx.restore();
     }
 

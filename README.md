@@ -15,7 +15,7 @@
 ## ⚔️ Key Features
 
 - **Late Bronze Age Collapse Setting (1200 – 1100 BC):**
-  Experience the historical transition from fragile bronze dependency to the discovery of iron smelting across a four-act campaign (18 historical scenarios).
+  Experience the historical transition from fragile bronze dependency to the discovery of iron smelting across a three-act campaign (10 handcrafted historical scenarios).
 - **Procedural 2.5D SVGA Pixel Art Engine:**
   Authentic 1990s PC strategy aesthetic rendered directly onto an HTML5 Canvas with custom shaders, dynamic elevation slopes, volumetric shadows, construction scaffolding, and water reflections.
 - **Resource Logistics & Economy:**

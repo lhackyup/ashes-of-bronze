@@ -228,25 +228,32 @@ export class HUDController {
     return parts.join(', ') || 'Free';
   }
 
+  public setUnlockedBuildings(buildings: string[]): void {
+    this.unlockedBuildings = buildings;
+  }
+
   public setUnlockedUnits(units: string[]): void {
     this.unlockedUnits = units;
   }
 
-  public populateBuildMenu(unlockedBuildings?: string[]): void {
-    const container = document.getElementById('build-items-container');
-    if (!container) return;
+  public renderDefaultBuildPanel(buildingToPlace: string | null = null): void {
+    if (this.buildPanelTitleEl) {
+      this.buildPanelTitleEl.textContent = 'Cyclopean Works & Construction';
+    }
+    if (!this.buildItemsContainerEl) return;
+    this.buildItemsContainerEl.innerHTML = '';
 
-    container.innerHTML = '';
-    const entries = Object.entries(BUILDINGS).filter(([id]) => {
-      if (unlockedBuildings && unlockedBuildings.length > 0) {
-        return unlockedBuildings.includes(id);
+    const buildingEntries = Object.entries(BUILDINGS).filter(([id]) => {
+      if (id === 'acropolis' || id === 'lion_den') return false;
+      if (this.unlockedBuildings.length > 0) {
+        return this.unlockedBuildings.includes(id);
       }
       return true;
     });
 
-    for (const [id, def] of entries) {
+    for (const [id, def] of buildingEntries) {
       const btn = document.createElement('button');
-      btn.className = 'svga-btn build-btn';
+      btn.className = `svga-btn build-btn ${buildingToPlace === id ? 'active' : ''}`;
       const costHtml = this.formatCostHtml(def.cost);
       const costText = this.formatCostTooltip(def.cost);
       btn.title = `${def.name} (${costText}) - ${def.description}`;
@@ -256,63 +263,99 @@ export class HUDController {
         <div style="font-size: 10px; margin-top: 2px;">${costHtml}</div>
       `;
 
-      btn.addEventListener('click', () => {
+      btn.onclick = () => {
         EventBus.get().emit('audio:click');
         if (this.onSelectBuildItem) {
           this.onSelectBuildItem(id);
         }
-      });
-
-      container.appendChild(btn);
+      };
+      this.buildItemsContainerEl.appendChild(btn);
     }
+
+    const tipBox = document.createElement('div');
+    tipBox.style.cssText = 'grid-column: 1 / -1; margin-top: 8px; font-size: 10px; color: #ffd166; text-align: center; border-top: 1px solid #4a3e33; padding-top: 6px; line-height: 1.3; width: 100%; box-sizing: border-box;';
+    tipBox.innerHTML = '💡 <em>Click a building above to construct, or select the <strong>Militia Barracks</strong> to recruit Highland Skirmishers & infantry.</em>';
+    this.buildItemsContainerEl.appendChild(tipBox);
+  }
+
+  public populateBuildMenu(unlockedBuildings?: string[]): void {
+    if (unlockedBuildings) {
+      this.unlockedBuildings = unlockedBuildings;
+    }
+    this.renderDefaultBuildPanel();
   }
 
   public updateInspector(
     selectedUnit: UnitEntity | null,
     selectedBuilding: BuildingEntity | null,
-    selectedVein?: { name: string; type: string; current: number; max: number } | null
+    selectedVein?: { name: string; type: string; current: number; max: number; tx?: number; ty?: number } | null
+  ): void {
+    this.updateSelection(
+      selectedUnit ? [selectedUnit] : [],
+      selectedBuilding,
+      selectedVein,
+      'move',
+      null
+    );
+  }
+
+  public updateSelection(
+    selectedUnits: UnitEntity[],
+    selectedBuilding: BuildingEntity | null,
+    selectedVein?: { name: string; type: string; current: number; max: number; tx?: number; ty?: number } | null,
+    activeUnitCommand: 'move' | 'stop' | 'attack' | 'harvest' = 'move',
+    buildingToPlace: string | null = null
   ): void {
     const actionsBox = document.getElementById('inspector-actions');
     if (actionsBox) actionsBox.innerHTML = '';
     this.inspectorHpFillEl.style.backgroundColor = '';
 
-    if (selectedUnit) {
+    // ==========================================
+    // 1. INSPECTOR PANEL (Top info card)
+    // ==========================================
+    if (selectedUnits.length > 0) {
       this.inspectorPanelEl.style.display = 'flex';
-      this.inspectorNameEl.textContent = selectedUnit.def.name;
-      let desc = selectedUnit.def.description;
-      if (selectedUnit.def.category === 'worker') {
-        const cType = (selectedUnit.currentCargoType || 'cargo').toUpperCase();
-        if (selectedUnit.state === 'WAITING_STORAGE') {
-          desc += `\n[STATUS: WAITING FOR STORAGE SPACE - Baskets Full: ${selectedUnit.currentCargoAmount} ${cType}]`;
-        } else if (selectedUnit.state === 'HARVESTING') {
-          desc += `\n[STATUS: Harvesting ${cType} - Baskets: ${selectedUnit.currentCargoAmount}/${selectedUnit.def.cargoCapacity || 120}]`;
-        } else if (selectedUnit.state === 'RETURN_CARGO') {
-          desc += `\n[STATUS: Hauling ${selectedUnit.currentCargoAmount} ${cType} to depot]`;
+      if (selectedUnits.length === 1) {
+        const u = selectedUnits[0];
+        this.inspectorNameEl.textContent = u.def.name;
+        let desc = u.def.description;
+        if (u.def.category === 'worker') {
+          const cType = (u.currentCargoType || 'cargo').toUpperCase();
+          if (u.state === 'WAITING_STORAGE') {
+            desc += `\n[WAITING FOR STORAGE - Baskets Full: ${u.currentCargoAmount} ${cType}]`;
+          } else if (u.state === 'HARVESTING') {
+            desc += `\n[HARVESTING ${cType} - Baskets: ${u.currentCargoAmount}/${u.def.cargoCapacity || 120}]`;
+          } else if (u.state === 'RETURN_CARGO') {
+            desc += `\n[HAULING TO DEPOT: ${u.currentCargoAmount} ${cType}]`;
+          }
         }
-      }
-      this.inspectorDescEl.textContent = desc;
-      const hpPct = Math.max(0, Math.min(100, (selectedUnit.hp / selectedUnit.maxHp) * 100));
-      this.inspectorHpFillEl.style.width = `${hpPct}%`;
-
-      if (actionsBox && selectedUnit.owner === 'player') {
-        const stopBtn = document.createElement('button');
-        stopBtn.className = 'svga-btn';
-        stopBtn.textContent = 'Halt / Stop';
-        stopBtn.onclick = () => {
-          selectedUnit.path = [];
-          selectedUnit.state = 'IDLE';
-        };
-        actionsBox.appendChild(stopBtn);
+        this.inspectorDescEl.textContent = desc;
+        const hpPct = Math.max(0, Math.min(100, (u.hp / u.maxHp) * 100));
+        this.inspectorHpFillEl.style.width = `${hpPct}%`;
+      } else {
+        this.inspectorNameEl.textContent = `${selectedUnits.length} Units Selected`;
+        const counts: Record<string, number> = {};
+        let totalHp = 0;
+        let totalMaxHp = 0;
+        for (const u of selectedUnits) {
+          counts[u.def.name] = (counts[u.def.name] || 0) + 1;
+          totalHp += u.hp;
+          totalMaxHp += u.maxHp;
+        }
+        const summary = Object.entries(counts).map(([name, count]) => `${count}x ${name}`).join(', ');
+        this.inspectorDescEl.textContent = `Regiment Formation: ${summary}`;
+        const hpPct = Math.max(0, Math.min(100, (totalHp / Math.max(1, totalMaxHp)) * 100));
+        this.inspectorHpFillEl.style.width = `${hpPct}%`;
       }
     } else if (selectedBuilding) {
       this.inspectorPanelEl.style.display = 'flex';
-      this.inspectorNameEl.textContent = selectedBuilding.def.name;
+      this.inspectorNameEl.textContent = selectedBuilding.customName || selectedBuilding.def.name;
       const isUnderConstruction = selectedBuilding.buildProgress < 1.0;
       if (isUnderConstruction) {
         const buildPct = Math.floor(selectedBuilding.buildProgress * 100);
-        this.inspectorDescEl.textContent = `[Under Construction ${buildPct}%] Scaffolding active. Cedar frames being lashed.`;
+        this.inspectorDescEl.textContent = `[Under Construction ${buildPct}%] Cedar frames lashed and cyclopean megaliths being placed.`;
       } else {
-        this.inspectorDescEl.textContent = selectedBuilding.def.description;
+        this.inspectorDescEl.textContent = selectedBuilding.customDescription || selectedBuilding.def.description;
       }
       if (selectedBuilding.def.indestructible || selectedBuilding.defId === 'lion_den') {
         this.inspectorDescEl.textContent += '\n[STRUCTURE: INDESTRUCTIBLE BEDROCK CAVERN - Immune to all damage]';
@@ -322,86 +365,335 @@ export class HUDController {
         const hpPct = Math.max(0, Math.min(100, (selectedBuilding.hp / selectedBuilding.maxHp) * 100));
         this.inspectorHpFillEl.style.width = `${hpPct}%`;
       }
-
-      if (actionsBox && selectedBuilding.owner === 'player' && selectedBuilding.def.producesUnits) {
-        for (const uId of selectedBuilding.def.producesUnits) {
-          const uDef = UNITS[uId];
-          if (!uDef) continue;
-          // Filter out future era locked units
-          if (uDef.unlockEra === 'early_iron') continue;
-          if (this.unlockedUnits.length > 0 && !this.unlockedUnits.includes(uId)) continue;
-
-          const uCostHtml = this.formatCostHtml(uDef.cost);
-          const uCostText = this.formatCostTooltip(uDef.cost);
-          const shortName = uId === 'spear_militia' ? 'Spearman' :
-                            (uId === 'skirmisher' ? 'Slinger' :
-                            (uId === 'composite_bowman' ? 'Bowman' :
-                            (uId === 'bronze_swordsman' ? 'Khopesh' :
-                            (uId === 'donkey_caravan' ? 'Donkey' : uDef.name.split(' ')[0]))));
-
-          const trainBtn = document.createElement('button');
-          trainBtn.className = 'svga-btn';
-          const trainSeconds = uDef.trainTime || 5;
-          trainBtn.title = isUnderConstruction ?
-            `Cannot train during construction (${Math.floor(selectedBuilding.buildProgress * 100)}%)` :
-            `Train ${uDef.name} (${uCostText}, Supply: ${uDef.supplyCost}, Time: ${trainSeconds}s) - ${uDef.description}`;
-          if (isUnderConstruction) {
-            trainBtn.style.opacity = '0.5';
-            trainBtn.style.cursor = 'not-allowed';
-          }
-          trainBtn.innerHTML = `
-            <div style="font-weight: bold; font-size: 11px;">Train ${shortName} <span style="font-size: 9px; color: #fbbf24;">(${trainSeconds}s)</span></div>
-            <div style="font-size: 9px; margin-top: 2px;">${uCostHtml}</div>
-          `;
-          trainBtn.onclick = () => {
-            if (isUnderConstruction) {
-              EventBus.get().emit('advisor:message', {
-                speaker: 'tarkhunta',
-                text: 'The Barracks is still swarming with carpenters! Wait for scaffolding removal.',
-                isAlert: true
-              });
-              return;
-            }
-            if (this.onTrainUnit) this.onTrainUnit(uId);
-          };
-          actionsBox.appendChild(trainBtn);
-        }
-
-        // Live Training Queue & Progress Display in Inspector
-        if (selectedBuilding.trainingQueue && selectedBuilding.trainingQueue.length > 0) {
-          const queueBox = document.createElement('div');
-          queueBox.style.cssText = 'margin-top: 6px; padding: 4px; background: #1c140e; border: 1px solid #78350f; border-radius: 2px; width: 100%; box-sizing: border-box;';
-          const current = selectedBuilding.trainingQueue[0];
-          const curDef = UNITS[current.unitDefId];
-          const curShortName = curDef ? curDef.name.split(' ')[0] : current.unitDefId;
-          const progressPct = Math.max(0, Math.min(100, Math.floor((1 - current.remainingTime / current.totalTime) * 100)));
-          queueBox.innerHTML = `
-            <div style="display: flex; justify-content: space-between; font-size: 10px; color: #fbbf24; font-weight: bold;">
-              <span>Training: ${curShortName}</span>
-              <span>${Math.ceil(current.remainingTime)}s (${progressPct}%)</span>
-            </div>
-            <div style="width: 100%; height: 5px; background: #332211; margin-top: 3px; border: 1px solid #553311; border-radius: 1px; overflow: hidden;">
-              <div style="width: ${progressPct}%; height: 100%; background: #38bdf8;"></div>
-            </div>
-            ${selectedBuilding.trainingQueue.length > 1 ? `
-              <div style="font-size: 9px; color: #94a3b8; margin-top: 3px;">
-                Queued (+${selectedBuilding.trainingQueue.length - 1}): ${selectedBuilding.trainingQueue.slice(1).map(q => UNITS[q.unitDefId]?.name.split(' ')[0] || q.unitDefId).join(', ')}
-              </div>
-            ` : ''}
-          `;
-          actionsBox.appendChild(queueBox);
-        }
-      }
     } else if (selectedVein) {
       this.inspectorPanelEl.style.display = 'flex';
       this.inspectorNameEl.textContent = selectedVein.name;
-      const typeLabel = selectedVein.type === 'copper' ? 'Copper [Cop]' : (selectedVein.type === 'tin' ? 'Tin [Tin]' : 'Iron [Irn]');
-      this.inspectorDescEl.textContent = `Mineral reserve: ${Math.floor(selectedVein.current)} / ${selectedVein.max} ${typeLabel}. Harvested by Caravans.`;
+      const typeLabel = selectedVein.type === 'copper' ? 'Copper [Cop]' :
+                        (selectedVein.type === 'tin' ? 'Tin [Tin]' :
+                        (selectedVein.type === 'timber' ? 'Timber [Tmb]' :
+                        (selectedVein.type === 'stone' ? 'Stone [Stn]' : 'Iron [Irn]')));
+      this.inspectorDescEl.textContent = `Mineral reserve: ${Math.floor(selectedVein.current)} / ${selectedVein.max} ${typeLabel}. Gathered by Donkey Caravans.`;
       const pct = Math.max(0, Math.min(100, (selectedVein.current / selectedVein.max) * 100));
       this.inspectorHpFillEl.style.width = `${pct}%`;
-      this.inspectorHpFillEl.style.backgroundColor = selectedVein.type === 'copper' ? '#2de0a5' : (selectedVein.type === 'tin' ? '#c0c6cc' : '#e07a5f');
+      this.inspectorHpFillEl.style.backgroundColor = selectedVein.type === 'copper' ? '#2de0a5' :
+                                                   (selectedVein.type === 'tin' ? '#c0c6cc' :
+                                                   (selectedVein.type === 'timber' ? '#f59e0b' : '#e2e8f0'));
     } else {
       this.inspectorPanelEl.style.display = 'none';
+    }
+
+    // ==========================================
+    // 2. CYCLOPEAN WORKS & FORGE (Contextual action panel)
+    // ==========================================
+    if (!this.buildItemsContainerEl) return;
+    this.buildItemsContainerEl.innerHTML = '';
+
+    if (selectedUnits.length > 0) {
+      // ------------------------------------------
+      // CASE A: UNIT SELECTED -> COMMANDS PALETTE (2 COLUMNS)
+      // ------------------------------------------
+      if (this.buildPanelTitleEl) {
+        this.buildPanelTitleEl.textContent = selectedUnits.length === 1 ?
+          `Orders: ${selectedUnits[0].def.name}` :
+          `Orders: ${selectedUnits.length} Units`;
+      }
+
+      const hasWorker = selectedUnits.some(u => u.owner === 'player' && (u.def.category === 'worker' || !!u.def.cargoCapacity));
+
+      // 1. Move Button (Default Active)
+      const moveBtn = document.createElement('button');
+      moveBtn.className = `svga-btn unit-cmd-btn ${activeUnitCommand === 'move' ? 'active' : ''}`;
+      moveBtn.innerHTML = `
+        <span class="cmd-icon">🚶</span>
+        <span class="cmd-label">Move</span>
+        <span class="cmd-sub">${activeUnitCommand === 'move' ? 'ACTIVE (Default)' : 'Reposition'}</span>
+      `;
+      moveBtn.onclick = () => {
+        if (this.onSelectUnitCommand) this.onSelectUnitCommand('move');
+      };
+      this.buildItemsContainerEl.appendChild(moveBtn);
+
+      // 2. Stop Button
+      const stopBtn = document.createElement('button');
+      stopBtn.className = `svga-btn unit-cmd-btn ${activeUnitCommand === 'stop' ? 'active' : ''}`;
+      stopBtn.innerHTML = `
+        <span class="cmd-icon">🛑</span>
+        <span class="cmd-label">Halt</span>
+        <span class="cmd-sub">${activeUnitCommand === 'stop' ? 'ACTIVE' : 'Instant Stop'}</span>
+      `;
+      stopBtn.onclick = () => {
+        if (this.onSelectUnitCommand) this.onSelectUnitCommand('stop');
+      };
+      this.buildItemsContainerEl.appendChild(stopBtn);
+
+      // 3. Attack Button
+      const attackBtn = document.createElement('button');
+      attackBtn.className = `svga-btn unit-cmd-btn ${activeUnitCommand === 'attack' ? 'active' : ''}`;
+      attackBtn.innerHTML = `
+        <span class="cmd-icon">⚔️</span>
+        <span class="cmd-label">Attack</span>
+        <span class="cmd-sub">${activeUnitCommand === 'attack' ? 'ACTIVE' : 'Engage'}</span>
+      `;
+      attackBtn.onclick = () => {
+        if (this.onSelectUnitCommand) this.onSelectUnitCommand('attack');
+      };
+      this.buildItemsContainerEl.appendChild(attackBtn);
+
+      // 4. Harvest Button (only if worker) or Guard Button
+      if (hasWorker) {
+        const harvestBtn = document.createElement('button');
+        harvestBtn.className = `svga-btn unit-cmd-btn ${activeUnitCommand === 'harvest' ? 'active' : ''}`;
+        harvestBtn.innerHTML = `
+          <span class="cmd-icon">⛏️</span>
+          <span class="cmd-label">Harvest</span>
+          <span class="cmd-sub">${activeUnitCommand === 'harvest' ? 'ACTIVE' : 'Gather'}</span>
+        `;
+        harvestBtn.onclick = () => {
+          if (this.onSelectUnitCommand) this.onSelectUnitCommand('harvest');
+        };
+        this.buildItemsContainerEl.appendChild(harvestBtn);
+      } else {
+        const guardBtn = document.createElement('button');
+        guardBtn.className = 'svga-btn unit-cmd-btn';
+        guardBtn.style.opacity = '0.5';
+        guardBtn.title = 'Troops automatically stand guard and engage visible hostiles';
+        guardBtn.innerHTML = `
+          <span class="cmd-icon">🛡️</span>
+          <span class="cmd-label">Guard</span>
+          <span class="cmd-sub">Automatic</span>
+        `;
+        this.buildItemsContainerEl.appendChild(guardBtn);
+      }
+
+      // Helpful context prompt (full-width spanning both columns)
+      const hintDiv = document.createElement('div');
+      hintDiv.style.cssText = 'grid-column: 1 / -1; margin-top: 8px; font-size: 10px; color: #ffd166; text-align: center; border-top: 1px solid #4a3e33; padding-top: 6px; line-height: 1.3; width: 100%; box-sizing: border-box;';
+      if (activeUnitCommand === 'move') {
+        hintDiv.innerHTML = '👉 <strong>Move Active:</strong> Left-click or right-click terrain to march.';
+      } else if (activeUnitCommand === 'attack') {
+        hintDiv.innerHTML = '⚔️ <strong>Attack Active:</strong> Click an enemy or ground to assault.';
+      } else if (activeUnitCommand === 'harvest') {
+        hintDiv.innerHTML = '⛏️ <strong>Harvest Active:</strong> Click an ore vein or cedar tree to gather.';
+      } else if (activeUnitCommand === 'stop') {
+        hintDiv.innerHTML = '🛑 <strong>Halted:</strong> Unit holding ground. Awaiting orders.';
+      } else {
+        hintDiv.textContent = 'Issue a command to the regiment.';
+      }
+      this.buildItemsContainerEl.appendChild(hintDiv);
+
+    } else if (selectedBuilding) {
+      // ------------------------------------------
+      // CASE B: BUILDING SELECTED
+      // ------------------------------------------
+      const isUnderConstruction = selectedBuilding.buildProgress < 1.0;
+
+      if (selectedBuilding.defId === 'acropolis') {
+        // MEGARON IS SELECTED -> FULL CIVIC WORKS & CITADEL RECRUITMENT IN TWO COLUMNS
+        if (this.buildPanelTitleEl) {
+          this.buildPanelTitleEl.textContent = 'Megaron — Civic Works & Production';
+        }
+
+        // Section 1: Civic Constructions (Unlocked Buildings in 2 COLUMNS)
+        const secHeader = document.createElement('div');
+        secHeader.className = 'panel-section-header';
+        secHeader.textContent = 'Cyclopean Works (Construct)';
+        this.buildItemsContainerEl.appendChild(secHeader);
+
+        const buildingEntries = Object.entries(BUILDINGS).filter(([id]) => {
+          if (id === 'acropolis' || id === 'lion_den') return false;
+          if (this.unlockedBuildings.length > 0) {
+            return this.unlockedBuildings.includes(id);
+          }
+          return true;
+        });
+
+        // Append building buttons directly into #build-items-container (2-column CSS grid)
+        for (const [id, def] of buildingEntries) {
+          const btn = document.createElement('button');
+          btn.className = `svga-btn build-btn ${buildingToPlace === id ? 'active' : ''}`;
+          const costHtml = this.formatCostHtml(def.cost);
+          const costText = this.formatCostTooltip(def.cost);
+          btn.title = `${def.name} (${costText}) - ${def.description}`;
+
+          btn.innerHTML = `
+            <div style="font-weight: bold; font-size: 11px;">${def.name}</div>
+            <div style="font-size: 10px; margin-top: 2px;">${costHtml}</div>
+          `;
+
+          btn.onclick = () => {
+            EventBus.get().emit('audio:click');
+            if (this.onSelectBuildItem) {
+              this.onSelectBuildItem(id);
+            }
+          };
+
+          this.buildItemsContainerEl.appendChild(btn);
+        }
+
+        // Section 2: Citadel Training (Donkey Caravans)
+        if (selectedBuilding.def.producesUnits && selectedBuilding.def.producesUnits.length > 0) {
+          const trainHeader = document.createElement('div');
+          trainHeader.className = 'panel-section-header';
+          trainHeader.textContent = 'Citadel Training';
+          this.buildItemsContainerEl.appendChild(trainHeader);
+
+          this.renderBuildingUnitRecruitment(selectedBuilding, isUnderConstruction);
+        }
+
+      } else {
+        // OTHER BUILDING SELECTED (Barracks, Foundry, Granary, etc.)
+        // NO BUILDING CONSTRUCTION LIST! Only specific building actions & training!
+        if (this.buildPanelTitleEl) {
+          this.buildPanelTitleEl.textContent = selectedBuilding.def.name;
+        }
+
+        if (isUnderConstruction) {
+          const buildPct = Math.floor(selectedBuilding.buildProgress * 100);
+          const progBox = document.createElement('div');
+          progBox.style.cssText = 'grid-column: 1 / -1; padding: 8px; background: #1c140e; border: 1px solid #78350f; border-radius: 3px; width: 100%; box-sizing: border-box; margin-bottom: 8px;';
+          progBox.innerHTML = `
+            <div style="display: flex; justify-content: space-between; font-size: 11px; color: #fbbf24; font-weight: bold;">
+              <span>Work in progress...</span>
+              <span>${buildPct}%</span>
+            </div>
+            <div style="width: 100%; height: 6px; background: #332211; margin-top: 4px; border: 1px solid #553311; border-radius: 1px; overflow: hidden;">
+              <div style="width: ${buildPct}%; height: 100%; background: #f59e0b;"></div>
+            </div>
+          `;
+          this.buildItemsContainerEl.appendChild(progBox);
+        }
+
+        if (selectedBuilding.owner === 'player' && selectedBuilding.def.producesUnits && selectedBuilding.def.producesUnits.length > 0) {
+          const trainHeader = document.createElement('div');
+          trainHeader.className = 'panel-section-header';
+          trainHeader.textContent = 'Troop Training';
+          this.buildItemsContainerEl.appendChild(trainHeader);
+
+          this.renderBuildingUnitRecruitment(selectedBuilding, isUnderConstruction);
+        } else {
+          // Building without units (e.g. Granary, Tower, Wall)
+          const infoBox = document.createElement('div');
+          infoBox.style.cssText = 'grid-column: 1 / -1; padding: 8px; font-size: 11px; color: #d6cbbf; background: rgba(22, 17, 13, 0.4); border: 1px solid #4a3e33; border-radius: 3px; line-height: 1.4; width: 100%; box-sizing: border-box;';
+          if (selectedBuilding.defId === 'granary') {
+            infoBox.innerHTML = '🌾 <strong>Royal Granary:</strong> Expands grain stockpile capacity to 1200 units to support a large standing army.';
+          } else if (selectedBuilding.defId === 'bronze_foundry') {
+            infoBox.innerHTML = '🔥 <strong>Bronze Foundry:</strong> Smelts copper and tin into bronze armaments, expanding metal storage capacity to 1500.';
+          } else if (selectedBuilding.defId === 'sentry_tower') {
+            infoBox.innerHTML = '🏹 <strong>Sentry Tower:</strong> Archer garrison that automatically fires arrows upon hostile threats.';
+          } else if (selectedBuilding.defId === 'cyclopean_slab') {
+            infoBox.innerHTML = '🧱 <strong>Cyclopean Rampart:</strong> Massive ashlar stone fortification that blocks invaders.';
+          } else {
+            infoBox.textContent = selectedBuilding.def.description;
+          }
+          this.buildItemsContainerEl.appendChild(infoBox);
+        }
+      }
+
+    } else if (selectedVein) {
+      // ------------------------------------------
+      // CASE C: RESOURCE VEIN SELECTED
+      // ------------------------------------------
+      if (this.buildPanelTitleEl) {
+        this.buildPanelTitleEl.textContent = 'Natural Resource';
+      }
+
+      const resBox = document.createElement('div');
+      resBox.style.cssText = 'grid-column: 1 / -1; padding: 8px; background: rgba(22, 17, 13, 0.6); border: 1px solid #4a3e33; border-radius: 3px; font-size: 11px; line-height: 1.4; width: 100%; box-sizing: border-box;';
+      resBox.innerHTML = `
+        <div style="font-weight: bold; color: #ffd166; font-size: 12px; margin-bottom: 4px;">${selectedVein.name}</div>
+        <div style="color: #b5a691; margin-bottom: 8px;">Estimated Reserve: <strong style="color: #ffffff;">${Math.floor(selectedVein.current)} / ${selectedVein.max}</strong></div>
+      `;
+
+      const harvestBtn = document.createElement('button');
+      harvestBtn.className = 'svga-btn';
+      harvestBtn.style.cssText = 'width: 100%; height: 36px; font-weight: bold; font-size: 11px;';
+      harvestBtn.textContent = '⛏️ Dispatch Caravan to Harvest';
+      harvestBtn.onclick = () => {
+        if (this.onAssignHarvest) this.onAssignHarvest();
+      };
+      resBox.appendChild(harvestBtn);
+
+      this.buildItemsContainerEl.appendChild(resBox);
+
+    } else {
+      // ------------------------------------------
+      // CASE D: NOTHING SELECTED -> DEFAULT BUILD PANEL
+      // ------------------------------------------
+      this.renderDefaultBuildPanel(buildingToPlace);
+    }
+  }
+
+  private renderBuildingUnitRecruitment(selectedBuilding: BuildingEntity, isUnderConstruction: boolean): void {
+    if (!this.buildItemsContainerEl || !selectedBuilding.def.producesUnits) return;
+
+    for (const uId of selectedBuilding.def.producesUnits) {
+      const uDef = UNITS[uId];
+      if (!uDef) continue;
+      if (uDef.unlockEra === 'early_iron') continue;
+      if (this.unlockedUnits.length > 0 && !this.unlockedUnits.includes(uId)) continue;
+
+      const uCostHtml = this.formatCostHtml(uDef.cost);
+      const uCostText = this.formatCostTooltip(uDef.cost);
+      const shortName = uId === 'spear_militia' ? 'Spearman' :
+                        (uId === 'skirmisher' ? 'Slinger' :
+                        (uId === 'highland_skirmisher' ? 'Highlander' :
+                        (uId === 'composite_bowman' ? 'Bowman' :
+                        (uId === 'bronze_swordsman' ? 'Khopesh' :
+                        (uId === 'donkey_caravan' ? 'Caravan' : uDef.name.split(' ')[0])))));
+
+      const trainBtn = document.createElement('button');
+      trainBtn.className = 'svga-btn build-btn';
+      trainBtn.style.cssText = selectedBuilding.def.producesUnits.length === 1 ? 'grid-column: 1 / -1; width: 100%;' : '';
+      const trainSeconds = uDef.trainTime || 5;
+      trainBtn.title = isUnderConstruction ?
+        `Cannot train during construction (${Math.floor(selectedBuilding.buildProgress * 100)}%)` :
+        `Train ${uDef.name} (${uCostText}, Supply: ${uDef.supplyCost}, Time: ${trainSeconds}s) - ${uDef.description}`;
+      if (isUnderConstruction) {
+        trainBtn.style.opacity = '0.5';
+        trainBtn.style.cursor = 'not-allowed';
+      }
+      trainBtn.innerHTML = `
+        <div style="font-weight: bold; font-size: 11px;">Train ${shortName}</div>
+        <div style="font-size: 9px; color: #fbbf24;">(${trainSeconds}s, Pop: ${uDef.supplyCost})</div>
+        <div style="font-size: 9px; margin-top: 2px;">${uCostHtml}</div>
+      `;
+      trainBtn.onclick = () => {
+        if (isUnderConstruction) {
+          EventBus.get().emit('advisor:message', {
+            speaker: 'tarkhunta',
+            text: 'The structure is still swarming with carpenters! Wait for scaffolding removal.',
+            isAlert: true
+          });
+          return;
+        }
+        if (this.onTrainUnit) this.onTrainUnit(uId);
+      };
+      this.buildItemsContainerEl.appendChild(trainBtn);
+    }
+
+    // Live Training Queue & Progress Display (full-width spanning both columns)
+    if (selectedBuilding.trainingQueue && selectedBuilding.trainingQueue.length > 0) {
+      const queueBox = document.createElement('div');
+      queueBox.style.cssText = 'grid-column: 1 / -1; margin-top: 6px; padding: 4px 6px; background: #1c140e; border: 1px solid #78350f; border-radius: 2px; width: 100%; box-sizing: border-box;';
+      const current = selectedBuilding.trainingQueue[0];
+      const curDef = UNITS[current.unitDefId];
+      const curShortName = curDef ? curDef.name.split(' ')[0] : current.unitDefId;
+      const progressPct = Math.max(0, Math.min(100, Math.floor((1 - current.remainingTime / current.totalTime) * 100)));
+      queueBox.innerHTML = `
+        <div style="display: flex; justify-content: space-between; font-size: 10px; color: #fbbf24; font-weight: bold;">
+          <span>Training: ${curShortName}</span>
+          <span>${Math.ceil(current.remainingTime)}s (${progressPct}%)</span>
+        </div>
+        <div style="width: 100%; height: 5px; background: #332211; margin-top: 3px; border: 1px solid #553311; border-radius: 1px; overflow: hidden;">
+          <div style="width: ${progressPct}%; height: 100%; background: #38bdf8;"></div>
+        </div>
+        ${selectedBuilding.trainingQueue.length > 1 ? `
+          <div style="font-size: 9px; color: #94a3b8; margin-top: 3px;">
+            Queued (+${selectedBuilding.trainingQueue.length - 1}): ${selectedBuilding.trainingQueue.slice(1).map(q => UNITS[q.unitDefId]?.name.split(' ')[0] || q.unitDefId).join(', ')}
+          </div>
+        ` : ''}
+      `;
+      this.buildItemsContainerEl.appendChild(queueBox);
     }
   }
 

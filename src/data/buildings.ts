@@ -91,10 +91,10 @@ export const BUILDINGS: Record<string, BuildingDef> = {
     maxHp: 1000,
     cost: { copper: 150, timber: 100 },
     buildTime: 12,
-    description: 'Trains tower-shield spearmen, Levantine slingers, Cypriot composite bowmen, and assault infantry.',
+    description: 'Trains tower-shield spearmen, Levantine slingers, Highland skirmishers, Cypriot composite bowmen, and assault infantry.',
     requiresFoundation: true,
     foundationPenaltyHpRatio: 0.5,
-    producesUnits: ['spear_militia', 'skirmisher', 'composite_bowman', 'bronze_swordsman', 'iron_infantry']
+    producesUnits: ['spear_militia', 'skirmisher', 'highland_skirmisher', 'composite_bowman', 'bronze_swordsman', 'iron_infantry']
   },
 
   watchtower: {
@@ -113,6 +113,22 @@ export const BUILDINGS: Record<string, BuildingDef> = {
     attackRange: 5.5,
     damage: 22,
     attackRate: 1.2
+  },
+
+  signal_beacon: {
+    id: 'signal_beacon',
+    name: 'Signal Beacon Spire',
+    category: 'defense',
+    width: 2,
+    height: 2,
+    maxHp: 950,
+    cost: { copper: 60, stone: 160, timber: 140 },
+    buildTime: 12,
+    description: 'A monumental stone brazier spire on high ground. Its soaring signal flame dispels the shroud of war across the entire map, granting vision of terrain and all enemy movements.',
+    requiresFoundation: true,
+    foundationPenaltyHpRatio: 0.5,
+    revealsEntireMap: true,
+    radarRange: 999
   },
 
   chariot_stable: {

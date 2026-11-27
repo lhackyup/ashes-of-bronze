@@ -1,0 +1,173 @@
+{
+  "id": "scenario_07_into_stone_gorges",
+  "title": "Scenario VII: Into the Stone Gorges",
+  "act": 2,
+  "era": "collapse",
+  "map": {
+    "width": 64,
+    "height": 64,
+    "biome": "taurus_mountains",
+    "seed": 1172
+  },
+  "player": {
+    "faction": "player",
+    "startPosition": { "tx": 12, "ty": 50 },
+    "initialResources": {
+      "copper": 450,
+      "tin": 35,
+      "iron": 0,
+      "grain": 350,
+      "stone": 320,
+      "timber": 280
+    },
+    "unlockedBuildings": [
+      "cyclopean_slab",
+      "cyclopean_wall",
+      "acropolis",
+      "granary",
+      "bronze_foundry",
+      "barracks",
+      "watchtower",
+      "signal_beacon"
+    ],
+    "unlockedUnits": [
+      "donkey_caravan",
+      "spear_militia",
+      "skirmisher",
+      "highland_skirmisher",
+      "composite_bowman",
+      "bronze_swordsman"
+    ]
+  },
+  "opponents": [
+    {
+      "id": "lukka_mountain_tribes",
+      "faction": "sea_peoples",
+      "aiProfile": "aggressive_raider",
+      "waves": [
+        {
+          "triggerTimeSeconds": 45,
+          "spawnEdge": "north",
+          "units": [
+            { "type": "skirmisher", "count": 3 },
+            { "type": "spear_militia", "count": 2 }
+          ],
+          "advisorWarning": "Zalpa: Mountain raiders spotted scrambling down the rocky shelves! Deploy our Highland Skirmishers to seize the ridges before their javelins pin our vanguard down!"
+        },
+        {
+          "triggerTimeSeconds": 110,
+          "spawnEdge": "east",
+          "units": [
+            { "type": "sea_raider", "count": 3 },
+            { "type": "shardana_torchbearer", "count": 2 }
+          ],
+          "advisorWarning": "Tarkhunta: Protect the pack donkeys! If our provisions and mining tools fall into the gorge, the expedition will starve before we reach the black stones!"
+        },
+        {
+          "triggerTimeSeconds": 190,
+          "spawnEdge": "north",
+          "units": [
+            { "type": "spear_militia", "count": 4 },
+            { "type": "skirmisher", "count": 3 },
+            { "type": "bronze_swordsman", "count": 1 }
+          ],
+          "advisorWarning": "Burna-Khabir: Savage hillmen descending from the northern crags! Hold the narrow defile with spear phalanxes and rain javelins into their unprotected flanks!"
+        },
+        {
+          "triggerTimeSeconds": 270,
+          "spawnEdge": "east",
+          "units": [
+            { "type": "sea_raider", "count": 4 },
+            { "type": "shardana_torchbearer", "count": 3 },
+            { "type": "bronze_swordsman", "count": 2 }
+          ],
+          "advisorWarning": "Zalpa: Concentrated rush through the rocky riverbed! Our Highland Skirmishers hold the elevation advantage: let them loose from the canyon heights!"
+        },
+        {
+          "triggerTimeSeconds": 350,
+          "spawnEdge": "north",
+          "units": [
+            { "type": "rival_warlord", "count": 1 },
+            { "type": "sea_raider", "count": 4 },
+            { "type": "bronze_swordsman", "count": 2 },
+            { "type": "skirmisher", "count": 3 }
+          ],
+          "advisorWarning": "Tarkhunta: The Lukka Mountain Chieftain marches forth to defend his sacred rock shrine! Slay him and the black iron veins of the Taurus are ours forever!"
+        }
+      ]
+    }
+  ],
+  "objectives": {
+    "primary": [
+      {
+        "id": "defend_megaron",
+        "type": "protect_entity",
+        "description": "Preserve the Expedition Redoubt: Protect your Mountain Acropolis at (12, 50).",
+        "targetId": "acropolis",
+        "isPrimary": true
+      },
+      {
+        "id": "train_skirmishers",
+        "type": "train_units",
+        "description": "Highland Mountain Vanguard: Train at least 4 Highland Skirmishers to fight across rocky ridges.",
+        "targetId": "highland_skirmisher",
+        "targetAmount": 4,
+        "isPrimary": true
+      },
+      {
+        "id": "gather_iron",
+        "type": "gather_resource",
+        "description": "The Dark Stones of the Sky: Mine and harvest at least 250 Iron Ore from the mountain hematite veins.",
+        "targetId": "iron",
+        "targetAmount": 250,
+        "isPrimary": true
+      },
+      {
+        "id": "slay_warlord",
+        "type": "destroy_entity",
+        "description": "Defeat the Lukka Mountain Chieftain commanding the high defiles.",
+        "targetId": "rival_warlord",
+        "isPrimary": true
+      }
+    ],
+    "secondary": [
+      {
+        "id": "destroy_war_camps",
+        "type": "destroy_entity",
+        "description": "Clear the High Defiles: Raze the 2 Lukka ambush outposts on the eastern ridges.",
+        "targetId": "sea_camp",
+        "targetAmount": 2,
+        "isPrimary": false
+      },
+      {
+        "id": "preserve_watchtowers",
+        "type": "preserve_entity",
+        "description": "Maintain Mountain Surveillance: Keep at least 2 Watchtowers or Signal Beacons standing.",
+        "targetId": "watchtower",
+        "targetAmount": 2,
+        "isPrimary": false
+      }
+    ]
+  },
+  "narrative": {
+    "briefing": "Year 1172 BC. Overseas tin is extinct; our golden khopesh swords can no longer be repaired and noble chariots are useless in the rocky Taurus passes. Tarkhunta leads an armed expeditionary vanguard into the razor-sharp limestone gorges of Anatolia, pursuing ancient tales whispered by mountain hermits of heavy black stones fallen from the sky that can be smelted without tin. Deploy the newly recruited Highland Skirmishers to secure the rocky shelves against savage Lukka raiders, uncover the dark veins of hematite, and open humanity's path toward the Iron Age.",
+    "advisorPortrait": "tarkhunta",
+    "dialogues": [
+      {
+        "condition": "start",
+        "speaker": "tarkhunta",
+        "message": "Listen to the wind howl between these limestone jaws, Wanax. Chariots cannot turn here, and bronze is dead. But these dark, heavy stones high above... if the legends of the mountain smiths hold true, they hold the secret of an unyielding new metal."
+      },
+      {
+        "condition": "skirmishers_ready",
+        "speaker": "zalpa",
+        "message": "The Highland Skirmishers have scaled the upper ledges! With their pelta shields and heavy javelins, no Lukka ambusher can strike our caravans from the cliffs without tasting bronze."
+      },
+      {
+        "condition": "iron_discovered",
+        "speaker": "tarkhunta",
+        "message": "By the gods of the forge, look at the ore! Heavy as lead, dark as midnight! It is hematite iron! Pack the baskets: civilization will forge a new dawn from this rock!"
+      }
+    ]
+  }
+}

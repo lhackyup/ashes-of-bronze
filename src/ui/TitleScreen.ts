@@ -1,5 +1,6 @@
 import { EventBus } from '../core/EventBus.ts';
 import { SaveManager } from '../services/SaveManager.ts';
+import { CAMPAIGN_SCENARIOS } from '../data/campaignActs.ts';
 
 export class TitleScreen {
   private overlayEl: HTMLElement | null = null;
@@ -190,7 +191,7 @@ export class TitleScreen {
     if (continueBtn) {
       if (save.completedScenarios.length > 0) {
         continueBtn.style.display = 'flex';
-        continueBtn.textContent = `▶ CONTINUE (${save.completedScenarios.length}/18 CLEARED)`;
+        continueBtn.textContent = `▶ CONTINUE (${save.completedScenarios.length}/${CAMPAIGN_SCENARIOS.length} CLEARED)`;
       } else {
         continueBtn.textContent = '▶ START CAMPAIGN';
       }

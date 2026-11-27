@@ -111,15 +111,18 @@ export class ObjectiveManager {
 
   public recordEnemyKilled(defId?: string): void {
     this.stats.enemiesSlain++;
-    if (defId === 'shardana_warlord') {
+    if (defId === 'shardana_warlord' || defId === 'rival_warlord') {
       this.warlordSlain = true;
+      const isShardana = defId === 'shardana_warlord';
       EventBus.get().emit('advisor:message', {
         speaker: 'burna_khabir',
-        text: 'The Shardana Fleet Warlord has fallen! His horned helmet rolls in the sand and his reavers scatter in terror!',
+        text: isShardana
+          ? 'The Shardana Fleet Warlord has fallen! His horned helmet rolls in the sand and his reavers scatter in terror!'
+          : 'The Rival Warlord has fallen! His battered bronze chariot lies shattered and his desperate host scatters into the hills!',
         isAlert: false
       });
       EventBus.get().emit('fx:floating_text', {
-        text: 'SHARDANA FLEET WARLORD DEFEATED!',
+        text: isShardana ? 'SHARDANA FLEET WARLORD DEFEATED!' : 'RIVAL WARLORD DEFEATED!',
         color: '#f59e0b',
         x: 28 * 48,
         y: 28 * 48 - 30
@@ -144,10 +147,10 @@ export class ObjectiveManager {
     const resources = economy.resources;
     this.stats.tinHarvested = Math.max(this.stats.tinHarvested, Math.floor(resources.tin));
 
-    // 1. Check Defeat: Loss of Acropolis
+    // 1. Check Defeat: Loss of Acropolis / Royal Cuneiform Library
     const playerAcropolis = buildings.find(b => b.owner === 'player' && b.defId === 'acropolis');
     if (!playerAcropolis || playerAcropolis.hp <= 0) {
-      this.triggerDefeat('The Acropolis of Kadesh-on-Sea has fallen to the Sea Peoples!');
+      this.triggerDefeat('The Royal Cuneiform Library & Acropolis has been destroyed! The wisdom and history of the Bronze Age is lost forever.');
       return;
     }
 
@@ -243,10 +246,26 @@ export class ObjectiveManager {
         } else {
           allPrimariesDone = false;
         }
+      } else if (obj.id === 'build_signal_beacon' || (obj.type === 'build_building' && obj.targetId === 'signal_beacon')) {
+        const beacons = buildings.filter(b => b.owner === 'player' && b.defId === 'signal_beacon' && b.buildProgress >= 1.0);
+        obj.currentAmount = beacons.length;
+        if (beacons.length >= (obj.targetAmount || 1)) {
+          this.completeObjective(obj);
+        } else {
+          allPrimariesDone = false;
+        }
       } else if (obj.id === 'train_bowmen' || (obj.type === 'train_units' && obj.targetId === 'composite_bowman')) {
         const bowmen = units.filter(u => u.owner === 'player' && u.defId === 'composite_bowman');
         obj.currentAmount = bowmen.length;
         if (bowmen.length >= (obj.targetAmount || 3)) {
+          this.completeObjective(obj);
+        } else {
+          allPrimariesDone = false;
+        }
+      } else if (obj.id === 'train_skirmishers' || (obj.type === 'train_units' && obj.targetId === 'highland_skirmisher')) {
+        const skirmishers = units.filter(u => u.owner === 'player' && u.defId === 'highland_skirmisher');
+        obj.currentAmount = skirmishers.length;
+        if (skirmishers.length >= (obj.targetAmount || 4)) {
           this.completeObjective(obj);
         } else {
           allPrimariesDone = false;
@@ -266,26 +285,36 @@ export class ObjectiveManager {
         } else {
           allPrimariesDone = false;
         }
-      } else if (obj.id === 'gather_tin' || obj.id === 'gather_cargo' || obj.type === 'gather_resource') {
-        obj.currentAmount = Math.floor(resources.tin);
-        if (resources.tin >= (obj.targetAmount || 200)) {
+      } else if (obj.id === 'gather_iron' || (obj.type === 'gather_resource' && obj.targetId === 'iron')) {
+        obj.currentAmount = Math.floor(resources.iron);
+        if (resources.iron >= (obj.targetAmount || 250)) {
           this.completeObjective(obj);
-        } else {
+        } else if (obj.isPrimary) {
           allPrimariesDone = false;
         }
-      } else if (obj.id === 'survive_sea_peoples' || obj.id === 'survive_siege') {
+      } else if (obj.id === 'gather_tin' || obj.id === 'gather_cargo' || obj.type === 'gather_resource') {
+        const totalTin = Math.max(Math.floor(resources.tin), this.stats.tinHarvested);
+        obj.currentAmount = totalTin;
+        if (totalTin >= (obj.targetAmount || 200)) {
+          this.completeObjective(obj);
+        } else if (obj.isPrimary) {
+          allPrimariesDone = false;
+        }
+      } else if (obj.id === 'survive_sea_peoples' || obj.id === 'survive_siege' || obj.id === 'survive_assault') {
         const targetWaves = obj.targetAmount || tactical.getTotalWavesCount() || this.totalWaves || 1;
         const repelled = tactical.getRepelledWavesCount();
+        const hostileUnits = units.filter(u => u.owner !== 'player' && u.owner !== 'neutral' && u.hp > 0).length;
         obj.currentAmount = repelled;
 
-        // Objective completes when all designated assault waves have been completely repelled
-        if (repelled >= targetWaves) {
+        // Objective completes when all designated assault waves have been completely repelled,
+        // or if warlord is slain and there are no remaining hostile units/waves
+        if (repelled >= targetWaves || (this.warlordSlain && hostileUnits === 0 && tactical.getRemainingWavesCount() === 0)) {
           obj.currentAmount = targetWaves;
           this.completeObjective(obj);
         } else {
           allPrimariesDone = false;
         }
-      } else if (obj.id === 'slay_warlord' || (obj.type === 'destroy_entity' && obj.targetId === 'shardana_warlord')) {
+      } else if (obj.id === 'slay_warlord' || (obj.type === 'destroy_entity' && (obj.targetId === 'shardana_warlord' || obj.targetId === 'rival_warlord'))) {
         if (this.warlordSlain) {
           obj.currentAmount = 1;
           this.completeObjective(obj);
@@ -308,12 +337,15 @@ export class ObjectiveManager {
         const targetReq = obj.targetAmount || 1;
         if (remainingHostileBldgs === 0) {
           obj.currentAmount = targetReq;
-          this.completeObjective(obj);
+          if (!obj.isCompleted) {
+            this.completeObjective(obj);
+            EventBus.get().emit('tactical:trigger_final_wave');
+          }
         } else {
           obj.currentAmount = 0;
         }
       } else if (obj.id === 'preserve_watchtowers') {
-        const survivingTowers = buildings.filter(b => b.owner === 'player' && b.defId === 'watchtower' && b.hp > 0).length;
+        const survivingTowers = buildings.filter(b => b.owner === 'player' && (b.defId === 'watchtower' || b.defId === 'signal_beacon') && b.hp > 0).length;
         obj.currentAmount = survivingTowers;
         if (survivingTowers < (obj.targetAmount || 2)) {
           obj.isFailed = true;

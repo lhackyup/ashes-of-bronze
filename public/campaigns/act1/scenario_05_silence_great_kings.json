@@ -1,0 +1,163 @@
+{
+  "id": "scenario_05_silence_great_kings",
+  "title": "Scenario V: Silence of the Great Kings",
+  "act": 1,
+  "era": "late_bronze",
+  "map": {
+    "width": 60,
+    "height": 60,
+    "biome": "cyclopean_ruins",
+    "seed": 1177
+  },
+  "player": {
+    "faction": "player",
+    "startPosition": { "tx": 28, "ty": 28 },
+    "initialResources": {
+      "copper": 650,
+      "tin": 130,
+      "iron": 0,
+      "grain": 450,
+      "stone": 450,
+      "timber": 380
+    },
+    "unlockedBuildings": [
+      "cyclopean_slab",
+      "cyclopean_wall",
+      "acropolis",
+      "granary",
+      "bronze_foundry",
+      "barracks",
+      "watchtower",
+      "chariot_stable"
+    ],
+    "unlockedUnits": [
+      "donkey_caravan",
+      "spear_militia",
+      "skirmisher",
+      "composite_bowman",
+      "bronze_swordsman",
+      "war_chariot"
+    ]
+  },
+  "opponents": [
+    {
+      "id": "sea_peoples_coalition_armada",
+      "faction": "sea_peoples",
+      "aiProfile": "aggressive_raider",
+      "waves": [
+        {
+          "triggerTimeSeconds": 45,
+          "spawnEdge": "west",
+          "units": [
+            { "type": "sea_raider", "count": 2 },
+            { "type": "shardana_torchbearer", "count": 2 }
+          ],
+          "advisorWarning": "Zalpa: Feathered prows and bird-carved keels spotted across the western shoals! Sea marauders are attempting to torch our vanguard refugee supply trains!"
+        },
+        {
+          "triggerTimeSeconds": 105,
+          "spawnEdge": "north",
+          "units": [
+            { "type": "sea_raider", "count": 3 },
+            { "type": "skirmisher", "count": 2 },
+            { "type": "shardana_torchbearer", "count": 1 }
+          ],
+          "advisorWarning": "Burna-Khabir: Columns of barbarian raiders descending from the northern defiles! Guard the portal to the Royal Cuneiform Archives before the sacred tablets turn to dust!"
+        },
+        {
+          "triggerTimeSeconds": 175,
+          "spawnEdge": "west",
+          "units": [
+            { "type": "sea_raider", "count": 4 },
+            { "type": "shardana_torchbearer", "count": 2 }
+          ],
+          "advisorWarning": "Tarkhunta: Second amphibious landing wave hitting the bluffs! Hold ranks with the spear phalanx: we have zero overseas tin to recast broken bronze blades!"
+        },
+        {
+          "triggerTimeSeconds": 250,
+          "spawnEdge": "north",
+          "units": [
+            { "type": "sea_raider", "count": 5 },
+            { "type": "skirmisher", "count": 2 },
+            { "type": "shardana_torchbearer", "count": 2 }
+          ],
+          "advisorWarning": "Zalpa: Massed overland advance through the ruins! Unleash the Royal War Chariots down the paved palace concourse to sweep their archer flanks!"
+        },
+        {
+          "triggerTimeSeconds": 330,
+          "spawnEdge": "west",
+          "units": [
+            { "type": "shardana_warlord", "count": 1 },
+            { "type": "sea_raider", "count": 5 },
+            { "type": "shardana_torchbearer", "count": 3 }
+          ],
+          "advisorWarning": "Burna-Khabir: The Supreme Chieftain of the Sea Peoples Coalition has come ashore with his royal vanguard! Stand firm: if we shatter his horde, the memory of the Bronze Age shall survive!"
+        }
+      ]
+    }
+  ],
+  "objectives": {
+    "primary": [
+      {
+        "id": "defend_megaron",
+        "type": "protect_entity",
+        "description": "Preserve the Cuneiform Library: Protect your Royal Library Acropolis at (28, 28) from being destroyed.",
+        "targetId": "acropolis",
+        "isPrimary": true
+      },
+      {
+        "id": "survive_siege",
+        "type": "survive_time",
+        "description": "Repel all 5 assault waves of the combined Sea Peoples invasion force.",
+        "targetAmount": 5,
+        "isPrimary": true
+      },
+      {
+        "id": "slay_warlord",
+        "type": "destroy_entity",
+        "description": "Slay the Supreme Coalition Warlord leading the annihilation of Ugarit.",
+        "targetId": "shardana_warlord",
+        "isPrimary": true
+      }
+    ],
+    "secondary": [
+      {
+        "id": "destroy_war_camps",
+        "type": "destroy_entity",
+        "description": "Break the Coastal Blockade: raze the 2 fortified Sea Peoples forward camps in the northwest.",
+        "targetId": "sea_camp",
+        "targetAmount": 2,
+        "isPrimary": false
+      },
+      {
+        "id": "gather_cargo",
+        "type": "gather_resource",
+        "description": "Emergency Tin Salvage: recover at least 250 bars of tin by mining the merchant vault at (34, 18) or sacking Sea Peoples camps.",
+        "targetId": "tin",
+        "targetAmount": 250,
+        "isPrimary": false
+      }
+    ]
+  },
+  "narrative": {
+    "briefing": "Year 1177 BC. The world of the Great Kings has fallen silent. Hattusa is a bed of cold embers, Mycenae is ashes, and Egypt has sealed her Delta borders. The cosmopolitan merchant capital of Ugarit is burning under sea barbarian onslaught. The Wanax marches at the head of our royal army on an emergency mandate: extract the clay tablets of the Royal Cuneiform Library, salvage the last bronze bullion from merchant vaults, and crush the supreme Sea Peoples Coalition Chieftain before the Bronze Age is extinguished forever!",
+    "advisorPortrait": "burna_khabir",
+    "dialogues": [
+      {
+        "condition": "start",
+        "speaker": "burna_khabir",
+        "message": "My Wanax, look upon the ruins: the Great Kings are silent, and here in Ugarit the memory of our entire civilization is burning. If these inscribed clay tablets are pulverized, humanity plunges into centuries of illiterate darkness."
+      },
+      {
+        "condition": "ramparts_built",
+        "speaker": "tarkhunta",
+        "message": "The cyclopean ramparts are anchored among the shattered palace columns! Husband every bar of bronze: no warrior who falls today can easily be replaced!"
+      },
+      {
+        "condition": "camps_destroyed",
+        "speaker": "zalpa",
+        "message": "The coastal blockade camps are burning to cinders! Our evacuation caravans have a clear corridor southward: now let us break their supreme warlord upon the rocks!"
+      }
+    ]
+  }
+}

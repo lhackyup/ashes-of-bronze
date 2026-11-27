@@ -72,6 +72,10 @@ export class UnitFSM {
     units: UnitEntity[],
     buildings: BuildingEntity[]
   ): void {
+    if (u.isHalted) {
+      return; // A halted unit strictly stands ground and never auto-acquires targets!
+    }
+
     // Se è un'unità da combattimento, cerca nemici vicini entro raggio di guardia (8 tile)
     if (u.def.category === 'infantry' || u.def.category === 'skirmisher' || u.def.category === 'chariot') {
       const aggroRange = (u.def.attackRange || 2) * TILE_SIZE + 320;
@@ -102,8 +106,14 @@ export class UnitFSM {
   }
 
   private static handleMove(u: UnitEntity, dt: number, graph: GridGraph, units?: UnitEntity[]): void {
-    // If military unit on a manual move order, scan for encroaching enemies within aggro sight (5 tiles)
-    if (u.state === 'MOVE_TO' && units && (u.def.category === 'infantry' || u.def.category === 'skirmisher' || u.def.category === 'chariot')) {
+    if (u.isHalted) {
+      u.path = [];
+      u.state = 'IDLE';
+      return;
+    }
+
+    // If military unit on an attack-move order, scan for encroaching enemies within aggro sight (5 tiles)
+    if (u.isAttackMove && u.state === 'MOVE_TO' && units && (u.def.category === 'infantry' || u.def.category === 'skirmisher' || u.def.category === 'chariot')) {
       const aggroRange = (u.def.attackRange || 2.0) * TILE_SIZE + 180;
       for (const other of units) {
         if (UnitFSM.isEnemy(u.owner, other.owner) && other.hp > 0) {
@@ -461,8 +471,8 @@ export class UnitFSM {
                 u.state = 'IDLE';
                 // Immediately acquire another target if available
                 this.handleIdle(u, units, buildings);
-              } else if (victim.targetEntityId === null || victim.state === 'IDLE' || victim.state === 'MOVE_TO') {
-                // Immediate tactical retaliation against the attacker if valid enemy
+              } else if (!victim.isHalted && (victim.targetEntityId === null || victim.state === 'IDLE' || (victim.state === 'MOVE_TO' && victim.isAttackMove))) {
+                // Immediate tactical retaliation against the attacker if valid enemy and not explicitly halted
                 if (UnitFSM.isEnemy(victim.owner, u.owner)) {
                   victim.targetEntityId = u.id;
                   victim.state = 'ATTACK_TARGET';

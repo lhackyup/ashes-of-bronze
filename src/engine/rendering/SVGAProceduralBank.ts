@@ -1574,6 +1574,155 @@ export class SVGAProceduralBank {
         ctx.fillRect(47, -1, 2, 3); // Roof peak finial
       }));
 
+      // 5b. Signal Beacon Spire (2x2 tiles = 96x96)
+      // Monumental megalithic stone pyre tower topped with a giant roaring fire brazier
+      this.buildingSprites.set(`signal_beacon_${owner}`, this.makeBuildingSprite(96, (ctx) => {
+        // Ground shadow
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+        ctx.fillRect(14, 20, 68, 72);
+
+        // Stepped megalithic stone footing apron
+        const footG = ctx.createLinearGradient(16, 72, 80, 92);
+        footG.addColorStop(0, '#a39688');
+        footG.addColorStop(0.5, '#6e6355');
+        footG.addColorStop(1, '#3b3329');
+        ctx.fillStyle = footG;
+        ctx.beginPath();
+        ctx.ellipse(48, 82, 32, 11, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#261f18';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // Monumental stepped stone pyramid tower shaft
+        const towerG = ctx.createLinearGradient(20, 26, 76, 82);
+        towerG.addColorStop(0, '#f1ede7');
+        towerG.addColorStop(0.3, '#c2b5a7');
+        towerG.addColorStop(0.75, '#75695c');
+        towerG.addColorStop(1, '#332b23');
+        ctx.fillStyle = towerG;
+
+        ctx.beginPath();
+        ctx.moveTo(30, 24); // Top left platform
+        ctx.lineTo(66, 24); // Top right platform
+        ctx.lineTo(76, 82); // Bottom right
+        ctx.lineTo(20, 82); // Bottom left
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#241d16';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Horizontal ashlar courses
+        ctx.strokeStyle = 'rgba(30, 24, 18, 0.45)';
+        ctx.lineWidth = 1;
+        for (let ly = 32; ly <= 78; ly += 8) {
+          const ratio = (ly - 24) / 58;
+          const leftX = 30 - ratio * 10;
+          const rightX = 66 + ratio * 10;
+          ctx.beginPath(); ctx.moveTo(leftX, ly); ctx.lineTo(rightX, ly); ctx.stroke();
+        }
+
+        // Stepped central sacrificial stairs on front face
+        for (let s = 0; s < 7; s++) {
+          const sw = 18 + s * 2;
+          const sx = 48 - sw / 2;
+          const sy = 48 + s * 5;
+          ctx.fillStyle = '#b8ada0';
+          ctx.fillRect(sx, sy, sw, 4);
+          ctx.strokeStyle = '#3d342a';
+          ctx.strokeRect(sx, sy, sw, 4);
+        }
+
+        // Faction Banners hanging on lower bastions
+        ctx.fillStyle = cMain;
+        ctx.fillRect(24, 52, 6, 14);
+        ctx.fillRect(66, 52, 6, 14);
+        ctx.fillStyle = cTrim;
+        ctx.fillRect(25, 64, 4, 3);
+        ctx.fillRect(67, 64, 4, 3);
+
+        // Summit Fire Platform with Stone Balustrades
+        ctx.fillStyle = '#d6ccc0';
+        ctx.fillRect(24, 18, 48, 7);
+        ctx.strokeStyle = '#322920';
+        ctx.strokeRect(24, 18, 48, 7);
+
+        // Corner stone pillars with miniature oil lamps
+        for (const px of [25, 67]) {
+          ctx.fillStyle = '#8f8274';
+          ctx.fillRect(px, 12, 4, 7);
+          ctx.fillStyle = '#f59e0b';
+          ctx.fillRect(px + 1, 10, 2, 3);
+        }
+
+        // Giant Central Bronze Fire Cauldron / Brazier
+        const brazierG = ctx.createLinearGradient(34, 16, 62, 16);
+        brazierG.addColorStop(0, '#d97706');
+        brazierG.addColorStop(0.5, '#f59e0b');
+        brazierG.addColorStop(1, '#78350f');
+        ctx.fillStyle = brazierG;
+        ctx.beginPath();
+        ctx.ellipse(48, 16, 16, 6, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#451a03';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // Heavy iron pedestal legs holding the cauldron
+        ctx.fillStyle = '#1c1917';
+        ctx.fillRect(38, 18, 3, 5);
+        ctx.fillRect(47, 18, 3, 5);
+        ctx.fillRect(55, 18, 3, 5);
+
+        // Glowing cedar charcoal bed inside the brazier
+        ctx.fillStyle = '#dc2626';
+        ctx.beginPath();
+        ctx.ellipse(48, 15, 13, 4, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Roaring Signal Fire: Multilayered stylized flames leaping to the sky
+        ctx.fillStyle = '#ea580c';
+        ctx.beginPath();
+        ctx.moveTo(36, 15);
+        ctx.quadraticCurveTo(40, -4, 46, -10);
+        ctx.quadraticCurveTo(49, -2, 52, -12);
+        ctx.quadraticCurveTo(57, -3, 60, 15);
+        ctx.closePath();
+        ctx.fill();
+
+        // Inner brilliant yellow flame core
+        ctx.fillStyle = '#fde047';
+        ctx.beginPath();
+        ctx.moveTo(40, 15);
+        ctx.quadraticCurveTo(44, 2, 48, -7);
+        ctx.quadraticCurveTo(51, 3, 56, 15);
+        ctx.closePath();
+        ctx.fill();
+
+        // White-hot flame heart
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(48, 11, 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Floating fiery sparks & embers
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(43, -12, 2, 2);
+        ctx.fillRect(51, -15, 2, 2);
+        ctx.fillRect(47, -19, 2.5, 2.5);
+        ctx.fillRect(39, -8, 1.5, 1.5);
+        ctx.fillRect(56, -9, 1.5, 1.5);
+
+        // Billowing ash and cedar smoke plumes drifting across the sky
+        ctx.fillStyle = 'rgba(75, 85, 99, 0.45)';
+        ctx.beginPath(); ctx.arc(49, -18, 6, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = 'rgba(100, 116, 139, 0.35)';
+        ctx.beginPath(); ctx.arc(45, -26, 8, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = 'rgba(148, 163, 184, 0.25)';
+        ctx.beginPath(); ctx.arc(42, -36, 11, 0, Math.PI * 2); ctx.fill();
+      }));
+
       // 6. Royal War Chariot Stables & Wheelwright Forge (3x3 tiles = 144x144)
       // Authentic 2.5D Late Bronze Age royal chariot compound:
       // Megalithic stone socle, twin war horse stalls with bay & chestnut horses,
@@ -3047,6 +3196,121 @@ export class SVGAProceduralBank {
         ctx.lineTo(1, 11);
         ctx.stroke();
       }
+      ctx.restore();
+
+    } else if (u.defId === 'highland_skirmisher') {
+      // --- HIGHLAND MOUNTAIN SKIRMISHER (Taurus mountain warrior, crescent pelta shield, heavy javelins, wool hood) ---
+      const isAttacking = u.state === 'ATTACK_TARGET' && u.attackCooldown > 0;
+      const throwPhase = isAttacking ? Math.sin((u.attackCooldown / (u.def.attackCooldown || 1.0)) * Math.PI) : 0;
+
+      // 1. High-top Mountain Gaiters & Leather Boots (cross-laced for climbing)
+      ctx.fillStyle = '#44403c'; // Dark mountain gaiters
+      ctx.fillRect(-4, 3, 3, 9 + bob);
+      ctx.fillRect(2, 3, 3, 9 - bob);
+      ctx.fillStyle = '#78350f'; // Leather climbing boots
+      ctx.fillRect(-5, 11 + bob, 5, 2.5);
+      ctx.fillRect(1, 11 - bob, 5, 2.5);
+      // Cross strapping
+      ctx.strokeStyle = '#a8a29e';
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(-4, 4 + bob); ctx.lineTo(-1, 11 + bob);
+      ctx.moveTo(2, 4 - bob); ctx.lineTo(5, 11 - bob);
+      ctx.stroke();
+
+      // 2. Mountain Wool Tunic & Hooded Cloak
+      ctx.fillStyle = '#57534e'; // Earthen wool tunic
+      ctx.fillRect(-5, -6 + bob * 0.5, 10, 10);
+      ctx.fillStyle = cMain; // Faction sash
+      ctx.fillRect(-5, 0 + bob * 0.5, 10, 2);
+
+      // Woolen hooded cowl around shoulders
+      ctx.fillStyle = '#44403c';
+      ctx.beginPath();
+      ctx.ellipse(0, -7 + bob * 0.5, 7, 4, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Side Flint/Bronze Dagger at belt
+      ctx.fillStyle = '#292524';
+      ctx.fillRect(3, -1 + bob * 0.5, 2, 6);
+      ctx.fillStyle = '#f59e0b'; // Bronze pommel
+      ctx.fillRect(3, -2 + bob * 0.5, 2, 1.5);
+
+      // 3. Head & Mountain Cap/Hood
+      ctx.fillStyle = '#bfa58d'; // Weathered skin
+      ctx.fillRect(-3, -12 + bob * 0.5, 6, 6);
+      ctx.fillStyle = '#292524'; // Mountain Capote
+      ctx.fillRect(-4, -14 + bob * 0.5, 8, 3.5);
+      ctx.fillStyle = cTrim; // Headband ribbon
+      ctx.fillRect(-4, -12 + bob * 0.5, 8, 1.2);
+
+      // 4. Back Quiver with Spare Javelins (3 bronze leaf points pointing upward)
+      ctx.save();
+      ctx.translate(4, -8 + bob * 0.5);
+      ctx.rotate(-0.4);
+      // Quiver tube
+      ctx.fillStyle = '#573919';
+      ctx.fillRect(0, 0, 4.5, 12);
+      ctx.strokeStyle = '#291807';
+      ctx.lineWidth = 0.8;
+      ctx.strokeRect(0, 0, 4.5, 12);
+      // 2 protruding javelin shafts
+      ctx.strokeStyle = '#a16207';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(1, 0); ctx.lineTo(1, -7);
+      ctx.moveTo(3, 0); ctx.lineTo(3, -9);
+      ctx.stroke();
+      // Bronze leaf points
+      ctx.fillStyle = '#fbbf24';
+      ctx.beginPath(); ctx.moveTo(1, -7); ctx.lineTo(0, -9); ctx.lineTo(1, -12); ctx.lineTo(2, -9); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(3, -9); ctx.lineTo(2, -11); ctx.lineTo(3, -14); ctx.lineTo(4, -11); ctx.closePath(); ctx.fill();
+      ctx.restore();
+
+      // 5. Crescent Pelta Shield (Held on left arm)
+      ctx.save();
+      ctx.translate(-7, -4 + bob * 0.5);
+      // Crescent wicker/rawhide shield shape
+      ctx.fillStyle = cMain;
+      ctx.beginPath();
+      ctx.arc(0, 0, 6.5, -Math.PI * 0.7, Math.PI * 0.7);
+      ctx.quadraticCurveTo(2, 0, 0, -6.5 * Math.sin(Math.PI * 0.7));
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#78350f'; // Rawhide rim
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      // Central bronze boss
+      ctx.fillStyle = '#f59e0b';
+      ctx.beginPath(); ctx.arc(0, 0, 2, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+
+      // 6. Right Arm & Heavy Throwing Javelin (poised to hurl or held high)
+      ctx.save();
+      ctx.translate(4, -9 + bob * 0.5);
+      if (isAttacking) {
+        ctx.rotate(-0.2 + throwPhase * 0.7);
+      } else {
+        ctx.rotate(isMoving ? Math.sin(animPhase) * 0.25 : 0.1);
+      }
+      // Wooden javelin shaft
+      ctx.strokeStyle = '#854d0e';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(-10, -2);
+      ctx.lineTo(12, -2);
+      ctx.stroke();
+      // Bronze armor-piercing javelin head
+      ctx.fillStyle = '#fbbf24';
+      ctx.beginPath();
+      ctx.moveTo(12, -4);
+      ctx.lineTo(17, -2);
+      ctx.lineTo(12, 0);
+      ctx.closePath();
+      ctx.fill();
+      // Leather throwing thong (ankyle) wrapped at balance point
+      ctx.fillStyle = '#dc2626';
+      ctx.fillRect(0, -3, 3, 2);
       ctx.restore();
 
     } else if (u.defId === 'bronze_swordsman') {

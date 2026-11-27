@@ -23,6 +23,8 @@ export class BuildingEntity {
   public isSelected: boolean = false;
   public constructionParticleTimer: number = 0;
   public trainingQueue: TrainingQueueItem[] = [];
+  public customName?: string;
+  public customDescription?: string;
 
   constructor(
     id: number,

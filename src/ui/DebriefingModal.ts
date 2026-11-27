@@ -7,9 +7,9 @@ import { CAMPAIGN_SCENARIOS } from '../data/campaignActs.ts';
 export class DebriefingModal {
   private overlayEl: HTMLElement | null = null;
   private onRestartCallback?: () => void;
-  private onNextCallback?: () => void;
+  private onNextCallback?: (fromScenarioId: string, nextScenarioId: string) => void;
 
-  constructor(onRestart?: () => void, onNext?: () => void) {
+  constructor(onRestart?: () => void, onNext?: (fromScenarioId: string, nextScenarioId: string) => void) {
     this.onRestartCallback = onRestart;
     this.onNextCallback = onNext;
   }
@@ -58,13 +58,19 @@ export class DebriefingModal {
     const titleText = isVictory ? `VICTORY: ${curMeta.title.toUpperCase()}` : 'DEFEAT: ASHES AND RUIN';
 
     const chronicleText = isVictory
-      ? (curScenarioId === 'scenario_04_siege_kadesh_sea'
-          ? 'Dawn breaks upon the smoking ramparts of Kadesh-on-Sea! The supreme nocturnal assault of the Sea Peoples has broken against our cyclopean walls. Their forward war camps have been reduced to smoldering ash, and the horned helmet of the Shardana Fleet Warlord lies shattered upon our sands. The Megaron stands unbroken, but as messengers arrive bearing dark news from across the sea, a chilling reality sets in: Hattusa has fallen, Mycenae is ashes, and Egypt has sealed its Delta... we are the last kingdom standing.'
-          : (curScenarioId === 'scenario_03_gate_of_cedars'
-              ? 'The Lebanon mountain passes echo with the thunder of royal chariot wheels! By the swift archery of our two-horse war chariots and the discipline of our mountain militia, the Shardana arsonists have been cut down. The sacred cedar groves stand unharmed, our foundries overflow with charcoal and timber, and the secret raider ambush camp has been burned to ash. The Gate of Cedars is barred against the sea invaders!'
-              : (curScenarioId === 'scenario_02_last_cargo_alashiya'
-                  ? 'The reefs of Ugarit run quiet. By the lethal range of our Cypriot bowmen and the courage of our donkey teams, the precious oxhide ingots of Alashiya have been hauled to safety! The Shardana raiding skiffs drift burning on the tide. Our foundries have secured the tin to forge our destiny!'
-                  : 'The sea churns red with the blood of the horned raiders. By blade, bow, and the unyielding strength of our cyclopean foundations, Kadesh-on-Sea has held fast! The cassiterite is secured in our storehouses, and the fires of our foundries will keep our people armed through the collapsing age.')))
+      ? (curScenarioId === 'scenario_07_into_stone_gorges'
+          ? "The limestone jaws of the Taurus echo with victory! By the fierce agility of our Highland Skirmishers and the courage of our expeditionary vanguard, the Lukka mountain warbands have been repelled and their chieftain slain. High within the northern defiles, the sacred hematite veins are secured: heavy dark iron ore fills our donkey panniers. The dawn of a new metal is at hand!"
+          : (curScenarioId === 'scenario_06_war_of_rags'
+              ? "The waters of the Orontes run red with fratricidal blood. King Benteshina has fallen, his shattered bronze armor sinking into the river mud, and the desperate warlord coalition is routed! The Signal Beacon Spire shines upon the borderlands, but our tin vaults are virtually empty: no more than 35 ingots remain. Tarkhunta sounds the march into the northern mountains!"
+              : (curScenarioId === 'scenario_05_silence_great_kings'
+                  ? "The flames of Ugarit flicker and fade across a sea of gray ash. From the burning ruins of the royal library, the heavily laden wagons of cuneiform tablets and the last oxhide ingots have reached safety behind our lines! The Supreme Warlord of the sea coalition lies broken upon the bluffs. Act I is fulfilled: the golden empires of the Bronze Age have fallen, but the torch of Kadesh burns bright in the dark!"
+                  : (curScenarioId === 'scenario_04_siege_kadesh_sea'
+                      ? 'Dawn breaks upon the smoking ramparts of Kadesh-on-Sea! The supreme nocturnal assault of the Sea Peoples has broken against our cyclopean walls. Their forward war camps have been reduced to smoldering ash, and the horned helmet of the Shardana Fleet Warlord lies shattered upon our sands. The Megaron stands unbroken, but as messengers arrive bearing dark news from across the sea, a chilling reality sets in: Hattusa has fallen, Mycenae is ashes, and Egypt has sealed its Delta... we are the last kingdom standing.'
+                      : (curScenarioId === 'scenario_03_gate_of_cedars'
+                          ? 'The Lebanon mountain passes echo with the thunder of royal chariot wheels! By the swift archery of our two-horse war chariots and the discipline of our mountain militia, the Shardana arsonists have been cut down. The sacred cedar groves stand unharmed, our foundries overflow with charcoal and timber, and the secret raider ambush camp has been burned to ash. The Gate of Cedars is barred against the sea invaders!'
+                          : (curScenarioId === 'scenario_02_last_cargo_alashiya'
+                              ? 'The reefs of Ugarit run quiet. By the lethal range of our Cypriot bowmen and the courage of our donkey teams, the precious oxhide ingots of Alashiya have been hauled to safety! The Shardana raiding skiffs drift burning on the tide. Our foundries have secured the tin to forge our destiny!'
+                              : 'The sea churns red with the blood of the horned raiders. By blade, bow, and the unyielding strength of our cyclopean foundations, Kadesh-on-Sea has held fast! The cassiterite is secured in our storehouses, and the fires of our foundries will keep our people armed through the collapsing age.'))))))
       : 'The walls of our settlement have crumbled into dust. The sea raiders have overrun our hearths, and our people scatter into the wilderness. The memory of our colony dissolves into the ashes of bronze...';
 
     if (isVictory) {
@@ -116,7 +122,7 @@ export class DebriefingModal {
             ${titleText}
           </div>
           <div style="font-size: 13px; color: #a89f91; font-style: italic; margin-top: 4px;">
-            Scenario I Chronicle — The Horned Sails
+            Scenario ${curMeta.scenarioIndex} Chronicle — ${curMeta.title}
           </div>
         </div>
 
@@ -211,8 +217,11 @@ export class DebriefingModal {
       document.getElementById('debrief-next-btn')?.addEventListener('click', () => {
         EventBus.get().emit('audio:click');
         this.hide();
-        if (this.onNextCallback) this.onNextCallback();
-        else window.location.reload();
+        if (this.onNextCallback) {
+          this.onNextCallback(curScenarioId, nextScenario?.id || '');
+        } else {
+          window.location.reload();
+        }
       });
     } else {
       document.getElementById('debrief-retry-btn')?.addEventListener('click', () => {

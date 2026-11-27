@@ -67,6 +67,23 @@ export const UNITS: Record<string, UnitDef> = {
     damageType: 'pierce'
   },
 
+  highland_skirmisher: {
+    id: 'highland_skirmisher',
+    name: 'Highland Skirmisher & Javelinier',
+    category: 'skirmisher',
+    maxHp: 155,
+    speed: 1.40,
+    cost: { copper: 40, timber: 30, stone: 15 },
+    trainTime: 4.5,
+    description: 'Agile mountain warrior armed with heavy armor-piercing javelins, crescent pelta shield, and flint dagger. Swift on rocky terrain, requiring no scarce tin.',
+    supplyCost: 1,
+    attackRange: 4.2,
+    damage: 22,
+    attackCooldown: 1.0,
+    armor: 2,
+    damageType: 'pierce'
+  },
+
   bronze_swordsman: {
     id: 'bronze_swordsman',
     name: 'Khopesh Bronze Warrior',
@@ -183,6 +200,23 @@ export const UNITS: Record<string, UnitDef> = {
     attackRange: 1.35,
     damage: 48,
     attackCooldown: 1.15,
+    armor: 6,
+    damageType: 'slash'
+  },
+
+  rival_warlord: {
+    id: 'rival_warlord',
+    name: 'Desperate Rival Warlord',
+    category: 'infantry',
+    maxHp: 1100,
+    speed: 1.10,
+    cost: { copper: 300, tin: 80 },
+    trainTime: 22.0,
+    description: 'Starving king of a fallen neighboring city-state. Clad in decaying bronze scale armor, wielding a massive broadsword to pillage our last tin stores.',
+    supplyCost: 3,
+    attackRange: 1.4,
+    damage: 52,
+    attackCooldown: 1.1,
     armor: 6,
     damageType: 'slash'
   }

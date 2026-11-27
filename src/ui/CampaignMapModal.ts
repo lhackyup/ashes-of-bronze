@@ -7,6 +7,7 @@ export class CampaignMapModal {
   private selectedScenario: CampaignScenarioMeta = CAMPAIGN_SCENARIOS[0];
   private selectedActIndex: number = 1;
   public onSelectScenario?: (scenarioId: string) => void;
+  public onShowInterlude?: (fromScenarioId: string, toScenarioId: string) => void;
   public onClose?: () => void;
 
   constructor() {
@@ -57,7 +58,7 @@ export class CampaignMapModal {
             border-radius: 3px;
             font-family: 'Cinzel', serif;
           ">
-            0 / 18 SCENARIOS SECURED
+            0 / 10 SCENARIOS SECURED
           </div>
         </div>
 
@@ -161,7 +162,19 @@ export class CampaignMapModal {
             <div id="intel-scenario-summary" style="font-size: 13px; line-height: 1.4; color: #f7efe1;"></div>
           </div>
 
-          <div style="margin-top: auto; padding-top: 12px;">
+          <div style="margin-top: auto; padding-top: 12px; display: flex; flex-direction: column; gap: 8px;">
+            <button id="intel-btn-interlude" class="svga-btn" style="
+              width: 100%;
+              padding: 8px;
+              font-size: 12px;
+              font-weight: bold;
+              background: #241c15;
+              border-color: #c9933b;
+              color: #ffd166;
+            ">
+              📜 HISTORICAL INTERLUDE
+            </button>
+
             <button id="intel-btn-deploy" class="svga-btn" style="
               width: 100%;
               padding: 12px;
@@ -192,14 +205,25 @@ export class CampaignMapModal {
       if (this.onClose) this.onClose();
     });
 
+    document.getElementById('intel-btn-interlude')?.addEventListener('click', () => {
+      if (!this.selectedScenario) return;
+      EventBus.get().emit('audio:click');
+      const curIdx = this.selectedScenario.scenarioIndex;
+      const prevScenario = curIdx > 1 ? CAMPAIGN_SCENARIOS[curIdx - 2] : null;
+      if (this.onShowInterlude) {
+        this.hide();
+        this.onShowInterlude(prevScenario ? prevScenario.id : 'scenario_01_horned_sails', this.selectedScenario.id);
+      }
+    });
+
     document.getElementById('intel-btn-deploy')?.addEventListener('click', () => {
       if (!this.selectedScenario) return;
       const save = SaveManager.get();
       const isCompleted = save.isScenarioCompleted(this.selectedScenario.id);
       const isCurrent = save.getData().currentScenarioId === this.selectedScenario.id;
 
-      // Allow if unlocked or already cleared (Scenarios 1, 2, 3 and 4 unlocked directly during dev)
-      if (isCurrent || isCompleted || this.selectedScenario.scenarioIndex <= 4) {
+      // Allow if unlocked or already cleared (Scenarios 1, 2, 3, 4, 5 unlocked directly during dev)
+      if (isCurrent || isCompleted || this.selectedScenario.scenarioIndex <= 5) {
         EventBus.get().emit('audio:command');
         this.hide();
         if (this.onSelectScenario) {
@@ -345,7 +369,7 @@ export class CampaignMapModal {
     const badge = document.getElementById('campaign-progress-badge');
     if (badge) {
       const totalCleared = save.getData().completedScenarios.length;
-      badge.textContent = `${totalCleared} / 18 SCENARIOS SECURED`;
+      badge.textContent = `${totalCleared} / ${CAMPAIGN_SCENARIOS.length} SCENARIOS SECURED`;
     }
   }
 

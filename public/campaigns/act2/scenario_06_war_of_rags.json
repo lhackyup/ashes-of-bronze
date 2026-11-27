@@ -1,0 +1,174 @@
+{
+  "id": "scenario_06_war_of_rags",
+  "title": "Scenario VI: The War of Rags and Bronze",
+  "act": 2,
+  "era": "collapse",
+  "map": {
+    "width": 64,
+    "height": 64,
+    "biome": "orontes_borderlands",
+    "seed": 1175
+  },
+  "player": {
+    "faction": "player",
+    "startPosition": { "tx": 16, "ty": 42 },
+    "initialResources": {
+      "copper": 550,
+      "tin": 90,
+      "iron": 0,
+      "grain": 400,
+      "stone": 380,
+      "timber": 320
+    },
+    "unlockedBuildings": [
+      "cyclopean_slab",
+      "cyclopean_wall",
+      "acropolis",
+      "granary",
+      "bronze_foundry",
+      "barracks",
+      "watchtower",
+      "signal_beacon",
+      "chariot_stable"
+    ],
+    "unlockedUnits": [
+      "donkey_caravan",
+      "spear_militia",
+      "skirmisher",
+      "highland_skirmisher",
+      "composite_bowman",
+      "bronze_swordsman",
+      "war_chariot"
+    ]
+  },
+  "opponents": [
+    {
+      "id": "rival_warlord_coalition",
+      "faction": "sea_peoples",
+      "aiProfile": "aggressive_raider",
+      "waves": [
+        {
+          "triggerTimeSeconds": 55,
+          "spawnEdge": "north",
+          "units": [
+            { "type": "skirmisher", "count": 3 },
+            { "type": "spear_militia", "count": 2 }
+          ],
+          "advisorWarning": "Zalpa: Desperate warbands from fallen neighboring cities have crossed the Orontes shallows! They are starving and screaming for our grain: hold the river fords!"
+        },
+        {
+          "triggerTimeSeconds": 125,
+          "spawnEdge": "east",
+          "units": [
+            { "type": "sea_raider", "count": 3 },
+            { "type": "shardana_torchbearer", "count": 2 }
+          ],
+          "advisorWarning": "Tarkhunta: Raiders creeping along the eastern bluffs! Erect a Signal Beacon Spire on high ground to pierce the fog across the entire valley so our archers can strike in time!"
+        },
+        {
+          "triggerTimeSeconds": 200,
+          "spawnEdge": "north",
+          "units": [
+            { "type": "bronze_swordsman", "count": 2 },
+            { "type": "spear_militia", "count": 4 },
+            { "type": "composite_bowman", "count": 2 }
+          ],
+          "advisorWarning": "Burna-Khabir: Former royal allies have formed a pact of madness! Clad in battered bronze cuirasses, they march to plunder our last tin ingots!"
+        },
+        {
+          "triggerTimeSeconds": 280,
+          "spawnEdge": "north",
+          "units": [
+            { "type": "war_chariot", "count": 1 },
+            { "type": "sea_raider", "count": 4 },
+            { "type": "shardana_torchbearer", "count": 2 }
+          ],
+          "advisorWarning": "Zalpa: Enemy war chariots splashing through the rocky riverbed! Form a phalanx of tower shields at the riverbank; do not let their wheels gain momentum on our plains!"
+        },
+        {
+          "triggerTimeSeconds": 360,
+          "spawnEdge": "north",
+          "units": [
+            { "type": "rival_warlord", "count": 1 },
+            { "type": "bronze_swordsman", "count": 3 },
+            { "type": "spear_militia", "count": 4 },
+            { "type": "composite_bowman", "count": 2 }
+          ],
+          "advisorWarning": "Burna-Khabir: King Benteshina of the Orontes borderlands has marched out in person! Clad in tarnished bronze scale armor, he seeks to seize our foundries or die trying!"
+        }
+      ]
+    }
+  ],
+  "objectives": {
+    "primary": [
+      {
+        "id": "defend_megaron",
+        "type": "protect_entity",
+        "description": "Preserve the Border Citadel: Protect your Megaron Acropolis at (16, 42) from destruction.",
+        "targetId": "acropolis",
+        "isPrimary": true
+      },
+      {
+        "id": "build_signal_beacon",
+        "type": "build_building",
+        "description": "Signal of the Heights: Erect a Signal Beacon Spire to permanently reveal the entire Orontes borderlands map.",
+        "targetId": "signal_beacon",
+        "targetAmount": 1,
+        "isPrimary": true
+      },
+      {
+        "id": "survive_siege",
+        "type": "survive_time",
+        "description": "Repel all 5 assault waves of the starving rival city-state coalition.",
+        "targetAmount": 5,
+        "isPrimary": true
+      },
+      {
+        "id": "slay_warlord",
+        "type": "destroy_entity",
+        "description": "Defeat Rival Warlord Benteshina leading the desperate assault.",
+        "targetId": "rival_warlord",
+        "isPrimary": true
+      }
+    ],
+    "secondary": [
+      {
+        "id": "destroy_war_camps",
+        "type": "destroy_entity",
+        "description": "Silence the Hostile Encampments: Raze the 2 rival forward siege camps across the Orontes.",
+        "targetId": "sea_camp",
+        "targetAmount": 2,
+        "isPrimary": false
+      },
+      {
+        "id": "gather_tin",
+        "type": "gather_resource",
+        "description": "Precious Bronze Reserves: Safeguard or stockpile at least 180 tin ingots without exhausting our supplies.",
+        "targetId": "tin",
+        "targetAmount": 180,
+        "isPrimary": false
+      }
+    ]
+  },
+  "narrative": {
+    "briefing": "Year 1175 BC. The catastrophic collapse of global trade networks has driven the surviving inland kingdoms into a fever of desperate madness. Tin is no longer brought from overseas; our neighbors' bronze blades are chipping and rust-bitten. King Benteshina of the northern Orontes has mobilized his starving armies, marching south to sack our royal foundries and strip our vaults of their last tin ingots. To survive on this vast 64x64 frontier, we must erect the newly perfected Signal Beacon Spire to banish the shroud of war and coordinate our defense against our fellow men.",
+    "advisorPortrait": "burna_khabir",
+    "dialogues": [
+      {
+        "condition": "start",
+        "speaker": "burna_khabir",
+        "message": "My Wanax, the world has truly gone mad. These are not sea invaders, but our former brothers from across the river, driven to bloodlust by starvation and the scarcity of bronze. We must hold the line."
+      },
+      {
+        "condition": "beacon_built",
+        "speaker": "tarkhunta",
+        "message": "The brazier fire of the Signal Beacon Spire roars into the heavens! Its flames illuminate every cliff, river ford, and approaching enemy column across the Orontes borderlands!"
+      },
+      {
+        "condition": "camps_destroyed",
+        "speaker": "zalpa",
+        "message": "The rival forward siege outposts are shattered! The remaining looters are fleeing in chaos back toward the northern hills!"
+      }
+    ]
+  }
+}

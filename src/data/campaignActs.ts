@@ -1,7 +1,7 @@
 export interface CampaignScenarioMeta {
   id: string;
   act: number;
-  scenarioIndex: number; // 1 to 18
+  scenarioIndex: number; // 1 to 10
   title: string;
   subtitle: string;
   region: string;
@@ -22,7 +22,7 @@ export interface CampaignActMeta {
 }
 
 export const CAMPAIGN_SCENARIOS: CampaignScenarioMeta[] = [
-  // --- ACT I: FIRE FROM THE SEA (1182 - 1177 BC) ---
+  // --- ACT I: THE BRONZE COLLAPSE (1182 - 1177 BC) ---
   {
     id: 'scenario_01_horned_sails',
     act: 1,
@@ -84,7 +84,7 @@ export const CAMPAIGN_SCENARIOS: CampaignScenarioMeta[] = [
     mapY: 41
   },
 
-  // --- ACT II: THE BRONZE ECLIPSE (1175 - 1160 BC) ---
+  // --- ACT II: THE ECLIPSE & THE DARK STONES (1175 - 1165 BC) ---
   {
     id: 'scenario_06_war_of_rags',
     act: 2,
@@ -110,139 +110,41 @@ export const CAMPAIGN_SCENARIOS: CampaignScenarioMeta[] = [
     mapY: 33
   },
   {
-    id: 'scenario_08_ambush_river_gorges',
+    id: 'scenario_08_secret_black_blade',
     act: 2,
     scenarioIndex: 8,
-    title: 'Ambush in the River Gorges',
-    subtitle: 'Infantry Shield-Wall Tactics',
-    region: 'Taurus Defiles',
-    yearBC: 1170,
-    summary: 'Chariots are useless in the narrow ravines. Coordinate infantry phalanxes and mountain skirmishers against Lukka ambushes.',
-    mapX: 61,
-    mapY: 30
-  },
-  {
-    id: 'scenario_09_heretic_smiths',
-    act: 2,
-    scenarioIndex: 9,
-    title: 'The Heretic Smiths',
-    subtitle: 'The Secret of Hematite',
+    title: 'The Secret of the Black Blade',
+    subtitle: 'The Heretic Smiths & The First Iron',
     region: 'Cilician Mountain Enclave',
     yearBC: 1165,
-    summary: 'Locate an isolated tribe smelting black hematite rock with double-chamber leather bellows. Shield their furnaces from raiders.',
+    summary: 'Locate an isolated enclave of heretic metallurgists smelting black hematite. Shield their furnaces from raiders and forge the first crude iron blade.',
     mapX: 58,
     mapY: 28
   },
-  {
-    id: 'scenario_10_first_black_blade',
-    act: 2,
-    scenarioIndex: 10,
-    title: 'The First Black Blade',
-    subtitle: 'Birth of Early Iron Metallurgy',
-    region: 'Tarkhunta’s Highlands Foundry',
-    yearBC: 1160,
-    summary: 'Escort the first raw iron ore back to the citadel. Tarkhunta casts the first forged iron sword: crude, but independent of overseas tin.',
-    mapX: 62,
-    mapY: 35
-  },
 
-  // --- ACT III: THE IRON FORGE (1155 - 1130 BC) ---
+  // --- ACT III: THE IRON DAWN (1150 - 1110 BC) ---
   {
-    id: 'scenario_11_flames_sacred_grove',
+    id: 'scenario_09_the_peoples_phalanx',
     act: 3,
-    scenarioIndex: 11,
-    title: 'Flames in the Sacred Grove',
-    subtitle: 'The First Iron Bloomery District',
-    region: 'Highland Iron Works',
-    yearBC: 1155,
-    summary: 'Construct industrial bloomery furnaces. Mass produce forged iron spearheads to break the monopoly of aristocratic bronze chariots.',
-    mapX: 57,
-    mapY: 31
-  },
-  {
-    id: 'scenario_12_the_peoples_army',
-    act: 3,
-    scenarioIndex: 12,
-    title: 'The People’s Army',
-    subtitle: 'Levies Armed in Steel',
-    region: 'Plain of Issus',
-    yearBC: 1150,
-    summary: 'Equip hundreds of peasants with iron spearheads. In open field combat, the disciplined iron phalanx shatters high-born chariot aristocrats.',
-    mapX: 63,
-    mapY: 38
-  },
-  {
-    id: 'scenario_13_liberation_orontes',
-    act: 3,
-    scenarioIndex: 13,
-    title: 'Liberation of the Orontes',
-    subtitle: 'Reclaiming the Granaries',
+    scenarioIndex: 9,
+    title: 'The People’s Phalanx',
+    subtitle: 'Liberation of the Orontes Granaries',
     region: 'Orontes Agricultural Basin',
-    yearBC: 1140,
-    summary: 'March south with iron legionaries to liberate fertile agricultural floodplains and granaries occupied by Sea Peoples reavers.',
+    yearBC: 1150,
+    summary: 'Equip mass peasant levies with cheap forged iron spearheads. March into the fertile floodplains to liberate the granaries and crush aristocratic bronze chariots.',
     mapX: 74,
     mapY: 46
   },
   {
-    id: 'scenario_14_levantine_founders',
+    id: 'scenario_10_the_iron_dawn',
     act: 3,
-    scenarioIndex: 14,
-    title: 'The Levantine Founders',
-    subtitle: 'Defense of the Bloomery Heart',
-    region: 'Central Foundry Citadel',
-    yearBC: 1130,
-    summary: 'A desperate coalition of decaying bronze warlords attacks our bloomeries to seize the secret of iron. Crush them with heavy infantry.',
-    mapX: 70,
-    mapY: 49
-  },
-
-  // --- ACT IV: DAWN OF THE NEW AGE (1125 - 1100 BC) ---
-  {
-    id: 'scenario_15_burning_docks',
-    act: 4,
-    scenarioIndex: 15,
-    title: 'Night of the Burning Docks',
-    subtitle: 'Three-Pronged Amphibious Raid',
-    region: 'Port of Kadesh',
-    yearBC: 1125,
-    summary: 'The supreme Sea Peoples coalition realizes our iron kingdom blocks their conquest. Repel a massive midnight multi-beach landing.',
-    mapX: 72,
-    mapY: 54
-  },
-  {
-    id: 'scenario_16_battle_stone_jaws',
-    act: 4,
-    scenarioIndex: 16,
-    title: 'Battle of Stone Jaws',
-    subtitle: 'Cyclopean Bastion Ambush',
-    region: 'Pass of Tyre',
-    yearBC: 1115,
-    summary: 'Channel the invading barbarian war horde into a towering stone canyon lined with ballistas and pitch trenches.',
-    mapX: 75,
-    mapY: 63
-  },
-  {
-    id: 'scenario_17_judgment_alashiya',
-    act: 4,
-    scenarioIndex: 17,
-    title: 'The Judgment of Alashiya',
-    subtitle: 'Naval Counter-Offensive to Cyprus',
-    region: 'Gulf of Cyprus',
-    yearBC: 1105,
-    summary: 'Launch an iron-clad fleet across the Great Green to strike the primary forward staging anchorage of the Shardana armada.',
-    mapX: 52,
-    mapY: 51
-  },
-  {
-    id: 'scenario_18_the_iron_dawn',
-    act: 4,
-    scenarioIndex: 18,
+    scenarioIndex: 10,
     title: 'The Iron Dawn',
     subtitle: 'Final Victory of the New Age',
-    region: 'The Capital of the New Age',
-    yearBC: 1100,
-    summary: 'The grand climactic clash: the combined iron army and cyclopean fortresses break the back of the Bronze Age collapse forever.',
-    mapX: 69,
+    region: 'The Citadel of the New Age',
+    yearBC: 1110,
+    summary: 'The grand climactic clash: repel the supreme combined land-and-sea invasion of the Sea Peoples coalition. The unbreakable iron legions secure the dawn of a new civilization.',
+    mapX: 70,
     mapY: 48
   }
 ];
@@ -250,34 +152,26 @@ export const CAMPAIGN_SCENARIOS: CampaignScenarioMeta[] = [
 export const CAMPAIGN_ACTS: CampaignActMeta[] = [
   {
     act: 1,
-    title: 'ACT I: FIRE FROM THE SEA',
-    subtitle: '1182 – 1177 BC · Survival, Coastal Defense & The Race for Tin',
+    title: 'ACT I: THE BRONZE COLLAPSE',
+    subtitle: '1182 – 1177 BC · Survival, Coastal Defense & The Broken Sea Trade',
     era: 'late_bronze',
     description: 'Great empires burn as mysterious fleets emerge from the western horizon. Cut off from world trade, our colony must salvage scarce tin and fortify the coastline.',
     scenarios: CAMPAIGN_SCENARIOS.filter(s => s.act === 1)
   },
   {
     act: 2,
-    title: 'ACT II: THE BRONZE ECLIPSE',
-    subtitle: '1175 – 1160 BC · Resource Depletion & The Mountain Enclaves',
+    title: 'ACT II: THE ECLIPSE & THE DARK STONES',
+    subtitle: '1175 – 1165 BC · Resource Depletion & The Mountain Enclaves',
     era: 'collapse',
-    description: 'With overseas tin exhausted, the old kingdoms turn upon one another. Tarkhunta leads an expedition into the Taurus Mountains in search of raw iron hematite.',
+    description: 'With overseas tin exhausted, the old kingdoms turn upon one another. Tarkhunta leads an expedition into the rugged Taurus Mountains to discover the secrets of black hematite.',
     scenarios: CAMPAIGN_SCENARIOS.filter(s => s.act === 2)
   },
   {
     act: 3,
-    title: 'ACT III: THE IRON FORGE',
-    subtitle: '1155 – 1130 BC · Democratization of War & Industrial Bloomeries',
+    title: 'ACT III: THE IRON DAWN',
+    subtitle: '1150 – 1110 BC · The People’s Phalanx & The Triumph of Steel',
     era: 'early_iron',
-    description: 'The secret of iron forging breaks the aristocratic monopoly of chariot warfare. Levies armed with cheap iron weapons shatter the remnants of bronze dynasties.',
+    description: 'The secret of iron forging breaks the aristocratic monopoly of bronze warfare. Armed with mass-produced iron, our legions shatter the invading Sea Peoples armadas forever.',
     scenarios: CAMPAIGN_SCENARIOS.filter(s => s.act === 3)
-  },
-  {
-    act: 4,
-    title: 'ACT IV: DAWN OF THE NEW AGE',
-    subtitle: '1125 – 1100 BC · The Climax & Birth of Iron Age Civilization',
-    era: 'iron_dawn',
-    description: 'The final confrontation against the combined warlords of the Sea Peoples. Out of the ashes of the Bronze Age, an unbreakable civilization is born.',
-    scenarios: CAMPAIGN_SCENARIOS.filter(s => s.act === 4)
   }
 ];

@@ -26,13 +26,15 @@ export class CouncilModal {
     const scenario = this.currentScenario;
     const scenarioMeta = scenario ? CAMPAIGN_SCENARIOS.find(s => s.id === scenario.id) : CAMPAIGN_SCENARIOS[0];
 
-    const title = scenario?.id === 'scenario_04_siege_kadesh_sea'
-      ? 'THE WAR COUNCIL: THE SIEGE OF KADESH-ON-SEA'
-      : (scenario?.id === 'scenario_03_gate_of_cedars'
-          ? 'THE WAR COUNCIL: THE GATE OF CEDARS'
-          : (scenario?.id === 'scenario_02_last_cargo_alashiya'
-              ? 'THE WAR COUNCIL: THE SHALLOWS OF UGARIT'
-              : 'THE WAR COUNCIL OF KADESH-ON-SEA'));
+    const title = scenario?.id === 'scenario_05_silence_great_kings'
+      ? 'THE WAR COUNCIL: SILENCE OF THE GREAT KINGS'
+      : (scenario?.id === 'scenario_04_siege_kadesh_sea'
+          ? 'THE WAR COUNCIL: THE SIEGE OF KADESH-ON-SEA'
+          : (scenario?.id === 'scenario_03_gate_of_cedars'
+              ? 'THE WAR COUNCIL: THE GATE OF CEDARS'
+              : (scenario?.id === 'scenario_02_last_cargo_alashiya'
+                  ? 'THE WAR COUNCIL: THE SHALLOWS OF UGARIT'
+                  : 'THE WAR COUNCIL OF KADESH-ON-SEA')));
 
     const subtitle = scenarioMeta
       ? `Scenario ${scenarioMeta.scenarioIndex}: ${scenarioMeta.title} — ${scenarioMeta.yearBC} BC, ${scenarioMeta.region}`
@@ -45,7 +47,11 @@ export class CouncilModal {
     let tarkhuntaText = "Copper is as soft as river mud without Cassiterite! Send Donkey Caravans to gather pure Tin for the armory.";
     let zalpaText = "Bird prows have been spotted off the coast. Deploy our forces to intercept the landing craft!";
 
-    if (scenario?.id === 'scenario_04_siege_kadesh_sea') {
+    if (scenario?.id === 'scenario_05_silence_great_kings') {
+      burnaText = "The Great Kings are silent, Wanax! Hattusa is cold ash and Mycenae lies in ruin. In Ugarit, the inscribed memory of our world is burning: extract the sacred tablets before civilization dissolves into three centuries of darkness!";
+      tarkhuntaText = "No overseas fleet will ever bring tin again! Every ingot salvaged from the ruins of Ugarit is precious as life: send Donkey Caravans to mine the ruined merchant vault at (34, 18) or sack enemy pirate camps to recover plundered tin!";
+      zalpaText = "Peleset and Shardana raiders have fortified two blockade outposts in the northwest to cut our retreat to Kar-Sur! Raze their camps with war chariots and shatter their supreme warlord!";
+    } else if (scenario?.id === 'scenario_04_siege_kadesh_sea') {
       burnaText = "The Great Green is filled with horned sails under the black sky! The Great Kings of Hatti and Mycenae are silent; only our Megaron still shines. If we fall tonight, humanity enters three centuries of darkness!";
       tarkhuntaText = "Erect Cyclopean Ramparts across every choke point! Lay heavy stone slabs and man the walls with composite bowmen. When the Shardana broadswords strike our megalithic stone, they will shatter!";
       zalpaText = "Wanax, the enemy has pitched a forward war camp in the northern gorge that will spawn raiding parties! We must use our War Chariots to sweep around and burn that camp to ash, or we will be harassed before their Warlord arrives!";
@@ -56,7 +62,7 @@ export class CouncilModal {
     } else if (scenario?.id === 'scenario_03_gate_of_cedars') {
       burnaText = "The sacred cedar groves of the Lebanon range are the lungs of our realm. If the Sea Peoples burn the timber passes, our city will starve and our furnaces turn cold.";
       tarkhuntaText = "Our bronze foundries have a voracious hunger for cedar charcoal! Stockpile at least 350 timber, and build the War Chariot Stables—without heavy bronze-tired wheels, we cannot hold the open valleys!";
-      zalpaText = "Mio Wanax! Scateniamo i Carri Reali a due cavalli! Nelle vaste pianure del passo, i nostri archi compositi calpesteranno gli incursori! E staniamo il loro covo nascosto nei boschi a nord-est!";
+      zalpaText = "My Wanax! Unleash the Royal Two-Horse War Chariots! Across the open plains of the pass, our composite bowmen will crush their arsonists and burn out their northeastern forest ambush!";
     }
 
     let objectivesListHtml = '';

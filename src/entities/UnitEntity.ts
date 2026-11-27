@@ -31,6 +31,8 @@ export class UnitEntity {
   // Combattimento
   public attackCooldown: number = 0;
   public isSelected: boolean = false;
+  public isHalted: boolean = false;
+  public isAttackMove: boolean = false;
 
   constructor(id: number, defId: string, owner: FactionId, x: number, y: number) {
     this.id = id;

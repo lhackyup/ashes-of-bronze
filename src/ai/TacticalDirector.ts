@@ -38,6 +38,7 @@ export class TacticalDirector {
   private waveUnitIds: Map<number, Set<number>> = new Map();
   private waveRepelled: Set<number> = new Set();
   private campSpawnTimers: Map<number, number> = new Map();
+  public forceFinalWave: boolean = false;
 
   constructor(scenario: ScenarioData, width: number, height: number) {
     this.flowField = new FlowField(width, height);
@@ -49,6 +50,10 @@ export class TacticalDirector {
     // Ordina per tempo di innesco
     this.waves.sort((a, b) => a.triggerTimeSeconds - b.triggerTimeSeconds);
     this.totalWavesCount = this.waves.length;
+
+    EventBus.get().on('tactical:trigger_final_wave', () => {
+      this.forceFinalWave = true;
+    });
   }
 
   public update(
@@ -83,6 +88,20 @@ export class TacticalDirector {
     // Ricalcola il Flow Field periodicamente verso il bersaglio tattico
     if (Math.floor(this.elapsedTime) % 4 === 0 && (!this.flowField.target || this.flowField.target.tx !== targetTx || this.flowField.target.ty !== targetTy)) {
       this.flowField.compute(graph, { tx: targetTx, ty: targetTy });
+    }
+
+    // Controlla attivazione forzata immediata dell'assalto finale (es. distruzione accampamenti nemici)
+    if (this.forceFinalWave && this.waves.length > 0) {
+      this.forceFinalWave = false;
+      EventBus.get().emit('advisor:message', {
+        speaker: 'zalpa',
+        text: 'The enemy coastal blockade camps are ablaze! Enraged by the destruction of their bases, the Sea Peoples Supreme Warlord launches his final desperate assault on the library!',
+        isAlert: true
+      });
+      while (this.waves.length > 0) {
+        const wave = this.waves.shift()!;
+        this.spawnWave(wave, graph, units, buildings);
+      }
     }
 
     // Controlla attivazione delle ondate
