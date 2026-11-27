@@ -118,6 +118,23 @@ export const UNITS: Record<string, UnitDef> = {
     damageType: 'slash'
   },
 
+  iron_phalangite: {
+    id: 'iron_phalangite',
+    name: 'Iron-Spiked Phalangite',
+    category: 'infantry',
+    maxHp: 240,
+    speed: 1.05,
+    cost: { iron: 45, grain: 25, copper: 20 },
+    trainTime: 5.5,
+    description: 'Disciplined mass infantry armed with an extended 4-meter pike with forged iron leaf-head and butt-spike, bronze/iron-scale cuirass, and round aspis shield. Exceptional reach (2.2 range) impales charging chariots and shock troops before contact.',
+    supplyCost: 1,
+    attackRange: 2.2,
+    damage: 28,
+    attackCooldown: 1.15,
+    armor: 3,
+    damageType: 'pierce'
+  },
+
   war_chariot: {
     id: 'war_chariot',
     name: 'Royal War Chariot (2 Horses)',

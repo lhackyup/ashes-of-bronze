@@ -74,6 +74,11 @@ export class EconomySystem {
           newMax.iron += 350;
           newMax.stone += 300;
           newMax.copper += 200;
+        } else if (b.defId === 'peoples_armory') {
+          // People's Levy Armory: expands iron, grain, stone storage
+          newMax.iron += 400;
+          newMax.grain += 400;
+          newMax.stone += 200;
         }
       }
     }

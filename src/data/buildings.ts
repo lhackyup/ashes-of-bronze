@@ -99,6 +99,23 @@ export const BUILDINGS: Record<string, BuildingDef> = {
     producesUnits: ['black_blade_warrior']
   },
 
+  peoples_armory: {
+    id: 'peoples_armory',
+    name: "People's Levy Armory & Forge",
+    category: 'military',
+    width: 3,
+    height: 3,
+    maxHp: 1100,
+    cost: { stone: 150, timber: 140, copper: 60 },
+    buildTime: 14,
+    description: 'Stone and cedar field armory where mass iron pike heads and reinforced shield fittings are forged in series. Expands storage (+400 Iron, +400 Grain, +200 Stone) and equips Iron-Spiked Phalangites.',
+    requiresFoundation: true,
+    foundationPenaltyHpRatio: 0.5,
+    storageProvided: 400,
+    dropsOffResources: ['iron', 'grain', 'stone', 'copper'],
+    producesUnits: ['iron_phalangite', 'spear_militia']
+  },
+
   barracks: {
     id: 'barracks',
     name: 'Militia Barracks & Forge',
@@ -108,10 +125,10 @@ export const BUILDINGS: Record<string, BuildingDef> = {
     maxHp: 1000,
     cost: { copper: 150, timber: 100 },
     buildTime: 12,
-    description: 'Trains tower-shield spearmen, Levantine slingers, Highland skirmishers, Cypriot composite bowmen, Black Blade warriors, and assault infantry.',
+    description: 'Trains tower-shield spearmen, Levantine slingers, Highland skirmishers, Cypriot composite bowmen, Black Blade warriors, Iron Phalangites, and assault infantry.',
     requiresFoundation: true,
     foundationPenaltyHpRatio: 0.5,
-    producesUnits: ['spear_militia', 'skirmisher', 'highland_skirmisher', 'composite_bowman', 'bronze_swordsman', 'black_blade_warrior', 'iron_infantry']
+    producesUnits: ['spear_militia', 'skirmisher', 'highland_skirmisher', 'composite_bowman', 'bronze_swordsman', 'black_blade_warrior', 'iron_phalangite', 'iron_infantry']
   },
 
   watchtower: {

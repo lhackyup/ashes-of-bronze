@@ -2506,6 +2506,181 @@ export class SVGAProceduralBank {
         ctx.fillStyle = cTrim;
         ctx.fillRect(14, 29, 2, 12);
       }));
+
+      // 7c. People's Levy Armory & Weapons Forge (Authentic 1150 BC Levantine Phalanx Armory, 3x3 tiles = 144x144)
+      this.buildingSprites.set(`peoples_armory_${owner}`, this.makeBuildingSprite(144, (ctx) => {
+        // --- 1. Stone & Earth Courtyard Apron ---
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.48)';
+        ctx.beginPath();
+        ctx.ellipse(72, 80, 68, 54, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Packed earthen & stone cobble courtyard
+        const yardG = ctx.createRadialGradient(72, 78, 18, 72, 78, 66);
+        yardG.addColorStop(0, '#382f25');
+        yardG.addColorStop(0.5, '#4a3f33');
+        yardG.addColorStop(1, '#635445');
+        ctx.fillStyle = yardG;
+        ctx.beginPath();
+        ctx.ellipse(72, 78, 64, 50, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // --- 2. Rear Dry-Stone Enclosure Walls ---
+        ctx.fillStyle = '#6e6252';
+        ctx.fillRect(14, 28, 116, 16);
+        ctx.fillStyle = '#52483a';
+        ctx.fillRect(14, 44, 116, 4); // Foundation ledge
+        // Ashlar stone joint lines
+        ctx.strokeStyle = '#2b241c';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        for (let wx = 14; wx < 130; wx += 14) {
+          ctx.moveTo(wx, 28); ctx.lineTo(wx, 44);
+        }
+        ctx.moveTo(14, 36); ctx.lineTo(130, 36);
+        ctx.stroke();
+
+        // --- 3. Open-Air Cedar Timber Armory Pavilion ---
+        // Heavy vertical cedar posts
+        const posts = [20, 52, 92, 122];
+        ctx.fillStyle = '#452b17';
+        for (const px of posts) {
+          ctx.fillRect(px, 32, 6, 68);
+          ctx.fillStyle = '#27170b';
+          ctx.fillRect(px, 98, 6, 4); // Post base
+          ctx.fillStyle = '#452b17';
+        }
+
+        // Horizontal cross-beams and bracing
+        ctx.fillStyle = '#5c3a21';
+        ctx.fillRect(18, 38, 108, 6);
+        ctx.fillRect(18, 56, 108, 5);
+
+        // Angled timber diagonal struts
+        ctx.strokeStyle = '#382111';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(22, 54); ctx.lineTo(36, 40);
+        ctx.moveTo(56, 54); ctx.lineTo(42, 40);
+        ctx.moveTo(94, 54); ctx.lineTo(108, 40);
+        ctx.moveTo(124, 54); ctx.lineTo(110, 40);
+        ctx.stroke();
+
+        // Terracotta pitched roof over the pavilion
+        this.drawRoofTiles(ctx, 12, 18, 120, 24, '#993d24', '#c25434');
+
+        // --- 4. Blacksmith's Weapons Hearth & Anvil Station (Left Side) ---
+        // Stone forge basin
+        ctx.fillStyle = '#3f362c';
+        ctx.fillRect(24, 62, 26, 20);
+        ctx.strokeStyle = '#1f1913';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(24, 62, 26, 20);
+
+        // Blazing coal hearth with radiant heat
+        const forgeFireG = ctx.createRadialGradient(37, 72, 2, 37, 72, 14);
+        forgeFireG.addColorStop(0, '#ffffff');
+        forgeFireG.addColorStop(0.3, '#fde047');
+        forgeFireG.addColorStop(0.7, '#ea580c');
+        forgeFireG.addColorStop(1, 'rgba(185, 28, 28, 0)');
+        ctx.fillStyle = forgeFireG;
+        ctx.fillRect(26, 64, 22, 16);
+
+        // Forge sparks
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(35, 58, 2, 2);
+        ctx.fillRect(39, 54, 2.5, 2.5);
+        ctx.fillRect(33, 50, 1.8, 1.8);
+
+        // Basalt anvil on oak stump
+        ctx.fillStyle = '#4a321f';
+        ctx.fillRect(28, 86, 14, 16);
+        ctx.fillStyle = '#334155';
+        ctx.fillRect(26, 82, 18, 7);
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(24, 83, 3, 5); // Anvil horn
+        ctx.fillStyle = '#64748b';
+        ctx.fillRect(28, 82, 14, 2); // Anvil shine
+
+        // Blacksmith hammer & tongs on anvil
+        ctx.fillStyle = '#d97706';
+        ctx.fillRect(32, 80, 5, 2.5);
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(34, 81, 7, 1.2);
+        // Quench barrel
+        ctx.fillStyle = '#382a1d';
+        ctx.fillRect(16, 88, 10, 14);
+        ctx.fillStyle = '#0284c7';
+        ctx.fillRect(17, 89, 8, 4);
+
+        // --- 5. Mass Weapons Racks & Iron Pikes (Center & Right) ---
+        // Horizontal wooden racks holding long pikes
+        ctx.fillStyle = '#452b17';
+        ctx.fillRect(58, 64, 58, 4);
+        ctx.fillRect(58, 82, 58, 4);
+
+        // Stacks of long 4-meter Iron-Tipped Pikes standing upright
+        for (let pk = 0; pk < 9; pk++) {
+          const px = 62 + pk * 6;
+          // Long ash-wood pike shaft
+          ctx.fillStyle = '#9a6b47';
+          ctx.fillRect(px, 32, 2, 56);
+          // Forged leaf-shaped iron spearhead
+          ctx.fillStyle = '#0f172a';
+          ctx.beginPath();
+          ctx.moveTo(px + 1, 22);
+          ctx.lineTo(px + 3.5, 28);
+          ctx.lineTo(px - 1.5, 28);
+          ctx.closePath();
+          ctx.fill();
+          // Whetted steel silver tip
+          ctx.fillStyle = '#f8fafc';
+          ctx.fillRect(px + 0.5, 22, 1, 4);
+          // Bronze ferrule collar
+          ctx.fillStyle = '#fbbf24';
+          ctx.fillRect(px - 0.5, 29, 3, 2);
+        }
+
+        // --- 6. Stacks of Round Hoplite-Style Aspis Shields (Front Right) ---
+        const shields = [
+          { x: 104, y: 92, r: 10 },
+          { x: 112, y: 95, r: 10 },
+          { x: 96, y: 98, r: 9 },
+          { x: 120, y: 99, r: 10 }
+        ];
+        for (const sh of shields) {
+          // Shield rim
+          ctx.fillStyle = '#334155';
+          ctx.beginPath(); ctx.arc(sh.x, sh.y, sh.r, 0, Math.PI * 2); ctx.fill();
+          // Shield body in faction color
+          ctx.fillStyle = cMain;
+          ctx.beginPath(); ctx.arc(sh.x, sh.y, sh.r - 2, 0, Math.PI * 2); ctx.fill();
+          // Central bronze/iron boss
+          ctx.fillStyle = '#fbbf24';
+          ctx.beginPath(); ctx.arc(sh.x, sh.y, 3, 0, Math.PI * 2); ctx.fill();
+        }
+
+        // Bundles of ash-wood pike shafts leaning against pillar
+        ctx.fillStyle = '#855431';
+        ctx.beginPath();
+        ctx.moveTo(90, 88); ctx.lineTo(95, 52); ctx.lineTo(97, 52); ctx.lineTo(93, 88);
+        ctx.closePath();
+        ctx.fill();
+
+        // --- 7. Faction War Pennant from Central Gable ---
+        ctx.fillStyle = '#3b2210';
+        ctx.fillRect(70, 4, 3, 28); // Central flagpole
+        // Billowing crimson/gold war banner
+        ctx.fillStyle = cMain;
+        ctx.beginPath();
+        ctx.moveTo(73, 6);
+        ctx.lineTo(96, 12);
+        ctx.lineTo(73, 19);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = cTrim;
+        ctx.fillRect(73, 6, 3, 13);
+      }));
     }
 
     // 8. Natural Wildlife Lair: Lion's Rocky Den (2x2 tiles = 96x96)
@@ -3880,6 +4055,139 @@ export class SVGAProceduralBank {
         ctx.lineWidth = 1.2;
         ctx.beginPath();
         ctx.arc(0, -24, 6, -Math.PI * 0.4, Math.PI * 0.4);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+    } else if (u.defId === 'iron_phalangite') {
+      // --- IRON-SPIKED PHALANGITE (Disciplined peasant phalanx, 4m iron-spiked pike, aspis shield, iron-scale linothorax) ---
+      const isAttacking = u.state === 'ATTACK_TARGET' && u.attackCooldown > 0;
+      const thrustPhase = isAttacking ? Math.sin((u.attackCooldown / (u.def.attackCooldown || 1.15)) * Math.PI) : 0;
+      const pikeLunge = thrustPhase * 16; // Significant forward reach thrust!
+
+      // 1. Dark Iron Greaves & Marching Gaiters
+      ctx.fillStyle = '#334155'; // Iron plate greaves
+      ctx.fillRect(-5, 3, 3.5, 9 + bob);
+      ctx.fillRect(2, 3, 3.5, 9 - bob);
+      ctx.fillStyle = '#64748b'; // Specular highlight
+      ctx.fillRect(-5, 4 + bob, 1, 7);
+      ctx.fillRect(2, 4 - bob, 1, 7);
+      ctx.fillStyle = '#292524'; // Leather sandals
+      ctx.fillRect(-5.5, 11 + bob, 4.5, 2.5);
+      ctx.fillRect(1.5, 11 - bob, 4.5, 2.5);
+
+      // 2. White Linen Linothorax with Blackened Iron Scales
+      ctx.fillStyle = '#f1f5f9'; // Layered white linen linothorax
+      ctx.fillRect(-6, -7 + bob * 0.5, 12, 10);
+      // Abdominal iron scale reinforcement
+      ctx.fillStyle = '#1e293b';
+      for (let sc = -5; sc <= 3; sc += 2.5) {
+        ctx.fillRect(sc, -3 + bob * 0.5, 2, 2.5);
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillRect(sc + 0.5, -2.5 + bob * 0.5, 1, 1);
+        ctx.fillStyle = '#1e293b';
+      }
+      // Faction waist sash & pteruges (linen shoulder/kilt flaps)
+      ctx.fillStyle = cMain;
+      ctx.fillRect(-6, 0 + bob * 0.5, 12, 2.5);
+      ctx.fillStyle = '#cbd5e1';
+      for (let pt = -5.5; pt <= 4; pt += 2) {
+        ctx.fillRect(pt, 2.5 + bob * 0.5, 1.5, 4);
+      }
+
+      // 3. Conical Iron Phalanx Helmet with Nasal Guard & Cheek Plates
+      ctx.fillStyle = '#334155';
+      ctx.beginPath();
+      ctx.moveTo(-5, -11 + bob * 0.5);
+      ctx.lineTo(0, -18 + bob * 0.5);
+      ctx.lineTo(5, -11 + bob * 0.5);
+      ctx.closePath();
+      ctx.fill();
+      // Bronze brow band
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillRect(-5, -12 + bob * 0.5, 10, 2);
+      // Iron nasal guard
+      ctx.fillStyle = '#64748b';
+      ctx.fillRect(-0.8, -12 + bob * 0.5, 1.6, 5);
+      // Cheek plates
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(-4.5, -10 + bob * 0.5, 1.5, 4);
+      ctx.fillRect(3, -10 + bob * 0.5, 1.5, 4);
+      // Resolute eyes
+      ctx.fillStyle = '#bfa58d'; // Skin
+      ctx.fillRect(-3, -10 + bob * 0.5, 6, 2.5);
+      ctx.fillStyle = '#0f172a'; // Eyes
+      ctx.fillRect(-2, -9 + bob * 0.5, 1, 1);
+      ctx.fillRect(1, -9 + bob * 0.5, 1, 1);
+
+      // 4. Large Round Aspis / Hoplon Shield (Left Arm - Held Forward)
+      ctx.save();
+      ctx.translate(-7, -3 + bob * 0.5);
+      // Shield body
+      ctx.fillStyle = '#334155'; // Outer iron/bronze rim
+      ctx.beginPath(); ctx.arc(0, 0, 8.5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = cMain; // Faction face
+      ctx.beginPath(); ctx.arc(0, 0, 7, 0, Math.PI * 2); ctx.fill();
+      // Faction chevron/stripe
+      ctx.fillStyle = cTrim;
+      ctx.fillRect(-5, -1.5, 10, 3);
+      // Central spike / boss
+      ctx.fillStyle = '#f8fafc';
+      ctx.beginPath(); ctx.arc(0, 0, 2.5, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+
+      // 5. THE 4-METER EXTENDED IRON-SPIKED PIKE (Right Arm & Forward)
+      ctx.save();
+      ctx.translate(4, -4 + bob * 0.5);
+      const pikeAngle = isAttacking ? 0.05 : -0.15;
+      ctx.rotate(pikeAngle);
+
+      // Long Ash-wood Pike Shaft (Extending 40px long!)
+      ctx.fillStyle = '#9a6b47';
+      ctx.fillRect(-14 + pikeLunge, -1, 38, 2.4);
+      ctx.fillStyle = '#784f30';
+      ctx.fillRect(-14 + pikeLunge, 0.4, 38, 1);
+
+      // Bronze/Iron Butt-Spike (Sauroter) at the rear
+      ctx.fillStyle = '#fbbf24';
+      ctx.beginPath();
+      ctx.moveTo(-14 + pikeLunge, -1.5);
+      ctx.lineTo(-20 + pikeLunge, 0.2);
+      ctx.lineTo(-14 + pikeLunge, 1.9);
+      ctx.closePath();
+      ctx.fill();
+
+      // Forged Leaf-Shaped Iron Spearhead at the front
+      const tipX = 24 + pikeLunge;
+      // Bronze ferrule
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillRect(tipX - 2, -1.5, 3, 3.4);
+      // Black iron spear blade
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.moveTo(tipX + 1, -2.5);
+      ctx.lineTo(tipX + 14, 0.2);
+      ctx.lineTo(tipX + 1, 2.9);
+      ctx.closePath();
+      ctx.fill();
+      // Tempered silvery razor cutting edge & spine highlight
+      ctx.strokeStyle = '#f8fafc';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(tipX + 1, -2.5);
+      ctx.lineTo(tipX + 14, 0.2);
+      ctx.lineTo(tipX + 1, 2.9);
+      ctx.stroke();
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(tipX + 3, -0.4, 8, 1.2);
+
+      // Dynamic attack thrust trail
+      if (isAttacking) {
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(tipX + 8, 0.2);
+        ctx.lineTo(tipX + 22, 0.2);
         ctx.stroke();
       }
       ctx.restore();

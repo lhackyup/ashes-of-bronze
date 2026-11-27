@@ -162,7 +162,79 @@ class GameApp {
 
     // Position starting buildings and units
     const pStart = scenario.player.startPosition;
-    if (scenario.id === 'scenario_08_secret_black_blade') {
+    if (scenario.id === 'scenario_09_the_peoples_phalanx') {
+      // Scenario 9: The People's Phalanx - Orontes Agricultural Floodplains (64x64)
+      this.gridGraph.setFoundation(pStart.tx, pStart.ty, 4, 4, true);         // Acropolis Enclave
+      this.gridGraph.setFoundation(pStart.tx + 5, pStart.ty - 2, 3, 3, true); // Terrace ready for People's Armory
+      this.gridGraph.setFoundation(pStart.tx - 5, pStart.ty, 2, 2, true);     // Granary
+      this.gridGraph.setFoundation(pStart.tx, pStart.ty - 5, 3, 3, true);     // Barracks
+      this.gridGraph.setFoundation(pStart.tx + 6, pStart.ty + 4, 2, 2, true); // East River Watchtower
+      this.gridGraph.setFoundation(pStart.tx - 5, pStart.ty - 4, 2, 2, true); // West Bluff Watchtower
+
+      // Core Enclave Buildings
+      const enclave = this.spawnBuilding('acropolis', 'player', pStart.tx, pStart.ty, true);
+      if (enclave) {
+        enclave.customName = 'Orontes Agricultural Enclave';
+        enclave.customDescription = 'Central fortified command post coordinating the granaries and the mobilization of the peasant phalanx.';
+      }
+
+      this.spawnBuilding('granary', 'player', pStart.tx - 5, pStart.ty, true);
+      this.spawnBuilding('barracks', 'player', pStart.tx, pStart.ty - 5, true);
+
+      // Guard Watchtowers monitoring river fords
+      this.spawnBuilding('watchtower', 'player', pStart.tx + 6, pStart.ty + 4, true);
+      this.spawnBuilding('watchtower', 'player', pStart.tx - 5, pStart.ty - 4, true);
+
+      // Cyclopean Rampart Walls creating chokepoint gates along the river approaches
+      const wallCoords = [
+        { tx: pStart.tx + 4, ty: pStart.ty - 6 },
+        { tx: pStart.tx + 5, ty: pStart.ty - 6 },
+        { tx: pStart.tx - 6, ty: pStart.ty - 1 },
+        { tx: pStart.tx - 6, ty: pStart.ty }
+      ];
+      for (const w of wallCoords) {
+        this.spawnBuilding('cyclopean_wall', 'player', w.tx, w.ty, true);
+      }
+
+      // Starting Defenders (Player constructs the People's Armory and trains Iron Phalangites during the mission!)
+      this.spawnUnit('donkey_caravan', 'player', (pStart.tx + 2) * TILE_SIZE + 24, (pStart.ty + 3) * TILE_SIZE + 24);
+      this.spawnUnit('donkey_caravan', 'player', (pStart.tx + 3) * TILE_SIZE + 24, (pStart.ty + 3) * TILE_SIZE + 24);
+      this.spawnUnit('spear_militia', 'player', (pStart.tx + 1) * TILE_SIZE + 24, (pStart.ty - 6) * TILE_SIZE + 24);
+      this.spawnUnit('spear_militia', 'player', (pStart.tx + 2) * TILE_SIZE + 24, (pStart.ty - 6) * TILE_SIZE + 24);
+      this.spawnUnit('spear_militia', 'player', (pStart.tx - 3) * TILE_SIZE + 24, (pStart.ty - 3) * TILE_SIZE + 24);
+      this.spawnUnit('skirmisher', 'player', (pStart.tx - 2) * TILE_SIZE + 24, (pStart.ty - 5) * TILE_SIZE + 24);
+      this.spawnUnit('skirmisher', 'player', (pStart.tx + 4) * TILE_SIZE + 24, (pStart.ty - 4) * TILE_SIZE + 24);
+      this.spawnUnit('composite_bowman', 'player', (pStart.tx - 3) * TILE_SIZE + 24, (pStart.ty - 1) * TILE_SIZE + 24);
+
+      // Rich Iron Deposits in northern river bluffs (tx: 12..14, ty: 36..37)
+      for (let dy = 0; dy < 2; dy++) {
+        for (let dx = 0; dx < 3; dx++) {
+          this.tileRenderer.setTile(12 + dx, 36 + dy, 'vein_iron', 900);
+          this.gridGraph.setTileCost(12 + dx, 36 + dy, 0);
+        }
+      }
+
+      // Two Hostile Forward Encampments across the Orontes River:
+      // Camp 1: Northern Riverbank Siege Camp (tx: 42, ty: 12)
+      const camp1Tx = 42;
+      const camp1Ty = 12;
+      this.gridGraph.setFoundation(camp1Tx, camp1Ty, 3, 3, true);
+      this.spawnBuilding('sea_camp', 'sea_peoples', camp1Tx, camp1Ty, true);
+      this.gridGraph.setFoundation(camp1Tx + 4, camp1Ty, 2, 2, true);
+      this.spawnBuilding('watchtower', 'sea_peoples', camp1Tx + 4, camp1Ty, true);
+      this.spawnUnit('skirmisher', 'sea_peoples', (camp1Tx + 1) * TILE_SIZE + 24, (camp1Ty + 4) * TILE_SIZE + 24);
+      this.spawnUnit('sea_raider', 'sea_peoples', (camp1Tx + 2) * TILE_SIZE + 24, (camp1Ty + 3) * TILE_SIZE + 24);
+
+      // Camp 2: Eastern Highland Siege Camp (tx: 52, ty: 32)
+      const camp2Tx = 52;
+      const camp2Ty = 32;
+      this.gridGraph.setFoundation(camp2Tx, camp2Ty, 3, 3, true);
+      this.spawnBuilding('sea_camp', 'sea_peoples', camp2Tx, camp2Ty, true);
+      this.gridGraph.setFoundation(camp2Tx, camp2Ty + 4, 3, 3, true);
+      this.spawnBuilding('barracks', 'sea_peoples', camp2Tx, camp2Ty + 4, true);
+      this.spawnUnit('spear_militia', 'sea_peoples', (camp2Tx + 1) * TILE_SIZE + 24, (camp2Ty + 2) * TILE_SIZE + 24);
+      this.spawnUnit('bronze_swordsman', 'sea_peoples', (camp2Tx + 2) * TILE_SIZE + 24, (camp2Ty + 3) * TILE_SIZE + 24);
+    } else if (scenario.id === 'scenario_08_secret_black_blade') {
       // Scenario 8: The Secret of the Black Blade - Cilician Taurus Bloomery Sanctuary (64x64)
       this.gridGraph.setFoundation(pStart.tx, pStart.ty, 4, 4, true);
       this.gridGraph.setFoundation(pStart.tx + 5, pStart.ty - 2, 3, 3, true); // Bloomery
@@ -2401,7 +2473,7 @@ class GameApp {
         targetFriendlyBuilding &&
         u.def.category === 'worker' &&
         (u.currentCargoAmount > 0 || u.state === 'WAITING_STORAGE') &&
-        (targetFriendlyBuilding.defId === 'acropolis' || targetFriendlyBuilding.defId === 'granary' || targetFriendlyBuilding.defId === 'bronze_foundry' || targetFriendlyBuilding.defId === 'iron_smelter' || targetFriendlyBuilding.defId === 'primitive_bloomery')
+        (targetFriendlyBuilding.defId === 'acropolis' || targetFriendlyBuilding.defId === 'granary' || targetFriendlyBuilding.defId === 'bronze_foundry' || targetFriendlyBuilding.defId === 'iron_smelter' || targetFriendlyBuilding.defId === 'primitive_bloomery' || targetFriendlyBuilding.defId === 'peoples_armory')
       ) {
         // Player directed donkey caravan to unload at a Granary, Megaron, or Foundry!
         const harvestTarget = u.targetMineCoord || u.lastHarvestCoord;

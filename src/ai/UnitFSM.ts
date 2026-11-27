@@ -855,7 +855,8 @@ export class UnitFSM {
                 b.defId === 'granary' ||
                 (b.defId === 'bronze_foundry' && (u.currentCargoType === 'copper' || u.currentCargoType === 'tin' || u.currentCargoType === 'iron' || u.currentCargoType === 'stone')) ||
                 (b.defId === 'iron_smelter' && u.currentCargoType === 'iron') ||
-                (b.defId === 'primitive_bloomery' && (u.currentCargoType === 'iron' || u.currentCargoType === 'stone' || u.currentCargoType === 'copper'))
+                (b.defId === 'primitive_bloomery' && (u.currentCargoType === 'iron' || u.currentCargoType === 'stone' || u.currentCargoType === 'copper')) ||
+                (b.defId === 'peoples_armory' && (u.currentCargoType === 'iron' || u.currentCargoType === 'grain' || u.currentCargoType === 'stone' || u.currentCargoType === 'copper'))
               )
             );
             if (dropoffs.length > 0) {
@@ -898,7 +899,8 @@ export class UnitFSM {
             b.defId === 'granary' ||
             (b.defId === 'bronze_foundry' && (u.currentCargoType === 'copper' || u.currentCargoType === 'tin' || u.currentCargoType === 'iron' || u.currentCargoType === 'stone')) ||
             (b.defId === 'iron_smelter' && u.currentCargoType === 'iron') ||
-            (b.defId === 'primitive_bloomery' && (u.currentCargoType === 'iron' || u.currentCargoType === 'stone' || u.currentCargoType === 'copper'))
+            (b.defId === 'primitive_bloomery' && (u.currentCargoType === 'iron' || u.currentCargoType === 'stone' || u.currentCargoType === 'copper')) ||
+            (b.defId === 'peoples_armory' && (u.currentCargoType === 'iron' || u.currentCargoType === 'grain' || u.currentCargoType === 'stone' || u.currentCargoType === 'copper'))
           )
         );
         if (dropoffs.length === 0) {

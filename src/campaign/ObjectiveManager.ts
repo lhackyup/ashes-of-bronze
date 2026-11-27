@@ -294,6 +294,22 @@ export class ObjectiveManager {
         } else {
           allPrimariesDone = false;
         }
+      } else if (obj.id === 'build_armory' || (obj.type === 'build_building' && obj.targetId === 'peoples_armory')) {
+        const armories = buildings.filter(b => b.owner === 'player' && b.defId === 'peoples_armory' && b.buildProgress >= 1.0);
+        obj.currentAmount = armories.length;
+        if (armories.length >= (obj.targetAmount || 1)) {
+          this.completeObjective(obj);
+        } else {
+          allPrimariesDone = false;
+        }
+      } else if (obj.id === 'train_phalangites' || obj.id === 'form_iron_phalanx' || (obj.type === 'train_units' && obj.targetId === 'iron_phalangite')) {
+        const phalangites = units.filter(u => u.owner === 'player' && u.defId === 'iron_phalangite');
+        obj.currentAmount = phalangites.length;
+        if (phalangites.length >= (obj.targetAmount || 6)) {
+          this.completeObjective(obj);
+        } else {
+          allPrimariesDone = false;
+        }
       } else if (obj.id === 'gather_timber' || (obj.type === 'gather_resource' && obj.targetId === 'timber')) {
         obj.currentAmount = Math.floor(resources.timber);
         if (resources.timber >= (obj.targetAmount || 350)) {

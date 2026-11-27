@@ -640,7 +640,8 @@ export class HUDController {
                         (uId === 'composite_bowman' ? 'Bowman' :
                         (uId === 'bronze_swordsman' ? 'Khopesh' :
                         (uId === 'black_blade_warrior' ? 'Black Blade' :
-                        (uId === 'donkey_caravan' ? 'Caravan' : uDef.name.split(' ')[0]))))));
+                        (uId === 'iron_phalangite' ? 'Phalangite' :
+                        (uId === 'donkey_caravan' ? 'Caravan' : uDef.name.split(' ')[0])))))));
 
       const trainBtn = document.createElement('button');
       trainBtn.className = 'svga-btn build-btn';

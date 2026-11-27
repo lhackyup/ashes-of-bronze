@@ -26,6 +26,8 @@
       "acropolis",
       "granary",
       "bronze_foundry",
+      "primitive_bloomery",
+      "peoples_armory",
       "barracks",
       "watchtower",
       "signal_beacon"
@@ -36,7 +38,9 @@
       "skirmisher",
       "highland_skirmisher",
       "composite_bowman",
-      "bronze_swordsman"
+      "bronze_swordsman",
+      "black_blade_warrior",
+      "iron_phalangite"
     ]
   },
   "opponents": [
@@ -86,6 +90,14 @@
         "isPrimary": true
       },
       {
+        "id": "build_armory",
+        "type": "build_building",
+        "description": "The People's Armory: Construct the People's Levy Armory on the stone foundation terrace.",
+        "targetId": "peoples_armory",
+        "targetAmount": 1,
+        "isPrimary": true
+      },
+      {
         "id": "liberate_granaries",
         "type": "gather_resource",
         "description": "Secure the Harvest: Stockpile at least 500 Grain in your depots.",
@@ -96,9 +108,9 @@
       {
         "id": "form_iron_phalanx",
         "type": "train_units",
-        "description": "Equip the People's Phalanx: Train at least 10 Spear Militia with forged iron spearheads.",
-        "targetId": "spear_militia",
-        "targetAmount": 10,
+        "description": "The People's Phalanx: Train at least 6 Iron-Spiked Phalangites at the Armory or Barracks.",
+        "targetId": "iron_phalangite",
+        "targetAmount": 6,
         "isPrimary": true
       }
     ],
@@ -120,12 +132,12 @@
       {
         "condition": "start",
         "speaker": "burna_khabir",
-        "message": "Look at these ranks! Farmers and carters armed with forged iron spearheads. When the noble bronze chariots charge, they will find an unbreakable wall of common steel!"
+        "message": "The age of aristocratic bronze monopoly is over! Erect the People's Levy Armory on our terrace, forge long iron pikes for the farmers and carters, and assemble an unbreakable wall of steel!"
       },
       {
         "condition": "phalanx_assembled",
         "speaker": "zalpa",
-        "message": "The phalanx is formed! The Orontes riverbanks are ours once more: civilization will not starve while iron defends the harvest!"
+        "message": "The Iron Phalanx is formed! The Orontes riverbanks are ours once more: civilization will not starve while common iron defends the harvest!"
       }
     ]
   }
