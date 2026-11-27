@@ -1,0 +1,132 @@
+{
+  "id": "scenario_10_the_iron_dawn",
+  "title": "Scenario X: The Iron Dawn",
+  "act": 3,
+  "era": "early_iron",
+  "map": {
+    "width": 64,
+    "height": 64,
+    "biome": "cyclopean_ruins",
+    "seed": 1110
+  },
+  "player": {
+    "faction": "player",
+    "startPosition": { "tx": 20, "ty": 42 },
+    "initialResources": {
+      "copper": 600,
+      "tin": 40,
+      "iron": 600,
+      "grain": 500,
+      "stone": 500,
+      "timber": 450
+    },
+    "unlockedBuildings": [
+      "cyclopean_slab",
+      "cyclopean_wall",
+      "acropolis",
+      "granary",
+      "bronze_foundry",
+      "barracks",
+      "watchtower",
+      "signal_beacon"
+    ],
+    "unlockedUnits": [
+      "donkey_caravan",
+      "spear_militia",
+      "skirmisher",
+      "highland_skirmisher",
+      "composite_bowman",
+      "bronze_swordsman"
+    ]
+  },
+  "opponents": [
+    {
+      "id": "supreme_sea_peoples_coalition",
+      "faction": "sea_peoples",
+      "aiProfile": "aggressive_raider",
+      "waves": [
+        {
+          "triggerTimeSeconds": 50,
+          "spawnEdge": "north",
+          "units": [
+            { "type": "skirmisher", "count": 4 },
+            { "type": "spear_militia", "count": 4 }
+          ],
+          "advisorWarning": "Zalpa: Horned sails and war horns on the northern horizon! The supreme Sea Peoples armada has made landfall!"
+        },
+        {
+          "triggerTimeSeconds": 130,
+          "spawnEdge": "east",
+          "units": [
+            { "type": "sea_raider", "count": 5 },
+            { "type": "shardana_torchbearer", "count": 4 }
+          ],
+          "advisorWarning": "Tarkhunta: Shardana elite assault battalions striking our eastern ramparts! Man the cyclopean walls and rain iron arrows upon their war galleys!"
+        },
+        {
+          "triggerTimeSeconds": 240,
+          "spawnEdge": "north",
+          "units": [
+            { "type": "shardana_warlord", "count": 1 },
+            { "type": "bronze_swordsman", "count": 5 },
+            { "type": "composite_bowman", "count": 4 },
+            { "type": "spear_militia", "count": 6 }
+          ],
+          "advisorWarning": "Burna-Khabir: The Grand Warlord of the Horned Armada has landed in person! Form up the Iron Phalanx! Today we break the back of the Bronze Age collapse forever!"
+        }
+      ]
+    }
+  ],
+  "objectives": {
+    "primary": [
+      {
+        "id": "defend_megaron",
+        "type": "protect_entity",
+        "description": "Defend the Iron Citadel of the New Age at (20, 42).",
+        "targetId": "acropolis",
+        "isPrimary": true
+      },
+      {
+        "id": "slay_warlord",
+        "type": "destroy_entity",
+        "description": "Slay the Supreme Fleet Warlord of the Sea Peoples coalition.",
+        "targetId": "shardana_warlord",
+        "isPrimary": true
+      },
+      {
+        "id": "crush_invasion",
+        "type": "destroy_entity",
+        "description": "Raze the 2 Sea Peoples forward invasion redoubts.",
+        "targetId": "sea_camp",
+        "targetAmount": 2,
+        "isPrimary": true
+      }
+    ],
+    "secondary": [
+      {
+        "id": "field_iron_legion",
+        "type": "train_units",
+        "description": "The Iron Vanguard: Field at least 15 active warriors armed in iron.",
+        "targetId": "spear_militia",
+        "targetAmount": 15,
+        "isPrimary": false
+      }
+    ]
+  },
+  "narrative": {
+    "briefing": "Year 1110 BC. The climactic final confrontation has arrived. Realizing that our burgeoning iron civilization is the only bulwark preventing their total dominion over the Mediterranean, the combined kings of the Shardana, Lukka, and Peleset launch an overwhelming land-and-sea invasion against our Citadel. Behind unbreakable cyclopean walls and armed with mass-produced iron blades, Burna the Khabir and Tarkhunta lead the army into the final battle to vanquish the invaders and seal the Iron Dawn forever.",
+    "advisorPortrait": "burna_khabir",
+    "dialogues": [
+      {
+        "condition": "start",
+        "speaker": "burna_khabir",
+        "message": "They thought humanity would vanish in the ashes of burned palaces and starving cities. But out of the collapse, we forged something stronger than bronze. Stand fast, sons of the Levant: the Iron Dawn is here!"
+      },
+      {
+        "condition": "warlord_slain",
+        "speaker": "tarkhunta",
+        "message": "The Grand Warlord has fallen! The horned banners burn in the surf! Civilization will not die: from this day forward, humanity belongs to the Age of Iron!"
+      }
+    ]
+  }
+}

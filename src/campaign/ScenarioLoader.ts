@@ -6,6 +6,9 @@ import scenario04 from '../../public/campaigns/act1/scenario_04_siege_kadesh_sea
 import scenario05 from '../../public/campaigns/act1/scenario_05_silence_great_kings.json';
 import scenario06 from '../../public/campaigns/act2/scenario_06_war_of_rags.json';
 import scenario07 from '../../public/campaigns/act2/scenario_07_into_stone_gorges.json';
+import scenario08 from '../../public/campaigns/act2/scenario_08_secret_black_blade.json';
+import scenario09 from '../../public/campaigns/act3/scenario_09_the_peoples_phalanx.json';
+import scenario10 from '../../public/campaigns/act3/scenario_10_the_iron_dawn.json';
 
 const FALLBACK_SCENARIOS: Record<string, any> = {
   scenario_01_horned_sails: scenario01,
@@ -14,7 +17,10 @@ const FALLBACK_SCENARIOS: Record<string, any> = {
   scenario_04_siege_kadesh_sea: scenario04,
   scenario_05_silence_great_kings: scenario05,
   scenario_06_war_of_rags: scenario06,
-  scenario_07_into_stone_gorges: scenario07
+  scenario_07_into_stone_gorges: scenario07,
+  scenario_08_secret_black_blade: scenario08,
+  scenario_09_the_peoples_phalanx: scenario09,
+  scenario_10_the_iron_dawn: scenario10
 };
 
 export class ScenarioLoader {

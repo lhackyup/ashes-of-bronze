@@ -1,0 +1,132 @@
+{
+  "id": "scenario_09_the_peoples_phalanx",
+  "title": "Scenario IX: The People’s Phalanx",
+  "act": 3,
+  "era": "early_iron",
+  "map": {
+    "width": 64,
+    "height": 64,
+    "biome": "orontes_borderlands",
+    "seed": 1150
+  },
+  "player": {
+    "faction": "player",
+    "startPosition": { "tx": 18, "ty": 44 },
+    "initialResources": {
+      "copper": 500,
+      "tin": 30,
+      "iron": 450,
+      "grain": 400,
+      "stone": 400,
+      "timber": 350
+    },
+    "unlockedBuildings": [
+      "cyclopean_slab",
+      "cyclopean_wall",
+      "acropolis",
+      "granary",
+      "bronze_foundry",
+      "barracks",
+      "watchtower",
+      "signal_beacon"
+    ],
+    "unlockedUnits": [
+      "donkey_caravan",
+      "spear_militia",
+      "skirmisher",
+      "highland_skirmisher",
+      "composite_bowman",
+      "bronze_swordsman"
+    ]
+  },
+  "opponents": [
+    {
+      "id": "bronze_warlord_remnants",
+      "faction": "sea_peoples",
+      "aiProfile": "aggressive_raider",
+      "waves": [
+        {
+          "triggerTimeSeconds": 55,
+          "spawnEdge": "north",
+          "units": [
+            { "type": "skirmisher", "count": 4 },
+            { "type": "spear_militia", "count": 3 }
+          ],
+          "advisorWarning": "Zalpa: Raider patrols crossing the floodplains! Form the iron spear-wall and turn their advance into a slaughter!"
+        },
+        {
+          "triggerTimeSeconds": 130,
+          "spawnEdge": "east",
+          "units": [
+            { "type": "sea_raider", "count": 4 },
+            { "type": "shardana_torchbearer", "count": 3 }
+          ],
+          "advisorWarning": "Tarkhunta: Keep the granaries safe! Our people have bled for this grain; do not let their torches reach the storage silos!"
+        },
+        {
+          "triggerTimeSeconds": 220,
+          "spawnEdge": "north",
+          "units": [
+            { "type": "bronze_swordsman", "count": 4 },
+            { "type": "composite_bowman", "count": 3 },
+            { "type": "spear_militia", "count": 5 }
+          ],
+          "advisorWarning": "Burna-Khabir: The last noble bronze warlord charges with his retainers! Lock shields and advance; our iron spears will shatter their brittle bronze armor!"
+        }
+      ]
+    }
+  ],
+  "objectives": {
+    "primary": [
+      {
+        "id": "defend_megaron",
+        "type": "protect_entity",
+        "description": "Hold the Orontes Command Enclave at (18, 44).",
+        "targetId": "acropolis",
+        "isPrimary": true
+      },
+      {
+        "id": "liberate_granaries",
+        "type": "gather_resource",
+        "description": "Secure the Harvest: Stockpile at least 500 Grain in your depots.",
+        "targetId": "grain",
+        "targetAmount": 500,
+        "isPrimary": true
+      },
+      {
+        "id": "form_iron_phalanx",
+        "type": "train_units",
+        "description": "Equip the People's Phalanx: Train at least 10 Spear Militia with forged iron spearheads.",
+        "targetId": "spear_militia",
+        "targetAmount": 10,
+        "isPrimary": true
+      }
+    ],
+    "secondary": [
+      {
+        "id": "destroy_war_camps",
+        "type": "destroy_entity",
+        "description": "Raze Raider Camps: Destroy the 2 Shardana riverbed outposts.",
+        "targetId": "sea_camp",
+        "targetAmount": 2,
+        "isPrimary": false
+      }
+    ]
+  },
+  "narrative": {
+    "briefing": "Year 1150 BC. The democratizing revolution of iron has arrived. Where bronze was a luxury metal for noble aristocrats and gilded charioteers, cheap and plentiful iron allows hundreds of common peasants to stand armed with deadly spearheads and reinforced shields. March into the fertile agricultural floodplains of the Orontes, liberate the granaries, and prove on the open battlefield that the People's Iron Phalanx can crush the decaying remnants of the Bronze Age dynasties.",
+    "advisorPortrait": "burna_khabir",
+    "dialogues": [
+      {
+        "condition": "start",
+        "speaker": "burna_khabir",
+        "message": "Look at these ranks! Farmers and carters armed with forged iron spearheads. When the noble bronze chariots charge, they will find an unbreakable wall of common steel!"
+      },
+      {
+        "condition": "phalanx_assembled",
+        "speaker": "zalpa",
+        "message": "The phalanx is formed! The Orontes riverbanks are ours once more: civilization will not starve while iron defends the harvest!"
+      }
+    ]
+  }
+}

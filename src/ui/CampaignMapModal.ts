@@ -218,20 +218,12 @@ export class CampaignMapModal {
 
     document.getElementById('intel-btn-deploy')?.addEventListener('click', () => {
       if (!this.selectedScenario) return;
-      const save = SaveManager.get();
-      const isCompleted = save.isScenarioCompleted(this.selectedScenario.id);
-      const isCurrent = save.getData().currentScenarioId === this.selectedScenario.id;
 
-      // Allow if unlocked or already cleared (Scenarios 1, 2, 3, 4, 5 unlocked directly during dev)
-      if (isCurrent || isCompleted || this.selectedScenario.scenarioIndex <= 5) {
-        EventBus.get().emit('audio:command');
-        this.hide();
-        if (this.onSelectScenario) {
-          this.onSelectScenario(this.selectedScenario.id);
-        }
-      } else {
-        EventBus.get().emit('audio:click');
-        alert('This territory is locked! Complete prior mandates to advance.');
+      // All scenarios across Act I, Act II, and Act III unlocked for testing
+      EventBus.get().emit('audio:command');
+      this.hide();
+      if (this.onSelectScenario) {
+        this.onSelectScenario(this.selectedScenario.id);
       }
     });
 
@@ -329,8 +321,8 @@ export class CampaignMapModal {
     for (const sc of currentActScenarios) {
       const isSelected = this.selectedScenario?.id === sc.id;
       const isCompleted = save.isScenarioCompleted(sc.id);
-      const isCurrent = save.getData().currentScenarioId === sc.id;
-      const isUnlocked = isCurrent || isCompleted || sc.scenarioIndex <= 4;
+      // All scenarios in Act I, Act II, Act III unlocked for testing
+      const isUnlocked = true;
 
       const scBtn = document.createElement('button');
       scBtn.className = 'svga-btn';
@@ -377,9 +369,8 @@ export class CampaignMapModal {
     this.selectedScenario = sc;
     const save = SaveManager.get();
     const isCompleted = save.isScenarioCompleted(sc.id);
-    const isCurrent = save.getData().currentScenarioId === sc.id;
-    // Allow Scenario 1, 2, 3 and 4 directly during development
-    const isUnlocked = isCurrent || isCompleted || sc.scenarioIndex <= 4;
+    // All scenarios in Act I, Act II, Act III unlocked for testing
+    const isUnlocked = true;
 
     document.getElementById('intel-scenario-title')!.textContent = `${sc.scenarioIndex}. ${sc.title}`;
     document.getElementById('intel-scenario-meta')!.textContent = `Act ${sc.act} · ${sc.yearBC} BC · ${sc.region}`;
@@ -1480,14 +1471,10 @@ export class CampaignMapModal {
         ctx.fillStyle = '#2de0a5';
         ctx.fill();
         ctx.strokeStyle = '#ffffff';
-      } else if (isCurrent || sc.scenarioIndex <= 4) {
+      } else {
         ctx.fillStyle = '#ffd166';
         ctx.fill();
         ctx.strokeStyle = '#8a6234';
-      } else {
-        ctx.fillStyle = '#3a2f27';
-        ctx.fill();
-        ctx.strokeStyle = '#5a4c3f';
       }
       ctx.lineWidth = 2.5;
       ctx.stroke();
