@@ -42,7 +42,7 @@
       "aiProfile": "aggressive_raider",
       "waves": [
         {
-          "triggerTimeSeconds": 240,
+          "triggerTimeSeconds": 90,
           "spawnEdge": "west",
           "units": [
             { "type": "sea_raider", "count": 3 }
@@ -50,7 +50,7 @@
           "advisorWarning": "Zalpa: Dark sails off the western shoals! Three landing skiffs have hit the beach!"
         },
         {
-          "triggerTimeSeconds": 420,
+          "triggerTimeSeconds": 180,
           "spawnEdge": "west",
           "units": [
             { "type": "sea_raider", "count": 4 }
@@ -58,7 +58,7 @@
           "advisorWarning": "Zalpa: More Shardana raiders advancing up the dunes! Protect the foundry and our donkey caravans!"
         },
         {
-          "triggerTimeSeconds": 600,
+          "triggerTimeSeconds": 270,
           "spawnEdge": "west",
           "units": [
             { "type": "sea_raider", "count": 6 }
